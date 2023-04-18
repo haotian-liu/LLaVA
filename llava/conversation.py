@@ -224,10 +224,10 @@ simple_conv_multimodal = Conversation(
            "Follow the instructions carefully and explain your answers in detail.  Provide examples when necessary.",
     roles=("Human", "Assistant"),
     messages=(
-        # ("Human", "Hi!"),
-        # ("Assistant", "Hi there!  How can I help you today?\n")
+        ("Human", "Hi!"),
+        ("Assistant", "Hi there!  How can I help you today?\n")
     ),
-    offset=0,
+    offset=2,
     sep_style=SeparatorStyle.SINGLE,
     sep="###",
 )
