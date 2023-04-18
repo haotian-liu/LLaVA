@@ -271,7 +271,7 @@ def http_bot(state, model_selector, temperature, max_new_tokens, request: gr.Req
 
 title_markdown = ("""
 # 🌋 LLaVA: Large Language and Vision Assistant
-[[Paper]](#) [[Code]](https://github.com/haotian-liu/LLaVA) [[Model]](https://github.com/haotian-liu/LLaVA)
+[[Project Page]](https://llava-vl.github.io) [[Paper]](https://arxiv.org/abs/2304.08485) [[Code]](https://github.com/haotian-liu/LLaVA) [[Model]](https://huggingface.co/liuhaotian/LLaVA-13b-delta-v0)
 """)
 
 tos_markdown = ("""
@@ -300,11 +300,12 @@ pre {
 """
 
 
-def build_demo():
+def build_demo(embed_mode):
     with gr.Blocks(title="LLaVA", theme=gr.themes.Base(), css=css) as demo:
         state = gr.State()
 
-        gr.Markdown(title_markdown)
+        if not embed_mode:
+            gr.Markdown(title_markdown)
 
         with gr.Row():
             with gr.Column(scale=6):
@@ -338,7 +339,8 @@ def build_demo():
                     max_output_tokens = gr.Slider(minimum=0, maximum=1024, value=512, step=64, interactive=True, label="Max output tokens",)
                 gr.Markdown(tos_markdown)
 
-        gr.Markdown(learn_more_markdown)
+        if not embed_mode:
+            gr.Markdown(learn_more_markdown)
         url_params = gr.JSON(visible=False)
 
         # Register listeners
@@ -380,18 +382,19 @@ if __name__ == "__main__":
     parser.add_argument("--host", type=str, default="0.0.0.0")
     parser.add_argument("--port", type=int)
     parser.add_argument("--controller-url", type=str, default="http://localhost:21001")
-    parser.add_argument("--concurrency-count", type=int, default=4)
+    parser.add_argument("--concurrency-count", type=int, default=8)
     parser.add_argument("--model-list-mode", type=str, default="once",
         choices=["once", "reload"])
     parser.add_argument("--share", action="store_true")
     parser.add_argument("--moderate", action="store_true")
+    parser.add_argument("--embed", action="store_true")
     args = parser.parse_args()
     logger.info(f"args: {args}")
 
     models = get_model_list()
 
     logger.info(args)
-    demo = build_demo()
+    demo = build_demo(args.embed)
     demo.queue(concurrency_count=args.concurrency_count, status_update_rate=10,
                api_open=False).launch(
         server_name=args.host, server_port=args.port, share=args.share)

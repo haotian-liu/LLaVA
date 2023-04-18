@@ -4,7 +4,7 @@ Visual instruction tuning towards large language and vision models with GPT-4 le
 
 ## Release
 
-- 🔥 We released **LLaVA: Large Language and Vision Assitant**. We propose visual instruction tuning, towards building large language and vision models with GPT-4 level capabilities.  Checkout the [paper](#) and [demo](https://llava.hliu.cc/).
+- 🔥 We released **LLaVA: Large Language and Vision Assitant**. We propose visual instruction tuning, towards building large language and vision models with GPT-4 level capabilities.  Checkout the [paper](https://arxiv.org/abs/2304.08485) and [demo](https://llava.hliu.cc/).
 
 <a href="https://llava.hliu.cc/"><img src="assets/demo.gif" width="70%"></a>
 
@@ -237,6 +237,7 @@ If you find LLaVA useful for your your research and applications, please cite us
 @misc{liu2023llava,
       title={Visual Instruction Tuning}, 
       author={Liu, Haotian and Li, Chunyuan and Wu, Qingyang and Lee, Yong Jae},
+      publisher={arXiv:2304.08485},
       year={2023},
 }
 ```
