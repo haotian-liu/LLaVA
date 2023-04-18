@@ -248,3 +248,7 @@ If you find LLaVA useful for your your research and applications, please cite us
       year={2023},
 }
 ```
+
+## Related Projects
+
+For future project ideas, checkout the [Grounded-Segment-Anything](https://github.com/IDEA-Research/Grounded-Segment-Anything) to detect, segment, and generate anything by marrying [Grounding DINO](https://github.com/IDEA-Research/GroundingDINO) and [Segment-Anything](https://github.com/facebookresearch/segment-anything).
