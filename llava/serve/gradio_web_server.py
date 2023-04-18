@@ -308,6 +308,21 @@ def build_demo(embed_mode):
             gr.Markdown(title_markdown)
 
         with gr.Row():
+            with gr.Column(scale=3):
+                with gr.Row(elem_id="model_selector_row"):
+                    model_selector = gr.Dropdown(
+                        choices=models,
+                        value=models[0] if len(models) > 0 else "",
+                        interactive=True,
+                        show_label=False).style(container=False)
+
+                imagebox = gr.Image(type="pil")
+
+                with gr.Accordion("Parameters", open=False, visible=False) as parameter_row:
+                    temperature = gr.Slider(minimum=0.0, maximum=1.0, value=0.7, step=0.1, interactive=True, label="Temperature",)
+                    max_output_tokens = gr.Slider(minimum=0, maximum=1024, value=512, step=64, interactive=True, label="Max output tokens",)
+                gr.Markdown(tos_markdown)
+
             with gr.Column(scale=6):
                 chatbot = grChatbot(elem_id="chatbot", visible=False).style(height=550)
                 with gr.Row():
@@ -324,20 +339,11 @@ def build_demo(embed_mode):
                     regenerate_btn = gr.Button(value="🔄  Regenerate", interactive=False)
                     clear_btn = gr.Button(value="🗑️  Clear history", interactive=False)
 
-            with gr.Column(scale=3):
-                with gr.Row(elem_id="model_selector_row"):
-                    model_selector = gr.Dropdown(
-                        choices=models,
-                        value=models[0] if len(models) > 0 else "",
-                        interactive=True,
-                        show_label=False).style(container=False)
-
-                imagebox = gr.Image(type="pil")
-
-                with gr.Accordion("Parameters", open=False, visible=False) as parameter_row:
-                    temperature = gr.Slider(minimum=0.0, maximum=1.0, value=0.7, step=0.1, interactive=True, label="Temperature",)
-                    max_output_tokens = gr.Slider(minimum=0, maximum=1024, value=512, step=64, interactive=True, label="Max output tokens",)
-                gr.Markdown(tos_markdown)
+        cur_dir = os.path.dirname(os.path.abspath(__file__))
+        gr.Examples(examples=[
+            [f"{cur_dir}/examples/extreme_ironing.jpg", "What is unusual about this image?"],
+            [f"{cur_dir}/examples/waterview.jpg", "What are the things I need to be cautious of?"],
+        ], inputs=[imagebox, textbox])
 
         if not embed_mode:
             gr.Markdown(learn_more_markdown)
