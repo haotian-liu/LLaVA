@@ -1,0 +1,90 @@
+{"question_id": 0, "image": "000000441147.jpg", "text": "What is the color of the two suitcases in the image?", "category": "conv"}
+{"question_id": 1, "image": "000000441147.jpg", "text": "Analyze the image in a comprehensive and detailed manner.", "category": "detail"}
+{"question_id": 2, "image": "000000441147.jpg", "text": "What potential factors could make these suitcases valuable?", "category": "complex"}
+{"question_id": 3, "image": "000000353536.jpg", "text": "What are the main objects on the table in the image?", "category": "conv"}
+{"question_id": 4, "image": "000000353536.jpg", "text": "Describe the following image.", "category": "detail"}
+{"question_id": 5, "image": "000000353536.jpg", "text": "What activity might have recently taken place around this table and what could be its aftermath?", "category": "complex"}
+{"question_id": 6, "image": "000000506095.jpg", "text": "What is the main focus of the image?", "category": "conv"}
+{"question_id": 7, "image": "000000506095.jpg", "text": "What is this photo about'?", "category": "detail"}
+{"question_id": 8, "image": "000000506095.jpg", "text": "What could be a reason for the cat's interest in the laptop?", "category": "complex"}
+{"question_id": 9, "image": "000000514915.jpg", "text": "What color is the dog in the image?", "category": "conv"}
+{"question_id": 10, "image": "000000514915.jpg", "text": "Describe the following image.", "category": "detail"}
+{"question_id": 11, "image": "000000514915.jpg", "text": "Why might the dog have chosen to lay down on the floor in this location?", "category": "complex"}
+{"question_id": 12, "image": "000000056013.jpg", "text": "Where is the cart with luggage bags located?", "category": "conv"}
+{"question_id": 13, "image": "000000056013.jpg", "text": "Describe the following image.", "category": "detail"}
+{"question_id": 14, "image": "000000056013.jpg", "text": "What challenges might the staff encounter with handling luggage in the lobby?", "category": "complex"}
+{"question_id": 15, "image": "000000408439.jpg", "text": "What is the body of water seen in the image?", "category": "conv"}
+{"question_id": 16, "image": "000000408439.jpg", "text": "Can you elaborate on the elements of the picture provided?", "category": "detail"}
+{"question_id": 17, "image": "000000408439.jpg", "text": "What are potential reasons for the train to be traveling in such a scenic route?", "category": "complex"}
+{"question_id": 18, "image": "000000164255.jpg", "text": "What is the main object in the image?", "category": "conv"}
+{"question_id": 19, "image": "000000164255.jpg", "text": "What do you think is going on in this snapshot?", "category": "detail"}
+{"question_id": 20, "image": "000000164255.jpg", "text": "What purpose does the umbrella serve on the beach?", "category": "complex"}
+{"question_id": 21, "image": "000000034096.jpg", "text": "What stage is the house in regarding its construction?", "category": "conv"}
+{"question_id": 22, "image": "000000034096.jpg", "text": "What is this photo about'?", "category": "detail"}
+{"question_id": 23, "image": "000000034096.jpg", "text": "What may be a potential obstacle for the house construction in its current state?", "category": "complex"}
+{"question_id": 24, "image": "000000385873.jpg", "text": "How many pizzas are there in the image?", "category": "conv"}
+{"question_id": 25, "image": "000000385873.jpg", "text": "Explain the visual content of the image in great detail.", "category": "detail"}
+{"question_id": 26, "image": "000000385873.jpg", "text": "What are the possible challenges one might face when dividing these pizzas equitably among a group of people?", "category": "complex"}
+{"question_id": 27, "image": "000000367571.jpg", "text": "How many doughnuts are in the box?", "category": "conv"}
+{"question_id": 28, "image": "000000367571.jpg", "text": "Write a detailed description of the given image.", "category": "detail"}
+{"question_id": 29, "image": "000000367571.jpg", "text": "What unique taste combinations can be found in this box of doughnuts?", "category": "complex"}
+{"question_id": 30, "image": "000000319432.jpg", "text": "What is the man doing in the image?", "category": "conv"}
+{"question_id": 31, "image": "000000319432.jpg", "text": "Can you describe the main features of this image for me?", "category": "detail"}
+{"question_id": 32, "image": "000000319432.jpg", "text": "Why might the man be holding the clothes on hangers?", "category": "complex"}
+{"question_id": 33, "image": "000000225738.jpg", "text": "How many giraffes are depicted in the image?", "category": "conv"}
+{"question_id": 34, "image": "000000225738.jpg", "text": "Write a detailed description of the given image.", "category": "detail"}
+{"question_id": 35, "image": "000000225738.jpg", "text": "Why might these giraffes be gathering near the same tree?", "category": "complex"}
+{"question_id": 36, "image": "000000092109.jpg", "text": "What is the main focus of the image?", "category": "conv"}
+{"question_id": 37, "image": "000000092109.jpg", "text": "What is this photo about'?", "category": "detail"}
+{"question_id": 38, "image": "000000092109.jpg", "text": "What can be inferred about the giraffe's habitat from this image?", "category": "complex"}
+{"question_id": 39, "image": "000000506483.jpg", "text": "What kind of objects are included in the art installation?", "category": "conv"}
+{"question_id": 40, "image": "000000506483.jpg", "text": "Explain the visual content of the image in great detail.", "category": "detail"}
+{"question_id": 41, "image": "000000506483.jpg", "text": "How might the art installation encourage interaction among people?", "category": "complex"}
+{"question_id": 42, "image": "000000097131.jpg", "text": "What is the main focus of the image?", "category": "conv"}
+{"question_id": 43, "image": "000000097131.jpg", "text": "Can you elaborate on the elements of the picture provided?", "category": "detail"}
+{"question_id": 44, "image": "000000097131.jpg", "text": "What might be the reason for the car to be parked on the side of the road?", "category": "complex"}
+{"question_id": 45, "image": "000000052312.jpg", "text": "What is unusual about the elderly man's facial appearance in the image?", "category": "conv"}
+{"question_id": 46, "image": "000000052312.jpg", "text": "What's happening in the scene?", "category": "detail"}
+{"question_id": 47, "image": "000000052312.jpg", "text": "What message could be conveyed by the man's unusual facial adornment?", "category": "complex"}
+{"question_id": 48, "image": "000000258285.jpg", "text": "How many airplanes are visible in the image?", "category": "conv"}
+{"question_id": 49, "image": "000000258285.jpg", "text": "What do you see happening in this image?", "category": "detail"}
+{"question_id": 50, "image": "000000258285.jpg", "text": "What environmental impact might these planes' activity have on the birds?", "category": "complex"}
+{"question_id": 51, "image": "000000081552.jpg", "text": "What is the cat doing on the red couch?", "category": "conv"}
+{"question_id": 52, "image": "000000081552.jpg", "text": "Write a detailed description of the given image.", "category": "detail"}
+{"question_id": 53, "image": "000000081552.jpg", "text": "What factors may have led the cat to choose this location for sleep?", "category": "complex"}
+{"question_id": 54, "image": "000000066144.jpg", "text": "What type of car is parked next to the stop sign in the image?", "category": "conv"}
+{"question_id": 55, "image": "000000066144.jpg", "text": "Explain the visual content of the image in great detail.", "category": "detail"}
+{"question_id": 56, "image": "000000066144.jpg", "text": "What can be inferred about the traffic situation in the area?", "category": "complex"}
+{"question_id": 57, "image": "000000203629.jpg", "text": "What is the man doing in the image?", "category": "conv"}
+{"question_id": 58, "image": "000000203629.jpg", "text": "Can you describe the main features of this image for me?", "category": "detail"}
+{"question_id": 59, "image": "000000203629.jpg", "text": "What might be the reason behind the man's thumbs-up gesture while on the phone?", "category": "complex"}
+{"question_id": 60, "image": "000000109532.jpg", "text": "What breed is the dog in the image?", "category": "conv"}
+{"question_id": 61, "image": "000000109532.jpg", "text": "What are the key elements in this picture?", "category": "detail"}
+{"question_id": 62, "image": "000000109532.jpg", "text": "What measures may be taken by the dog's owner to make the dog feel comfortable in the room?", "category": "complex"}
+{"question_id": 63, "image": "000000431165.jpg", "text": "What is the color of the elephant in the image?", "category": "conv"}
+{"question_id": 64, "image": "000000431165.jpg", "text": "What do you think is going on in this snapshot?", "category": "detail"}
+{"question_id": 65, "image": "000000431165.jpg", "text": "What could be a potential concern for the baby elephant in this setting?", "category": "complex"}
+{"question_id": 66, "image": "000000020650.jpg", "text": "What type of food items are present on the orange plate?", "category": "conv"}
+{"question_id": 67, "image": "000000020650.jpg", "text": "What are the key elements in this picture?", "category": "detail"}
+{"question_id": 68, "image": "000000020650.jpg", "text": "What can be inferred about the individual's dietary choices?", "category": "complex"}
+{"question_id": 69, "image": "000000205183.jpg", "text": "What type of bird is pictured in the image?", "category": "conv"}
+{"question_id": 70, "image": "000000205183.jpg", "text": "What do you see happening in this image?", "category": "detail"}
+{"question_id": 71, "image": "000000205183.jpg", "text": "What challenges could the duck face while walking along the paved road?", "category": "complex"}
+{"question_id": 72, "image": "000000210299.jpg", "text": "Is the little boy wearing any safety gear while riding his bike?", "category": "conv"}
+{"question_id": 73, "image": "000000210299.jpg", "text": "Can you elaborate on the elements of the picture provided?", "category": "detail"}
+{"question_id": 74, "image": "000000210299.jpg", "text": "Why is the little boy's precaution noteworthy?", "category": "complex"}
+{"question_id": 75, "image": "000000515716.jpg", "text": "How many people are visible in the image?", "category": "conv"}
+{"question_id": 76, "image": "000000515716.jpg", "text": "What do you see happening in this image?", "category": "detail"}
+{"question_id": 77, "image": "000000515716.jpg", "text": "What might be the reason behind this gathering?", "category": "complex"}
+{"question_id": 78, "image": "000000460149.jpg", "text": "What is the main object featured in the image?", "category": "conv"}
+{"question_id": 79, "image": "000000460149.jpg", "text": "Describe the following image.", "category": "detail"}
+{"question_id": 80, "image": "000000460149.jpg", "text": "Imagine you are walking down this street; how would you know the time or which direction the sidewalk leads?", "category": "complex"}
+{"question_id": 81, "image": "000000293505.jpg", "text": "Is the person riding a motorbike or scooter?", "category": "conv"}
+{"question_id": 82, "image": "000000293505.jpg", "text": "Explain the visual content of the image in great detail.", "category": "detail"}
+{"question_id": 83, "image": "000000293505.jpg", "text": "What challenges might the woman on the motorcycle face in this situation?", "category": "complex"}
+{"question_id": 84, "image": "000000525439.jpg", "text": "What is the position of the skateboard in the image?", "category": "conv"}
+{"question_id": 85, "image": "000000525439.jpg", "text": "Can you elaborate on the elements of the picture provided?", "category": "detail"}
+{"question_id": 86, "image": "000000525439.jpg", "text": "What might have happened prior to this moment?", "category": "complex"}
+{"question_id": 87, "image": "000000534270.jpg", "text": "What type of hats are the man and woman wearing?", "category": "conv"}
+{"question_id": 88, "image": "000000534270.jpg", "text": "Can you describe the main features of this image for me?", "category": "detail"}
+{"question_id": 89, "image": "000000534270.jpg", "text": "What benefits do umbrella hats provide to the couple on this rainy day?", "category": "complex"}
