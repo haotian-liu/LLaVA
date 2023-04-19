@@ -2,9 +2,9 @@
 
 *Visual instruction tuning towards large language and vision models with GPT-4 level capabilities.*
 
-[[Project Page](https://llava-vl.github.io/)] [[Paper](https://arxiv.org/abs/2304.08485)] [[Demo](https://llava.hliu.cc/)] 
+[[Project Page](https://llava-vl.github.io/)] [[Paper](https://arxiv.org/abs/2304.08485)] [[Demo](https://llava.hliu.cc/)]  [[Data](https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K)] [[Model](https://huggingface.co/liuhaotian/LLaVA-13b-delta-v0)]
 
-Visual Instruction Tuning <br>
+**Visual Instruction Tuning** <br>
 [Haotian Liu*](https://hliu.cc), [Chunyuan Li*](https://chunyuan.li/), [Qingyang Wu](https://scholar.google.ca/citations?user=HDiw-TsAAAAJ&hl=en/), [Yong Jae Lee](https://pages.cs.wisc.edu/~yongjaelee/) (*Equal Contribution)
 
 
@@ -15,12 +15,31 @@ Visual Instruction Tuning <br>
 
 <a href="https://llava.hliu.cc/"><img src="assets/demo.gif" width="70%"></a>
 
+[![Code License](https://img.shields.io/badge/Code%20License-Apache_2.0-green.svg)](https://github.com/tatsu-lab/stanford_alpaca/blob/main/LICENSE)
+[![Data License](https://img.shields.io/badge/Data%20License-CC%20By%20NC%204.0-red.svg)](https://github.com/tatsu-lab/stanford_alpaca/blob/main/DATA_LICENSE)
+**Usage and License Notices**: The data, code and checkpoint is intended and licensed for research use only. They are also restricted to uses that follow the license agreement of LLaMA, Vicuna and GPT-4. The dataset is CC BY NC 4.0 (allowing only non-commercial use) and models trained using the dataset should not be used outside of research purposes.
+
+
 ## Contents
+- [Data Donwnload](#data-donwnload)
 - [Install](#install)
 - [LLaVA Weights](#llava-weights)
 - [Serving](#serving)
 - [Evaluation](#evaluation)
 - [Fine-tuning](#fine-tuning)
+
+## Data Donwnload
+
+| Data file name | Size |
+| --- | ---: |
+| [conversation_58k.json](https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K/raw/main/conversation_58k.json) | 126 MB |
+| [detail_23k.json](https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K/raw/main/detail_23k.json) | 20.5 MB |
+| [complex_reasoning_77k.json](https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K/raw/main/complex_reasoning_77k.json) | 79.6 MB
+
+To download our langauge-image multimodal instruction-folllowing dataset [`LLaVA-Instruct-150K`](https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K), please run the following script:
+```bash
+sh download_data.sh
+```
 
 ## Install
 
@@ -248,3 +267,7 @@ If you find LLaVA useful for your your research and applications, please cite us
       year={2023},
 }
 ```
+
+## Related Projects
+
+For future project ideas, checkout the [Grounded-Segment-Anything](https://github.com/IDEA-Research/Grounded-Segment-Anything) to detect, segment, and generate anything by marrying [Grounding DINO](https://github.com/IDEA-Research/GroundingDINO) and [Segment-Anything](https://github.com/facebookresearch/segment-anything).
