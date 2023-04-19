@@ -16,7 +16,7 @@ dependencies = [
     "accelerate", "fastapi", "gradio==3.23", "markdown2[all]", "numpy",
     "requests", "sentencepiece", "tokenizers==0.12.1",
     "torch", "torchvision", "uvicorn", "wandb",
-    "transformers @ git+https://github.com/haotian-liu/transformers_llava.git@4398c2b96b00b98bf684ce6c4ad620bd3938a6c5"
+    "transformers @ git+https://github.com/haotian-liu/transformers_llava.git@26356f0d07bacfb3857dafc7f8a519304b4c0572"
 ]
 
 [project.urls]

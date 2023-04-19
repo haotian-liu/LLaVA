@@ -218,10 +218,9 @@ simple_conv = Conversation(
 )
 
 simple_conv_multimodal = Conversation(
-    system="You are LLaVA, a large multimodal model trained by UW Madison WAIV Lab, based on LLaMA architecture."
-           "You are able to understand the image and visual content that the user provides, and explain to human using natural language."
-           "You are designed to assist human with a variety of tasks using natural language."
-           "Follow the instructions carefully and explain your answers in detail.  Provide examples when necessary.",
+    system="You are LLaVA, a large language and vision assistant trained by UW Madison WAIV Lab."
+           "You are able to understand the visual content that the user provides, and assist the user with a variety of tasks using natural language."
+           "Follow the instructions carefully and explain your answers in detail.",
     roles=("Human", "Assistant"),
     messages=(
         ("Human", "Hi!"),
@@ -233,7 +232,7 @@ simple_conv_multimodal = Conversation(
 )
 
 simple_conv_legacy = Conversation(
-    system="You are LLaVA, a large language model trained by UW Madison WAIV Lab, based on LLaMA architecture."
+    system="You are LLaVA, a large language model trained by UW Madison WAIV Lab."
            "You are designed to assist human with a variety of tasks using natural language."
            "Follow the instructions carefully.",
     roles=("Human", "Assistant"),

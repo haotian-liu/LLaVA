@@ -17,6 +17,7 @@ import requests
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
 import uvicorn
+from functools import partial
 
 from llava.constants import WORKER_HEART_BEAT_INTERVAL
 from llava.utils import (build_logger, server_error_msg,
@@ -172,10 +173,6 @@ class ModelWorker:
 
     @torch.inference_mode()
     def generate_stream(self, params):
-        #cur_mem = torch.cuda.memory_allocated()
-        #max_mem = torch.cuda.max_memory_allocated()
-        #logging.info(f"cur mem: {cur_mem/GB:.2f} GB, max_mem: {max_mem/GB:.2f} GB")
-
         tokenizer, model, image_processor = self.tokenizer, self.model, self.image_processor
 
         prompt = params["prompt"]
@@ -229,6 +226,7 @@ class ModelWorker:
         max_src_len = self.context_len - max_new_tokens - 8
         input_ids = input_ids[-max_src_len:]
 
+        past_key_values = None
         for i in range(max_new_tokens):
             if i == 0:
                 out = model(
@@ -288,12 +286,20 @@ class ModelWorker:
             if stopped:
                 break
 
-        del past_key_values
+        if past_key_values is not None:
+            del past_key_values
 
     def generate_stream_gate(self, params):
         try:
             for x in self.generate_stream(params):
                 yield x
+        except ValueError as e:
+            print("Caught ValueError:", e)
+            ret = {
+                "text": server_error_msg,
+                "error_code": 1,
+            }
+            yield json.dumps(ret).encode() + b"\0"
         except torch.cuda.CudaError as e:
             print("Caught torch.cuda.CudaError:", e)
             ret = {
@@ -306,8 +312,10 @@ class ModelWorker:
 app = FastAPI()
 
 
-def release_model_semaphore():
+def release_model_semaphore(fn=None):
     model_semaphore.release()
+    if fn is not None:
+        fn()
 
 
 @app.post("/worker_generate_stream")
@@ -319,9 +327,10 @@ async def generate_stream(request: Request):
     if model_semaphore is None:
         model_semaphore = asyncio.Semaphore(args.limit_model_concurrency)
     await model_semaphore.acquire()
+    worker.send_heart_beat()
     generator = worker.generate_stream_gate(params)
     background_tasks = BackgroundTasks()
-    background_tasks.add_task(release_model_semaphore)
+    background_tasks.add_task(partial(release_model_semaphore, fn=worker.send_heart_beat))
     return StreamingResponse(generator, background=background_tasks)
 
 
