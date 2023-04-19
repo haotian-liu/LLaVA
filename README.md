@@ -1,4 +1,4 @@
-# 🌋 LLaVA: Large Language and Vision Assitant
+# 🌋 LLaVA: Large Language and Vision Assistant
 
 *Visual instruction tuning towards large language and vision models with GPT-4 level capabilities.*
 
@@ -11,7 +11,7 @@
 
 ## Release
 
-- 🔥 We released **LLaVA: Large Language and Vision Assitant**. We propose visual instruction tuning, towards building large language and vision models with GPT-4 level capabilities.  Checkout the [paper](https://arxiv.org/abs/2304.08485) and [demo](https://llava.hliu.cc/).
+- 🔥 We released **LLaVA: Large Language and Vision Assistant**. We propose visual instruction tuning, towards building large language and vision models with GPT-4 level capabilities.  Checkout the [paper](https://arxiv.org/abs/2304.08485) and [demo](https://llava.hliu.cc/).
 
 <a href="https://llava.hliu.cc/"><img src="assets/demo.gif" width="70%"></a>
 
