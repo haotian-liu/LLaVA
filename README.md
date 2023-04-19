@@ -50,17 +50,23 @@ cd LLaVA
 ```
 
 2. Install Package
-```bash
+```Shell
 pip install --upgrade pip  # enable PEP 660 support
 pip install -e .
-
-# For training
-pip install ninja
-pip install flash-attn
 ```
 
 **NOTE**:
-In this research preview, we used a modified version of huggingface/transformers library to support multimodal models and the LLaMA tokenizer.  Make sure that you are using the correct transformers library from https://github.com/haotian-liu/transformers_llava.
+In this research preview, we used a modified version of huggingface/transformers library to support multimodal models and the LLaMA tokenizer.  Make sure that you are using the correct transformers library from https://github.com/haotian-liu/transformers_llava by running the command below.
+
+```Shell
+pip install --upgrade --force-reinstall git+https://github.com/haotian-liu/transformers_llava.git@26356f0d07bacfb3857dafc7f8a519304b4c0572
+```
+
+3. Install additional packages for training cases
+```
+pip install ninja
+pip install flash-attn
+```
 
 ## LLaVA Weights
 We release [LLaVA](https://llava-vl.github.io/) weights as delta weights to comply with the LLaMA model license.
