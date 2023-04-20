@@ -122,7 +122,6 @@ python -m llava.serve.controller --host 0.0.0.0 --port 10000
 python -m llava.serve.model_worker --controller http://localhost:10000 --port 40000 --worker http://localhost:40000 --model-path ./checkpoints/LLaVA-13B-v0 --multi-modal
 ```
 Wait until the process finishes loading the model and you see "Uvicorn running on ...".
-```
 
 #### Launch a model worker (Multiple GPUs, when GPU VRAM <= 24GB)
 
