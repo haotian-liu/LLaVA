@@ -476,9 +476,13 @@ def train():
             if model_args.pretrain_mm_mlp_adapter:
                 mm_projector_weights = torch.load(model_args.pretrain_mm_mlp_adapter, map_location='cpu')
                 embed_tokens_weight = mm_projector_weights['model.embed_tokens.weight']
-                assert input_embeddings.shape == embed_tokens_weight.shape
                 assert num_new_tokens == 2
-                input_embeddings[-num_new_tokens:] = embed_tokens_weight[-num_new_tokens:]
+                if input_embeddings.shape == embed_tokens_weight.shape:
+                    input_embeddings[-num_new_tokens:] = embed_tokens_weight[-num_new_tokens:]
+                elif embed_tokens_weight.shape[0] == num_new_tokens:
+                    input_embeddings[-num_new_tokens:] = embed_tokens_weight
+                else:
+                    raise ValueError(f"Unexpected embed_tokens_weight shape. Pretrained: {embed_tokens_weight.shape}. Current: {input_embeddings.shape}. Numer of new tokens: {num_new_tokens}.")
 
         vision_config.im_patch_token = tokenizer.convert_tokens_to_ids([DEFAULT_IMAGE_PATCH_TOKEN])[0]
 
