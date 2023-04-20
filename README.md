@@ -46,7 +46,7 @@ The pretraining dataset used in this release is a subset of CC-3M dataset, filte
 
 If you already have CC-3M dataset on your disk, the image names follow this format: `GCC_train_000000000.jpg`.  You may edit the `image` field correspondingly if necessary.
 
-| Data | chat file | meta data | Size |
+| Data | Chat File | Meta Data | Size |
 | --- |  --- |  --- | ---: |
 | CC-3M Pretrain 595K | [chat.json](https://huggingface.co/datasets/liuhaotian/LLaVA-CC3M-Pretrain-595K/raw/main/chat.json) | [metadata.json](https://huggingface.co/datasets/liuhaotian/LLaVA-CC3M-Pretrain-595K/raw/main/metadata.json) | 211 MB
 
