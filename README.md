@@ -207,7 +207,7 @@ LLaVA is trained on 8 A100 GPUs with 80GB memory with the following code. To tra
 
 ```Shell
 torchrun --nnodes=1 --nproc_per_node=8 --master_port=25001 \
-    fastchat/train/train_mem.py \
+    llava/train/train_mem.py \
     --model_name_or_path ./checkpoints/llama-vicuna-13b \
     --data_path /path/to/cc3m_595k.json \
     --image_folder /path/to/cc3m_595k \
@@ -248,7 +248,7 @@ python scripts/extract_mm_projector.py \
 
 ```Shell
 torchrun --nnodes=1 --nproc_per_node=8 --master_port=25001 \
-    fastchat/train/train_mem.py \
+    llava/train/train_mem.py \
     --model_name_or_path /path/to/llama-vicuna-13b \
     --data_path /path/to/llava_instruct_150k.json \
     --image_folder /Data/haotian/coco/train2017 \
