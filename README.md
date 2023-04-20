@@ -67,7 +67,9 @@ pip install -e .
 ```
 
 **NOTE**:
-In this research preview, we used a modified version of huggingface/transformers library to support multimodal models and the LLaMA tokenizer.  Make sure that you are using the correct transformers library from https://github.com/haotian-liu/transformers_llava by running the command below.
+In this research preview, we used a modified version of huggingface/transformers library to support multimodal models and the LLaMA tokenizer.  Make sure that you create a new Conda environment and you are using the correct transformers library from https://github.com/haotian-liu/transformers_llava.
+
+You may try running the following command to make sure the version is correct.
 
 ```Shell
 pip install git+https://github.com/haotian-liu/transformers_llava.git@26356f0d07bacfb3857dafc7f8a519304b4c0572
