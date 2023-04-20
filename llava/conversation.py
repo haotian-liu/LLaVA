@@ -63,12 +63,12 @@ class Conversation:
                     max_len, min_len = 800, 400
                     shortest_edge = int(min(max_len / aspect_ratio, min_len, min_hw))
                     longest_edge = int(shortest_edge * aspect_ratio)
-                    H, W = image.size
+                    W, H = image.size
                     if H > W:
                         H, W = longest_edge, shortest_edge
                     else:
                         H, W = shortest_edge, longest_edge
-                    image = image.resize((H, W))
+                    image = image.resize((W, H))
                     buffered = BytesIO()
                     image.save(buffered, format="JPEG")
                     img_b64_str = base64.b64encode(buffered.getvalue()).decode()
@@ -88,12 +88,12 @@ class Conversation:
                     max_len, min_len = 800, 400
                     shortest_edge = int(min(max_len / aspect_ratio, min_len, min_hw))
                     longest_edge = int(shortest_edge * aspect_ratio)
-                    H, W = image.size
+                    W, H = image.size
                     if H > W:
                         H, W = longest_edge, shortest_edge
                     else:
                         H, W = shortest_edge, longest_edge
-                    image = image.resize((H, W))
+                    image = image.resize((W, H))
                     # image = image.resize((224, 224))
                     buffered = BytesIO()
                     image.save(buffered, format="JPEG")
