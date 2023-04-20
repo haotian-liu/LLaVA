@@ -41,6 +41,15 @@ To download our langauge-image multimodal instruction-folllowing dataset [`LLaVA
 sh download_data.sh
 ```
 
+### Pretraining Dataset
+The pretraining dataset used in this release is a subset of CC-3M dataset, filtered with a more balanced concept coverage distribution.  Please see [here](https://huggingface.co/datasets/liuhaotian/LLaVA-CC3M-Pretrain-595K) for a detailed description on the dataset structure and how to download the images.
+
+If you already have CC-3M dataset on your disk, the image names follow this format: `GCC_train_000000000.jpg`.  You may edit the `image` field correspondingly if necessary.
+
+| Data | chat file | meta data | Size |
+| --- |  --- | ---: |
+| CC-3M Pretrain 595K | [chat.json](https://huggingface.co/datasets/liuhaotian/LLaVA-CC3M-Pretrain-595K/raw/main/chat.json) | [metadata.json](https://huggingface.co/datasets/liuhaotian/LLaVA-CC3M-Pretrain-595K/raw/main/metadata.json) | 211 MB
+
 ## Install
 
 1. Clone this repository and navigate to LLaVA folder
