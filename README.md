@@ -83,7 +83,9 @@ pip install flash-attn
 
 ## LLaVA Weights
 We release [LLaVA](https://llava-vl.github.io/) weights as delta weights to comply with the LLaMA model license.
-You can add our delta to the original LLaMA weights to obtain the LLaVA weights. Instructions:
+You can add our delta to the original LLaMA weights to obtain the LLaVA weights.
+
+Instructions:
 
 1. Get the original LLaMA weights in the huggingface format by following the instructions [here](https://huggingface.co/docs/transformers/main/model_doc/llama).
 2. Use the following scripts to get LLaVA weights by applying [our delta](https://huggingface.co/liuhaotian/LLaVA-13b-delta-v0). It will automatically download delta weights from our Hugging Face account.
@@ -99,6 +101,12 @@ python3 -m llava.model.apply_delta \
 
 ### LLaVA-7B
 Coming soon.
+
+
+### LLaVA pretrained projector weights
+The initial release is pretrained on [LLaVA-filtered CC3M 595K](https://huggingface.co/datasets/liuhaotian/LLaVA-CC3M-Pretrain-595K) with 1 epoch.  The pretrained weights are released [here](https://huggingface.co/liuhaotian/LLaVA-13b-pretrain-projector-v0).
+
+You may perform instruction tuning on our pretrained checkpoints, by using our [visual instruction tuning](https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K) data following the instructions [here](https://github.com/haotian-liu/LLaVA#fine-tuning-with-local-gpus).
 
 ## Serving
 
