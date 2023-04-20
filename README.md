@@ -72,7 +72,7 @@ In this research preview, we used a modified version of huggingface/transformers
 You may try running the following command to make sure the version is correct.
 
 ```Shell
-pip install git+https://github.com/haotian-liu/transformers_llava.git@26356f0d07bacfb3857dafc7f8a519304b4c0572
+pip install git+https://github.com/haotian-liu/transformers_llava.git@988b6abb3b7da9a5cbb5051e994706f7f88c2565
 ```
 
 3. Install additional packages for training cases
@@ -122,6 +122,19 @@ python -m llava.serve.controller --host 0.0.0.0 --port 10000
 python -m llava.serve.model_worker --controller http://localhost:10000 --port 40000 --worker http://localhost:40000 --model-path ./checkpoints/LLaVA-13B-v0 --multi-modal
 ```
 Wait until the process finishes loading the model and you see "Uvicorn running on ...".
+```
+
+#### Launch a model worker (Multiple GPUs, when GPU VRAM <= 24GB)
+
+If your the VRAM of your GPU is less than 24GB (e.g., RTX 3090, RTX 4090, etc.), you may try running it with multiple GPUs.
+
+If you install our repo before 4/20/23, you may need to reinstall our fork of `transformers`: `pip install git+https://github.com/haotian-liu/transformers_llava.git@988b6abb3b7da9a5cbb5051e994706f7f88c2565`.
+
+```Shell
+python -m llava.serve.model_worker --controller http://localhost:10000 --port 40000 --worker http://localhost:40000 --model-path ./checkpoints/LLaVA-13B-v0 --multi-modal --num-gpus 2
+```
+Wait until the process finishes loading the model and you see "Uvicorn running on ...".
+
 
 #### Send a test message
 ```Shell
