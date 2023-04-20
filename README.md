@@ -68,7 +68,6 @@ pip install -e .
 In this research preview, we used a modified version of huggingface/transformers library to support multimodal models and the LLaMA tokenizer.  Make sure that you are using the correct transformers library from https://github.com/haotian-liu/transformers_llava by running the command below.
 
 ```Shell
-pip uninstall transformers
 pip install git+https://github.com/haotian-liu/transformers_llava.git@26356f0d07bacfb3857dafc7f8a519304b4c0572
 ```
 
