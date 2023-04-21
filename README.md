@@ -51,21 +51,39 @@ If you already have CC-3M dataset on your disk, the image names follow this form
 | --- |  --- |  --- | ---: |
 | CC-3M Pretrain 595K | [chat.json](https://huggingface.co/datasets/liuhaotian/LLaVA-CC3M-Pretrain-595K/raw/main/chat.json) | [metadata.json](https://huggingface.co/datasets/liuhaotian/LLaVA-CC3M-Pretrain-595K/raw/main/metadata.json) | 211 MB
 
-## Install
+## <3 <3 <3  MacOS Install  <3 <3 <3
 
 1. Clone this repository and navigate to LLaVA folder
 ```bash
 git clone https://github.com/haotian-liu/LLaVA.git
-cd LLaVA
-```
+cd LLaVA/llava
 
-2. Install Package
-```Shell
-conda create -n llava python=3.10 -y
-conda activate llava
-pip install --upgrade pip  # enable PEP 660 support
+pipenv install
+pipenv shell
+
+pip install --upgrade pip
+
+pip install -r llava/requirements.txt
 pip install -e .
 ```
+
+2. after applying delta (as shown below)
+```bash
+#start controller
+python -m llava.serve.gradio_web_server --controller http://localhost:10000
+#start a worker
+python -m llava.serve.model_worker --controller http://localhost:10000 --port 40000 --worker http://localhost:40000 --model-path ./llava-13b --multi-modal --num-gpus 1
+#start the gradio server
+python -m llava.serve.controller --host 0.0.0.0 --port 10000
+```
+
+
+3. if you make any changes to the code in llava folder, you need to run the following command to update the package
+```bash
+pip install -r llava/requirements.txt
+pip install -e .
+```
+
 
 **NOTE**:
 In this research preview, we used a modified version of huggingface/transformers library to support multimodal models and the LLaMA tokenizer.  Make sure that you create a new Conda environment and you are using the correct transformers library from https://github.com/haotian-liu/transformers_llava.
@@ -79,7 +97,7 @@ pip install git+https://github.com/haotian-liu/transformers_llava.git@988b6abb3b
 3. Install additional packages for training cases
 ```
 pip install ninja
-pip install flash-attn
+pip install flash-attn ( this didnt work on my mac)
 ```
 
 ## LLaVA Weights
