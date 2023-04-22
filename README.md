@@ -124,7 +124,7 @@ python -m llava.serve.controller --host 0.0.0.0 --port 10000
 
 #### Launch a model worker
 ```Shell
-python -m llava.serve.model_worker --controller http://localhost:10000 --port 40000 --worker http://localhost:40000 --model-path ./checkpoints/LLaVA-13B-v0 --multi-modal
+python -m llava.serve.model_worker --host 0.0.0.0 --controller http://localhost:10000 --port 40000 --worker http://localhost:40000 --model-path ./checkpoints/LLaVA-13B-v0 --multi-modal
 ```
 Wait until the process finishes loading the model and you see "Uvicorn running on ...".
 
@@ -135,7 +135,7 @@ If your the VRAM of your GPU is less than 24GB (e.g., RTX 3090, RTX 4090, etc.),
 If you install our repo before 4/20/23, you may need to reinstall our fork of `transformers`: `pip install git+https://github.com/haotian-liu/transformers_llava.git@988b6abb3b7da9a5cbb5051e994706f7f88c2565`.
 
 ```Shell
-python -m llava.serve.model_worker --controller http://localhost:10000 --port 40000 --worker http://localhost:40000 --model-path ./checkpoints/LLaVA-13B-v0 --multi-modal --num-gpus 2
+python -m llava.serve.model_worker --host 0.0.0.0 --controller http://localhost:10000 --port 40000 --worker http://localhost:40000 --model-path ./checkpoints/LLaVA-13B-v0 --multi-modal --num-gpus 2
 ```
 Wait until the process finishes loading the model and you see "Uvicorn running on ...".
 
