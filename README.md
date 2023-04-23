@@ -268,7 +268,7 @@ torchrun --nnodes=1 --nproc_per_node=8 --master_port=25001 \
     llava/train/train_mem.py \
     --model_name_or_path /path/to/llama-vicuna-13b \
     --data_path /path/to/llava_instruct_150k.json \
-    --image_folder /Data/haotian/coco/train2017 \
+    --image_folder /Data/haotian/coco/train2014 \
     --vision_tower openai/clip-vit-large-patch14 \
     --pretrain_mm_mlp_adapter ./checkpoints/mm_projector/llava-13b-pretrain.bin \
     --mm_vision_select_layer -2 \
