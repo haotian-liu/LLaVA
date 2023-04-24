@@ -15,6 +15,7 @@ from llava.utils import (build_logger, server_error_msg,
     violates_moderation, moderation_msg)
 from llava.serve.gradio_patch import Chatbot as grChatbot
 from llava.serve.gradio_css import code_highlight_css
+import hashlib
 
 
 logger = build_logger("gradio_web_server", "gradio_web_server.log")
@@ -121,9 +122,12 @@ def flag_last_response(state, model_selector, request: gr.Request):
     return ("",) + (disable_btn,) * 3
 
 
-def regenerate(state, request: gr.Request):
+def regenerate(state, image_process_mode, request: gr.Request):
     logger.info(f"regenerate. ip: {request.client.host}")
     state.messages[-1][-1] = None
+    prev_human_msg = state.messages[-2]
+    if type(prev_human_msg[1]) in (tuple, list):
+        prev_human_msg[1] = (*prev_human_msg[1][:2], image_process_mode)
     state.skip_next = False
     return (state, state.to_gradio_chatbot(), "", None) + (disable_btn,) * 5
 
@@ -134,7 +138,7 @@ def clear_history(request: gr.Request):
     return (state, state.to_gradio_chatbot(), "", None) + (disable_btn,) * 5
 
 
-def add_text(state, text, image, request: gr.Request):
+def add_text(state, text, image, image_process_mode, request: gr.Request):
     logger.info(f"add_text. ip: {request.client.host}. len: {len(text)}")
     if len(text) <= 0 and image is None:
         state.skip_next = True
@@ -149,13 +153,14 @@ def add_text(state, text, image, request: gr.Request):
     text = text[:1536]  # Hard cut-off
     if image is not None:
         multimodal_msg = None
+        text = text[:1200]  # Hard cut-off for images
         if '<image>' not in text:
             text = text + '\n<image>'
 
         if multimodal_msg is not None:
             return (state, state.to_gradio_chatbot(), multimodal_msg, None) + (
                 no_change_btn,) * 5
-        text = (text, image)
+        text = (text, image, image_process_mode)
     state.append_message(state.roles[0], text)
     state.append_message(state.roles[1], None)
     state.skip_next = False
@@ -212,6 +217,15 @@ def http_bot(state, model_selector, temperature, max_new_tokens, request: gr.Req
     # Construct prompt
     prompt = state.get_prompt()
 
+    all_images = state.get_images(return_pil=True)
+    all_image_hash = [hashlib.md5(image.tobytes()).hexdigest() for image in all_images]
+    for image, hash in zip(all_images, all_image_hash):
+        t = datetime.datetime.now()
+        filename = os.path.join(LOGDIR, "serve_images", f"{t.year}-{t.month:02d}-{t.day:02d}", f"{hash}.jpg")
+        if not os.path.isfile(filename):
+            os.makedirs(os.path.dirname(filename), exist_ok=True)
+            image.save(filename)
+
     # Make requests
     pload = {
         "model": model_name,
@@ -219,7 +233,7 @@ def http_bot(state, model_selector, temperature, max_new_tokens, request: gr.Req
         "temperature": float(temperature),
         "max_new_tokens": min(int(max_new_tokens), 1536),
         "stop": state.sep if state.sep_style == SeparatorStyle.SINGLE else state.sep2,
-        "images": f'List of {len(state.get_images())} images',
+        "images": f'List of {len(state.get_images())} images: {all_image_hash}',
     }
     logger.info(f"==== request ====\n{pload}")
 
@@ -265,6 +279,7 @@ def http_bot(state, model_selector, temperature, max_new_tokens, request: gr.Req
             "start": round(start_tstamp, 4),
             "finish": round(start_tstamp, 4),
             "state": state.dict(),
+            "images": all_image_hash,
             "ip": request.client.host,
         }
         fout.write(json.dumps(data) + "\n")
@@ -301,6 +316,8 @@ pre {
 
 
 def build_demo(embed_mode):
+    textbox = gr.Textbox(show_label=False,
+        placeholder="Enter text and press ENTER", visible=False).style(container=False)
     with gr.Blocks(title="LLaVA", theme=gr.themes.Base(), css=css) as demo:
         state = gr.State()
 
@@ -317,18 +334,27 @@ def build_demo(embed_mode):
                         show_label=False).style(container=False)
 
                 imagebox = gr.Image(type="pil")
+                image_process_mode = gr.Radio(
+                    ["Crop", "Resize", "Pad"],
+                    value="Crop",
+                    label="Preprocess",
+                    info="When the image is not square, you may try adjusting this .")
 
                 with gr.Accordion("Parameters", open=False, visible=False) as parameter_row:
                     temperature = gr.Slider(minimum=0.0, maximum=1.0, value=0.7, step=0.1, interactive=True, label="Temperature",)
                     max_output_tokens = gr.Slider(minimum=0, maximum=1024, value=512, step=64, interactive=True, label="Max output tokens",)
-                gr.Markdown(tos_markdown)
+
+                cur_dir = os.path.dirname(os.path.abspath(__file__))
+                gr.Examples(examples=[
+                    [f"{cur_dir}/examples/extreme_ironing.jpg", "What is unusual about this image?"],
+                    [f"{cur_dir}/examples/waterview.jpg", "What are the things I should be cautious about when I visit here?"],
+                ], inputs=[imagebox, textbox])
 
             with gr.Column(scale=6):
-                chatbot = grChatbot(elem_id="chatbot", visible=False).style(height=550)
+                chatbot = grChatbot(elem_id="chatbot", label="LLaVA Chatbot", visible=False).style(height=550)
                 with gr.Row():
                     with gr.Column(scale=8):
-                        textbox = gr.Textbox(show_label=False,
-                            placeholder="Enter text and press ENTER", visible=False).style(container=False)
+                        textbox.render()
                     with gr.Column(scale=1, min_width=60):
                         submit_btn = gr.Button(value="Submit", visible=False)
                 with gr.Row(visible=False) as button_row:
@@ -339,13 +365,8 @@ def build_demo(embed_mode):
                     regenerate_btn = gr.Button(value="🔄  Regenerate", interactive=False)
                     clear_btn = gr.Button(value="🗑️  Clear history", interactive=False)
 
-        cur_dir = os.path.dirname(os.path.abspath(__file__))
-        gr.Examples(examples=[
-            [f"{cur_dir}/examples/extreme_ironing.jpg", "What is unusual about this image?"],
-            [f"{cur_dir}/examples/waterview.jpg", "What are the things I should be cautious about when I visit here?"],
-        ], inputs=[imagebox, textbox])
-
         if not embed_mode:
+            gr.Markdown(tos_markdown)
             gr.Markdown(learn_more_markdown)
         url_params = gr.JSON(visible=False)
 
@@ -357,16 +378,16 @@ def build_demo(embed_mode):
             [state, model_selector], [textbox, upvote_btn, downvote_btn, flag_btn])
         flag_btn.click(flag_last_response,
             [state, model_selector], [textbox, upvote_btn, downvote_btn, flag_btn])
-        regenerate_btn.click(regenerate, state,
+        regenerate_btn.click(regenerate, [state, image_process_mode],
             [state, chatbot, textbox, imagebox] + btn_list).then(
             http_bot, [state, model_selector, temperature, max_output_tokens],
             [state, chatbot] + btn_list)
         clear_btn.click(clear_history, None, [state, chatbot, textbox, imagebox] + btn_list)
 
-        textbox.submit(add_text, [state, textbox, imagebox], [state, chatbot, textbox, imagebox] + btn_list
+        textbox.submit(add_text, [state, textbox, imagebox, image_process_mode], [state, chatbot, textbox, imagebox] + btn_list
             ).then(http_bot, [state, model_selector, temperature, max_output_tokens],
                    [state, chatbot] + btn_list)
-        submit_btn.click(add_text, [state, textbox, imagebox], [state, chatbot, textbox, imagebox] + btn_list
+        submit_btn.click(add_text, [state, textbox, imagebox, image_process_mode], [state, chatbot, textbox, imagebox] + btn_list
             ).then(http_bot, [state, model_selector, temperature, max_output_tokens],
                    [state, chatbot] + btn_list)
 
