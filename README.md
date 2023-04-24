@@ -174,7 +174,57 @@ python summarize_gpt_review.py
 
 ### ScienceQA
 
-Please see ScienceQA [repo](https://github.com/lupantech/ScienceQA) for setting up the dataset.  You may either use the official ScienceQA evaluation script or [our script](eval_science_qa.py) to evaluate the model.
+#### Prepare Data
+1. Please see ScienceQA [repo](https://github.com/lupantech/ScienceQA) for setting up the dataset.
+2. Generate ScienceQA dataset for LLaVA conversation-style format.
+
+```Shell
+python scripts/convert_sqa_to_llava \
+    convert_to_llava \
+    --base-dir /path/to/ScienceQA/data/scienceqa \
+    --split {train,val,minival,test,minitest}
+```
+
+#### Evaluation
+
+1. Download our pretrained LLaVA-13B (delta) weights for ScienceQA dataset [here](https://huggingface.co/liuhaotian/LLaVA-13b-delta-v0-science_qa).  Convert the delta weights to actual weights following instructions [here](https://github.com/haotian-liu/LLaVA#llava-13b), and make sure to modify the command accordingly for ScienceQA.
+
+2. Generate LLaVA responses on ScienceQA dataset
+
+```Shell
+python -m llava.eval.model_vqa_science \
+    --model-name /path/to/LLaVA-13b-v0-science_qa \
+    --question-file /path/to/ScienceQA/data/scienceqa/llava_test.json \
+    --image-folder /path/to/ScienceQA/data/scienceqa/images/test \
+    --answers-file vqa/results/ScienceQA/test_llava-13b.jsonl
+```
+
+Alternatively, you may evaluate this with multiple GPUs, and concatenate the generated jsonl files.
+
+```Shell
+CHUNKS=8
+CHUNK_IDX=0
+CUDA_VISIBLE_DEVICES=CHUNK_IDX python model_vqa_science.py \
+    --model-name /path/to/LLaVA-13b-v0-science_qa \
+    --question-file /path/to/ScienceQA/data/scienceqa/llava_test.json \
+    --image-folder /path/to/ScienceQA/data/scienceqa/images/test \
+    --answers-file vqa/results/ScienceQA/test_llava-13b-chunk${CHUNKS}_${CHUNK_IDX}.jsonl \
+    --num-chunks $CHUNKS \
+    --chunk-idx $CHUNK_IDX
+
+# after running this for all chunks, concatenate the results
+cat {...} > vqa/results/ScienceQA/test_llava-13b.jsonl
+```
+
+3. Evaluate the generated responses
+
+```Shell
+python eval_science_qa.py \
+    --base-dir /path/to/ScienceQA/data/scienceqa \
+    --result-file vqa/results/ScienceQA/test_llava-13b.jsonl \
+    --output-file vqa/results/ScienceQA/test_llava-13b_output.json \
+    --result-file vqa/results/ScienceQA/test_llava-13b_result.json \
+```
 
 ## Fine-tuning
 ### Data

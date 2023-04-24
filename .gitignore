@@ -6,6 +6,7 @@ dist
 
 # Log
 *.log
+*.log.*
 *.json
 
 # Data
