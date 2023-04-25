@@ -204,7 +204,14 @@ python scripts/convert_sqa_to_llava \
 
 #### Evaluation
 
-1. Download our pretrained LLaVA-13B (delta) weights for ScienceQA dataset [here](https://huggingface.co/liuhaotian/LLaVA-13b-delta-v0-science_qa).  Convert the delta weights to actual weights following instructions [here](https://github.com/haotian-liu/LLaVA#llava-13b), and make sure to modify the command accordingly for ScienceQA.
+1. Download our pretrained LLaVA-13B (delta) weights for ScienceQA dataset [here](https://huggingface.co/liuhaotian/LLaVA-13b-delta-v0-science_qa).  Convert the delta weights to actual weights.
+
+```Shell
+python -m llava.model.apply_delta \
+    --base /path/to/llama-13b \
+    --target /path/to/LLaVA-13b-v0-science_qa \
+    --delta liuhaotian/LLaVA-13b-delta-v0-science_qa
+```
 
 2. Generate LLaVA responses on ScienceQA dataset
 
