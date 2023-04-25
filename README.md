@@ -213,7 +213,12 @@ python -m llava.model.apply_delta \
     --delta liuhaotian/LLaVA-13b-delta-v0-science_qa
 ```
 
-2. Generate LLaVA responses on ScienceQA dataset
+2. [Option 1] Multiple-GPU inference
+You may evaluate this with multiple GPUs, and concatenate the generated jsonl files.  Please refer to our script for [batch evaluation](scripts/sqa_eval_batch.sh) and [results gathering](scripts/sqa_eval_gather.sh).
+
+3. [Option 2] Single-GPU inference
+
+(a) Generate LLaVA responses on ScienceQA dataset
 
 ```Shell
 python -m llava.eval.model_vqa_science \
@@ -225,7 +230,7 @@ python -m llava.eval.model_vqa_science \
     --conv-mode simple
 ```
 
-3. Evaluate the generated responses
+(b) Evaluate the generated responses
 
 ```Shell
 python eval_science_qa.py \
@@ -234,8 +239,6 @@ python eval_science_qa.py \
     --output-file vqa/results/ScienceQA/test_llava-13b_output.json \
     --output-result vqa/results/ScienceQA/test_llava-13b_result.json \
 ```
-
-Alternatively, you may evaluate this with multiple GPUs, and concatenate the generated jsonl files.  Please refer to our script for [batch evaluation](scripts/sqa_eval_batch.sh) and [results gathering](scripts/sqa_eval_gather.sh).
 
 For reference, we attach our prediction file `test_llava-13b_result.json` [here](llava/eval/table/results/test_sqa_llava_13b_v0.json) for comparison when reproducing our results, as well as for further analysis in detail.
 
