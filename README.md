@@ -159,6 +159,30 @@ python -m llava.serve.gradio_web_server --controller http://localhost:10000
 ```
 #### You can open your browser and chat with a model now.
 
+### CLI Inference
+
+A starting script for inference with LLaVA without the need of Gradio interface. The current implementation only supports for a single-turn Q-A session, and the interactive CLI is WIP.  This also serves as an example for users to build customized inference scripts.
+
+```Shell
+python -m llava.eval.run_llava \
+    --model-name /path/to/LLaVA-13B-v0 \
+    --image-file "https://llava-vl.github.io/static/images/view.jpg" \
+    --query "What are the things I should be cautious about when I visit here?"
+```
+
+Example output (varies in different runs):
+
+> When visiting this picturesque location with a serene lake and a wooden pier extending over the water, one should be cautious about various safety aspects. Some important considerations include:
+> 
+> 1. Ensuring that the pier is structurally sound andstable, as old or weakened pier structures might not support the weight of visitors.
+> 2. Being aware of the water depth around the pier and lake, as sudden drop-offs or strong currents may pose a risk to swimmers, boaters, or those who venture too close to the edge.
+> 3. Staying vigilant about the presence of wildlife in the area, such as slippery, stealthy fish or other animals that might cause harm or inconvenience.
+> 4. Maintaining a safe distance from the water's edge, particularly for children, elderly individuals, or those who are not strong swimmers.
+> 5. Following any posted signs or guidelines related to safety and the use of the pier and surrounding areas.
+> 
+> By considering these safety precautions, visitors can enjoy the natural beauty of the location while minimizing risks and ensuring a safe and pleasant experience.
+
+
 ## Evaluation
 
 ### GPT-assisted Evaluation
