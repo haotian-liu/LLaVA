@@ -213,24 +213,9 @@ python -m llava.eval.model_vqa_science \
     --model-name /path/to/LLaVA-13b-v0-science_qa \
     --question-file /path/to/ScienceQA/data/scienceqa/llava_test.json \
     --image-folder /path/to/ScienceQA/data/scienceqa/images/test \
-    --answers-file vqa/results/ScienceQA/test_llava-13b.jsonl
-```
-
-Alternatively, you may evaluate this with multiple GPUs, and concatenate the generated jsonl files.
-
-```Shell
-CHUNKS=8
-CHUNK_IDX=0
-CUDA_VISIBLE_DEVICES=CHUNK_IDX python model_vqa_science.py \
-    --model-name /path/to/LLaVA-13b-v0-science_qa \
-    --question-file /path/to/ScienceQA/data/scienceqa/llava_test.json \
-    --image-folder /path/to/ScienceQA/data/scienceqa/images/test \
-    --answers-file vqa/results/ScienceQA/test_llava-13b-chunk${CHUNKS}_${CHUNK_IDX}.jsonl \
-    --num-chunks $CHUNKS \
-    --chunk-idx $CHUNK_IDX
-
-# after running this for all chunks, concatenate the results
-cat {...} > vqa/results/ScienceQA/test_llava-13b.jsonl
+    --answers-file vqa/results/ScienceQA/test_llava-13b.jsonl \
+    --answer-prompter
+    --conv-mode simple
 ```
 
 3. Evaluate the generated responses
@@ -240,17 +225,21 @@ python eval_science_qa.py \
     --base-dir /path/to/ScienceQA/data/scienceqa \
     --result-file vqa/results/ScienceQA/test_llava-13b.jsonl \
     --output-file vqa/results/ScienceQA/test_llava-13b_output.json \
-    --result-file vqa/results/ScienceQA/test_llava-13b_result.json \
+    --output-result vqa/results/ScienceQA/test_llava-13b_result.json \
 ```
+
+Alternatively, you may evaluate this with multiple GPUs, and concatenate the generated jsonl files.  Please refer to our script for [batch evaluation](scripts/sqa_eval_batch.sh) and [results gathering](scripts/sqa_eval_gather.sh).
+
+For reference, we attach our prediction file `test_llava-13b_result.json` [here](llava/eval/table/results/test_sqa_llava_13b_v0.json) for comparison when reproducing our results, as well as for further analysis in detail.
 
 ## Fine-tuning
 ### Data
 
-The current version of LLaVA is fine-tuned from a Vicuna-13B model.  We use approximately 600K filtered CC3M in feature alignment pretraining and 150K GPT-generated multimodal instruction-following data in finetuning. For detailed description of the data generation pipeline, please refer see our [paper](#).
+The current version of LLaVA is fine-tuned from a Vicuna-13B model.  We use approximately 600K filtered CC3M in feature alignment pretraining and 150K GPT-generated multimodal instruction-following data in finetuning. For detailed description of the data generation pipeline, please refer see our [paper](https://arxiv.org/abs/2304.08485).
 
 We are working on a more capable model that is pretrained with the data at a larger scale.  Stay tuned!
 
-We release all three types of multimodal instruction-following data.  The use of these data is subject to OpenAI [TOS](#).
+We release all three types of multimodal instruction-following data.  The use of these data is subject to OpenAI [TOS](https://openai.com/policies/terms-of-use).
 
 ### Code and Hyperparameters
 We fine-tune the model using the code from [FastChat](https://github.com/lm-sys/FastChat). We use a similar set of hyperparameters as Vicuna in finetuning.  Both hyperparameters used in pretraining and finetuning are provided below.
