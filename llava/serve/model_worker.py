@@ -47,16 +47,16 @@ def heart_beat_worker(controller):
 
 def load_model(model_path, num_gpus, is_multi_modal):
     if num_gpus == 1:
-        kwargs = {}
-    else:
         kwargs = {
             "device_map": "auto",
-            "max_memory": {i: "13GiB" for i in range(num_gpus)},
+            "max_memory": {i: "56GiB" for i in range(num_gpus)},
+        }
+        kwargs = {
         }
 
     tokenizer = AutoTokenizer.from_pretrained(model_path)
     model = AutoModelForCausalLM.from_pretrained(
-       model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True, **kwargs)
+       model_path, offload_folder="offload", torch_dtype=torch.float16, low_cpu_mem_usage=True, **kwargs).to("mps")
 
     image_processor = None
 
@@ -71,10 +71,10 @@ def load_model(model_path, num_gpus, is_multi_modal):
 
         vision_tower = model.model.vision_tower[0]
         if vision_tower.device.type == 'meta':
-            vision_tower = CLIPVisionModel.from_pretrained(vision_tower.config._name_or_path, torch_dtype=torch.float16, low_cpu_mem_usage=True).cuda()
+            vision_tower = CLIPVisionModel.from_pretrained(vision_tower.config._name_or_path, torch_dtype=torch.float16, low_cpu_mem_usage=True).to("mps")
             model.model.vision_tower[0] = vision_tower
         else:
-            vision_tower.to(device='cuda', dtype=torch.float16)
+            vision_tower.to(device='mps', dtype=torch.float16)
         vision_config = vision_tower.config
         vision_config.im_patch_token = tokenizer.convert_tokens_to_ids([DEFAULT_IMAGE_PATCH_TOKEN])[0]
         vision_config.use_im_start_end = mm_use_im_start_end
@@ -82,7 +82,7 @@ def load_model(model_path, num_gpus, is_multi_modal):
             vision_config.im_start_token, vision_config.im_end_token = tokenizer.convert_tokens_to_ids([DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN])
 
     if num_gpus == 1:
-        model.cuda()
+        model.to("mps")
 
     if hasattr(model.config, "max_sequence_length"):
         context_len = model.config.max_sequence_length
@@ -96,7 +96,7 @@ class ModelWorker:
     def __init__(self, controller_addr, worker_addr,
                  worker_id, no_register,
                  model_path, model_name,
-                 is_multi_modal, keep_aspect_ratio,
+                 is_multi_modal, keep_aspect_ratio, device,
                  num_gpus):
         self.controller_addr = controller_addr
         self.worker_addr = worker_addr
@@ -111,6 +111,8 @@ class ModelWorker:
                 self.model_name = model_paths[-1]
         else:
             self.model_name = model_name
+
+        self.device = device
 
         logger.info(f"Loading the model {self.model_name} on worker {worker_id} ...")
         self.is_multi_modal = is_multi_modal
@@ -230,15 +232,15 @@ class ModelWorker:
         for i in range(max_new_tokens):
             if i == 0:
                 out = model(
-                    torch.as_tensor([input_ids]).cuda(), 
+                    torch.as_tensor([input_ids]).to("mps"),
                     images=images,
                     use_cache=True)
                 logits = out.logits
                 past_key_values = out.past_key_values
             else:
                 attention_mask = torch.ones(
-                    1, past_key_values[0][0].shape[-2] + 1, device="cuda")
-                out = model(input_ids=torch.as_tensor([[token]], device="cuda"),
+                    1, past_key_values[0][0].shape[-2] + 1, device="mps")
+                out = model(input_ids=torch.as_tensor([[token]], device="mps"),
                             use_cache=True,
                             attention_mask=attention_mask,
                             past_key_values=past_key_values)
@@ -351,6 +353,7 @@ if __name__ == "__main__":
     parser.add_argument("--model-name", type=str)
     parser.add_argument("--multi-modal", action="store_true")
     parser.add_argument("--keep-aspect-ratio", action="store_true")
+    parser.add_argument("--device", type=str, default="mps")
     parser.add_argument("--num-gpus", type=int, default=1)
     parser.add_argument("--limit-model-concurrency", type=int, default=5)
     parser.add_argument("--stream-interval", type=int, default=2)
@@ -366,5 +369,6 @@ if __name__ == "__main__":
                          args.model_name,
                          args.multi_modal,
                          args.keep_aspect_ratio,
+                         args.device,
                          args.num_gpus)
     uvicorn.run(app, host=args.host, port=args.port, log_level="info")
