@@ -1,0 +1,18 @@
+A man wearing multiple neck ties making a goofy face.
+A man in a white shirt wearing very many ties.
+a man with ties on poses for a picture
+A man wearing multiple ties on his neck.
+A young man smiles while wearing several ties.
+
+tie: [0.574, 0.298, 0.752, 0.704]
+tie: [0.464, 0.339, 0.639, 0.789]
+tie: [0.349, 0.363, 0.563, 0.732]
+tie: [0.259, 0.255, 0.668, 0.805]
+person: [0.019, 0.065, 0.962, 0.988]
+person: [0.0, 0.24, 0.214, 1.0]
+tie: [0.316, 0.778, 0.443, 0.867]
+tie: [0.386, 0.707, 0.496, 0.801]
+tie: [0.251, 0.354, 0.402, 0.747]
+tie: [0.44, 0.318, 0.63, 0.397]
+tie: [0.566, 0.33, 0.655, 0.543]
+tie: [0.25, 0.409, 0.359, 0.556]

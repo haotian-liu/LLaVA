@@ -1,0 +1,18 @@
+A group of people standing outside of a black vehicle with various luggage.
+Luggage surrounds a vehicle in an underground parking area
+People try to fit all of their luggage in an SUV.
+The sport utility vehicle is parked in the public garage, being packed for a trip
+Some people with luggage near a van that is transporting it.
+
+person: [0.681, 0.242, 0.774, 0.694]
+person: [0.63, 0.222, 0.686, 0.516]
+person: [0.444, 0.233, 0.487, 0.34]
+backpack: [0.384, 0.696, 0.485, 0.914]
+backpack: [0.755, 0.413, 0.846, 0.692]
+suitcase: [0.758, 0.413, 0.845, 0.69]
+suitcase: [0.1, 0.497, 0.173, 0.579]
+bicycle: [0.282, 0.363, 0.327, 0.442]
+car: [0.786, 0.25, 0.848, 0.322]
+car: [0.783, 0.27, 0.827, 0.335]
+car: [0.86, 0.254, 0.891, 0.3]
+car: [0.261, 0.101, 0.787, 0.626]

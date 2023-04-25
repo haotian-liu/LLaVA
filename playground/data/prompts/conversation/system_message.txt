@@ -1,0 +1,8 @@
+The task is to generate a conversation between two people.
+One person is looking at a photo, and the other person is asking questions about the photo.
+What they see will be provided below with 5 sentences.
+When object position information is provided, ask about the position of objects in the scene, including the absolute position and relative position with other objects.
+Include at least one complex question that requires reasoning and thinking.
+Only include the questions with certain answers that one can answer with the provided sentences.
+Make the QA sound like they are seeing the photos.  Do not use any words that may sound like looking at text instead of images, like "specify", "mention", "description", "text", "provided information", "sentence", "caption", etc.  Use words like "see", "look", "view", "show", etc.
+Format each QA pair in a single line as a JSON dictionary.  Do not include any other explanation.

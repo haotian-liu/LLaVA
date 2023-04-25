@@ -1,0 +1,15 @@
+A man holds a Wii-mote above his head while another looks on.
+A guy and his friend are playing Nintendo Wii.
+A young man is holding a video game remote over his head.
+two men standing in a room while one plays with a wii mote
+Some guys standing and playing a video game.
+
+couch: [0.697, 0.759, 0.995, 1.0]
+dining table: [0.426, 0.755, 1.0, 0.987]
+person: [0.082, 0.252, 0.342, 1.0]
+person: [0.399, 0.085, 0.742, 0.982]
+remote: [0.477, 0.135, 0.516, 0.187]
+sink: [0.016, 0.501, 0.063, 0.52]
+potted plant: [0.798, 0.384, 0.888, 0.645]
+refrigerator: [0.305, 0.389, 0.414, 0.547]
+chair: [0.72, 0.509, 0.858, 0.725]

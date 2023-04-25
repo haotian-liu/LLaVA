@@ -55,6 +55,12 @@ If you already have CC-3M dataset on your disk, the image names follow this form
 | --- |  --- |  --- | ---: |
 | CC-3M Pretrain 595K | [chat.json](https://huggingface.co/datasets/liuhaotian/LLaVA-CC3M-Pretrain-595K/raw/main/chat.json) | [metadata.json](https://huggingface.co/datasets/liuhaotian/LLaVA-CC3M-Pretrain-595K/raw/main/metadata.json) | 211 MB
 
+### GPT-4 Prompts
+
+We provide our prompts and few-shot samples for GPT-4 queries, to better facilitate research in this domain.  Please check out the [`prompts`](playground/data/prompts) folder for three kinds of questions: conversation, detail description, and complex reasoning.
+
+Note that you may find them in different format. For example, `conversation` is in `jsonl`, and detail description is answer-only.  The selected format in our preliminary experiments work slightly better than a limited set of alternatives that we tried: `jsonl`, more natural format, answer-only.  If interested, you may try other variants or conduct more careful study in this.  Contributions are welcomed!
+
 ## Install
 
 1. Clone this repository and navigate to LLaVA folder

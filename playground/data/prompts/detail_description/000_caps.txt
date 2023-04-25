@@ -1,0 +1,18 @@
+A harbor filled with lots of boats next to a building.
+A bicycle parked in front of several boats at a dock.
+A red bicycle in front of a line of docked white yachts
+A bike sits before boats which sit before a long building.
+A bicycle is a convenient means of land transportation when you live on a boat.
+
+bicycle: [0.287, 0.641, 0.507, 0.874]
+bicycle: [0.566, 0.667, 0.63, 0.731]
+boat: [0.318, 0.579, 0.575, 0.724]
+boat: [0.704, 0.607, 0.818, 0.727]
+boat: [0.818, 0.601, 0.942, 0.744]
+boat: [0.002, 0.53, 0.243, 0.71]
+boat: [0.541, 0.611, 0.668, 0.731]
+person: [0.778, 0.527, 0.797, 0.57]
+cup: [0.708, 0.733, 0.724, 0.758]
+boat: [0.236, 0.532, 0.404, 0.64]
+boat: [0.81, 0.632, 0.836, 0.676]
+boat: [0.957, 0.526, 1.0, 0.752]

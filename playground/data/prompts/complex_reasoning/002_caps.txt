@@ -1,0 +1,7 @@
+There is a movie theater that displays the show times above the doors.
+A red fire hydrant is deep in the snow.
+The fire hydrant is in the snow near a recently plowed sidewalk.
+This city has had a very hard winter with snow.
+A hotel for dogs in the snow in winter.
+
+fire hydrant: [0.326, 0.612, 0.426, 0.72]
