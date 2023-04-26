@@ -337,11 +337,12 @@ torchrun --nnodes=1 --nproc_per_node=8 --master_port=25001 \
     --report_to wandb
 ```
 
+#### Experimental: use FSDP to save memory in pretraining
+
 <details>
-<summary>#### Experimental: use FSDP to save memory in pretraining</summary>
+<summary>Learn more</summary>
 
 ***
-FSDP in pretraining (experimental) BEGINS.
 
 Currently, PyTorch and Huggingface does not yet have stable/native support for FSDP on parameter efficient tuning (part of the parameters are frozen).  However, the feature is being developed in PyTorch nightly and shall be shipped in the next release.  We provide an experimental script to enable FSDP in pretraining.  To use it, please **create a new enviroment**, and install PyTorch nightly, and our `transformers` modified specifically for FSDP in pretraining.
 
