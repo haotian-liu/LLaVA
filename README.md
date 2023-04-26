@@ -338,7 +338,7 @@ torchrun --nnodes=1 --nproc_per_node=8 --master_port=25001 \
 ```
 
 <details>
-<summary>Experimental: use FSDP to save memory in pretraining</summary>
+<summary>#### Experimental: use FSDP to save memory in pretraining</summary>
 
 ***
 FSDP in pretraining (experimental) BEGINS.
