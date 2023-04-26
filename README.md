@@ -335,6 +335,58 @@ torchrun --nnodes=1 --nproc_per_node=8 --master_port=25001 \
     --report_to wandb
 ```
 
+<details>
+<summary>Experimental: use FSDP to save memory in pretraining</summary>
+
+Currently, PyTorch and Huggingface does not yet have stable/native support for FSDP on parameter efficient tuning (part of the parameters are frozen).  However, the feature is being developed in PyTorch nightly and shall be shipped in the next release.  We provide an experimental script to enable FSDP in pretraining.  To use it, please **create a new enviroment**, and install PyTorch nightly, and our `transformers` modified specifically for FSDP in pretraining.
+
+1. Prepare environment
+```Shell
+conda create -n llava_beta python=3.10 -y
+conda activate llava_beta
+pip install --upgrade pip
+pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu117
+pip install -e .
+pip install einops ninja
+pip install flash-attn
+```
+
+2. Run pretraining with FSDP (experimental)
+```Shell
+torchrun --nnodes=1 --nproc_per_node=8 --master_port=25001 \
+    llava/train/train_mem.py \
+    --model_name_or_path ./checkpoints/llama-vicuna-13b \
+    --data_path /path/to/cc3m_595k.json \
+    --image_folder /path/to/cc3m_595k \
+    --vision_tower openai/clip-vit-large-patch14 \
+    --tune_mm_mlp_adapter True \
+    --mm_vision_select_layer -2 \
+    --mm_use_im_start_end \
+    --bf16 True \
+    --output_dir ./checkpoints/llava-13b-pretrain_fsdp \
+    --num_train_epochs 1 \
+    --per_device_train_batch_size 16 \
+    --per_device_eval_batch_size 4 \
+    --gradient_accumulation_steps 1 \
+    --evaluation_strategy "no" \
+    --save_strategy "steps" \
+    --save_steps 2400 \
+    --save_total_limit 1 \
+    --learning_rate 2e-3 \
+    --weight_decay 0. \
+    --warmup_ratio 0.03 \
+    --lr_scheduler_type "cosine" \
+    --logging_steps 1 \
+    --tf32 True \
+    --fsdp "full_shard auto_wrap" \
+    --fsdp_transformer_layer_cls_to_wrap 'LlamaDecoderLayer' \
+    --model_max_length 2048 \
+    --gradient_checkpointing True \
+    --lazy_preprocess True \
+    --report_to wandb
+```
+</details>
+
 2. Extract projector features
 ```Shell
 python scripts/extract_mm_projector.py \
