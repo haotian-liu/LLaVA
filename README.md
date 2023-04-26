@@ -87,6 +87,7 @@ In this research preview, we used a modified version of huggingface/transformers
 You may try running the following command to make sure the version is correct.
 
 ```Shell
+pip uninstall transformers
 pip install git+https://github.com/haotian-liu/transformers_llava.git@988b6abb3b7da9a5cbb5051e994706f7f88c2565
 ```
 
@@ -355,6 +356,10 @@ pip install --pre torch torchvision torchaudio --index-url https://download.pyto
 pip install -e .
 pip install einops ninja
 pip install flash-attn
+
+# Install our modified transformers
+pip uninstall transformers
+pip install git+https://github.com/haotian-liu/transformers_llava.git@d1764446896c90b1108058cdd9a9cfdb90f4c22c
 ```
 
 2. Run pretraining with FSDP (experimental)
