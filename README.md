@@ -116,7 +116,12 @@ python3 -m llava.model.apply_delta \
 ```
 
 ### LLaVA-7B
-Coming soon.
+```bash
+python3 -m llava.model.apply_delta \
+    --base /path/to/llama-7b \
+    --target /output/path/to/LLaVA-7B-v0 \
+    --delta liuhaotian/LLaVA-7b-delta-v0
+```
 
 
 ### LLaVA pretrained projector weights
@@ -335,6 +340,77 @@ torchrun --nnodes=1 --nproc_per_node=8 --master_port=25001 \
     --lazy_preprocess True \
     --report_to wandb
 ```
+
+You may run this with a single A100 GPU with the following code.  Please note that the `per_device_train_batch_size` * `gradient_accumulation_steps` should be equal to 128 to keep the global batch size the same.
+
+<details>
+<summary>Pretrain: LLaVA-13B, 1x A100 (80G).  Time: ~33 hours.</summary>
+```Shell
+python llava/train/train_mem.py \
+    --model_name_or_path ./checkpoints/llama-vicuna-13b \
+    --data_path /path/to/cc3m_595k.json \
+    --image_folder /path/to/cc3m_595k \
+    --vision_tower openai/clip-vit-large-patch14 \
+    --tune_mm_mlp_adapter True \
+    --mm_vision_select_layer -2 \
+    --mm_use_im_start_end \
+    --bf16 True \
+    --output_dir ./checkpoints/llava-13b-pretrain \
+    --num_train_epochs 1 \
+    --per_device_train_batch_size 16 \
+    --per_device_eval_batch_size 4 \
+    --gradient_accumulation_steps 8 \
+    --evaluation_strategy "no" \
+    --save_strategy "steps" \
+    --save_steps 2400 \
+    --save_total_limit 1 \
+    --learning_rate 2e-3 \
+    --weight_decay 0. \
+    --warmup_ratio 0.03 \
+    --lr_scheduler_type "cosine" \
+    --logging_steps 1 \
+    --tf32 True \
+    --model_max_length 2048 \
+    --gradient_checkpointing True \
+    --lazy_preprocess True \
+    --report_to wandb
+```
+</details>
+
+<details>
+<summary>Pretrain: LLaVA-7B, 1x A100 (80G/40G).  Time: ~19 hours.</summary>
+```Shell
+python llava/train/train_mem.py \
+    --model_name_or_path ./checkpoints/llama-vicuna-7b \
+    --data_path /path/to/cc3m_595k.json \
+    --image_folder /path/to/cc3m_595k \
+    --vision_tower openai/clip-vit-large-patch14 \
+    --tune_mm_mlp_adapter True \
+    --mm_vision_select_layer -2 \
+    --mm_use_im_start_end \
+    --bf16 True \
+    --output_dir ./checkpoints/llava-7b-pretrain \
+    --num_train_epochs 1 \
+    --per_device_train_batch_size 16 \
+    --per_device_eval_batch_size 4 \
+    --gradient_accumulation_steps 8 \
+    --evaluation_strategy "no" \
+    --save_strategy "steps" \
+    --save_steps 2400 \
+    --save_total_limit 1 \
+    --learning_rate 2e-3 \
+    --weight_decay 0. \
+    --warmup_ratio 0.03 \
+    --lr_scheduler_type "cosine" \
+    --logging_steps 1 \
+    --tf32 True \
+    --model_max_length 2048 \
+    --gradient_checkpointing True \
+    --lazy_preprocess True \
+    --report_to wandb
+```
+</details>
+
 
 #### Experimental: use FSDP to save memory in pretraining
 
