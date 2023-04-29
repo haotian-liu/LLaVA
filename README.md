@@ -309,6 +309,9 @@ LLaVA is trained on 8 A100 GPUs with 80GB memory with the following code. To tra
 
 1. Pretraining
 
+<details>
+<summary>Pretrain: LLaVA-13B, 8x A100 (80G).  Time: ~4 hours.</summary>
+
 ```Shell
 torchrun --nnodes=1 --nproc_per_node=8 --master_port=25001 \
     llava/train/train_mem.py \
@@ -340,6 +343,7 @@ torchrun --nnodes=1 --nproc_per_node=8 --master_port=25001 \
     --lazy_preprocess True \
     --report_to wandb
 ```
+</details>
 
 You may run this with a single A100 GPU with the following code.  Please note that the `per_device_train_batch_size` * `gradient_accumulation_steps` should be equal to 128 to keep the global batch size the same.
 
