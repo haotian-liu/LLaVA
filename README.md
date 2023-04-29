@@ -345,6 +345,7 @@ You may run this with a single A100 GPU with the following code.  Please note th
 
 <details>
 <summary>Pretrain: LLaVA-13B, 1x A100 (80G).  Time: ~33 hours.</summary>
+
 ```Shell
 python llava/train/train_mem.py \
     --model_name_or_path ./checkpoints/llama-vicuna-13b \
@@ -379,6 +380,7 @@ python llava/train/train_mem.py \
 
 <details>
 <summary>Pretrain: LLaVA-7B, 1x A100 (80G/40G).  Time: ~19 hours.</summary>
+
 ```Shell
 python llava/train/train_mem.py \
     --model_name_or_path ./checkpoints/llama-vicuna-7b \
