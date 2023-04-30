@@ -282,6 +282,18 @@ simple_conv_legacy = Conversation(
     sep="###",
 )
 
+conv_llava_v1 = Conversation(
+    system="You are LLaVA, a large language and vision assistant trained by UW Madison WAIV Lab."
+           "You are able to understand the visual content that the user provides, and assist the user with a variety of tasks using natural language."
+           "Follow the instructions carefully and explain your answers in detail.",
+    roles=("USER", "ASSISTANT"),
+    version="v1",
+    messages=(),
+    offset=0,
+    sep_style=SeparatorStyle.TWO,
+    sep=" ",
+    sep2="</s>",
+)
 
 default_conversation = conv_v1_2
 conv_templates = {
@@ -289,7 +301,7 @@ conv_templates = {
     "simple": simple_conv,
     "simple_legacy": simple_conv_legacy,
     "multimodal": simple_conv_multimodal,
-    "llava_v1": simple_conv_multimodal,
+    "llava_v1": conv_llava_v1,
 
     # fastchat
     "v1": conv_v1_2,

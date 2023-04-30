@@ -17,16 +17,6 @@ def make_delta(base_model_path, target_model_path, delta_path, hub_repo_id):
     print("Loading target model")
     target = AutoModelForCausalLM.from_pretrained(target_model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True)
 
-    DEFAULT_PAD_TOKEN = "[PAD]"
-    base_tokenizer = AutoTokenizer.from_pretrained(base_model_path)
-    num_new_tokens = base_tokenizer.add_special_tokens(dict(pad_token=DEFAULT_PAD_TOKEN))
-
-    base.resize_token_embeddings(len(base_tokenizer))
-    input_embeddings = base.get_input_embeddings().weight.data
-    output_embeddings = base.get_output_embeddings().weight.data
-    input_embeddings[-num_new_tokens:] = 0
-    output_embeddings[-num_new_tokens:] = 0
-
     print("Calculating delta")
     for name, param in tqdm(target.state_dict().items(), desc="Calculating delta"):
         if name not in base.state_dict():
