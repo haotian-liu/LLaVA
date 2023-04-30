@@ -227,7 +227,7 @@ def preprocess_v1(
     input_ids = tokenizer(
         conversations,
         return_tensors="pt",
-        padding="max_length",
+        padding="longest",
         max_length=tokenizer.model_max_length,
         truncation=True,
     ).input_ids
