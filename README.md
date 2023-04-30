@@ -15,7 +15,9 @@
 
 ## Release
 
-- 🔥 We released **LLaVA: Large Language and Vision Assistant**. We propose visual instruction tuning, towards building large language and vision models with GPT-4 level capabilities.  Checkout the [paper](https://arxiv.org/abs/2304.08485) and [demo](https://llava.hliu.cc/).
+- [4/30] Our checkpoint with Vicuna-7b-v0 has been released [here](#llava-7b)! This checkpoint is more accessible and device friendly.  Stay tuned for a major upgrade next week!
+- [4/27] Thanks to the community effort, LLaVA-13B with 4-bit quantization allows you to run on a GPU with as few as 12GB VRAM!  Try it out [here](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/llava).
+- [4/17] 🔥 We released **LLaVA: Large Language and Vision Assistant**. We propose visual instruction tuning, towards building large language and vision models with GPT-4 level capabilities.  Checkout the [paper](https://arxiv.org/abs/2304.08485) and [demo](https://llava.hliu.cc/).
 
 <a href="https://llava.hliu.cc/"><img src="assets/demo.gif" width="70%"></a>
 
@@ -104,7 +106,7 @@ You can add our delta to the original LLaMA weights to obtain the LLaVA weights.
 Instructions:
 
 1. Get the original LLaMA weights in the huggingface format by following the instructions [here](https://huggingface.co/docs/transformers/main/model_doc/llama).
-2. Use the following scripts to get LLaVA weights by applying [our delta](https://huggingface.co/liuhaotian/LLaVA-13b-delta-v0). It will automatically download delta weights from our Hugging Face account.
+2. Use the following scripts to get LLaVA weights by applying our delta ([13b](https://huggingface.co/liuhaotian/LLaVA-13b-delta-v0), [7b](https://huggingface.co/liuhaotian/LLaVA-7b-delta-v0)). It will automatically download delta weights from our Hugging Face account.
 
 ### LLaVA-13B
 This conversion command needs around 60 GB of CPU RAM.
@@ -116,7 +118,13 @@ python3 -m llava.model.apply_delta \
 ```
 
 ### LLaVA-7B
-Coming soon.
+This conversion command needs around 30 GB of CPU RAM.
+```bash
+python3 -m llava.model.apply_delta \
+    --base /path/to/llama-7b \
+    --target /output/path/to/LLaVA-7B-v0 \
+    --delta liuhaotian/LLaVA-7b-delta-v0
+```
 
 
 ### LLaVA pretrained projector weights
