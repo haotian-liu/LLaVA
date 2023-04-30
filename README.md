@@ -82,13 +82,13 @@ pip install -e .
 ```
 
 **NOTE**:
-In this research preview, we used a modified version of huggingface/transformers library to support multimodal models and the LLaMA tokenizer.  Make sure that you create a new Conda environment and you are using the correct transformers library from https://github.com/haotian-liu/transformers_llava.
+[Update 4/29/23] We have successfully moved LLaVA framework to this repo, without the need of a special `transformers` modified by us.  Please make sure that the `transformers` used is from `huggingface/transformers` at `cae78c46` (we will test stable versions soon).  If you install our repo before `4/29/23`, please reinstall `transformers` following the commands below.
 
 You may try running the following command to make sure the version is correct.
 
 ```Shell
 pip uninstall transformers
-pip install git+https://github.com/haotian-liu/transformers_llava.git@988b6abb3b7da9a5cbb5051e994706f7f88c2565
+pip install git+https://github.com/huggingface/transformers@cae78c46
 ```
 
 3. Install additional packages for training cases
@@ -142,8 +142,6 @@ Wait until the process finishes loading the model and you see "Uvicorn running o
 #### Launch a model worker (Multiple GPUs, when GPU VRAM <= 24GB)
 
 If your the VRAM of your GPU is less than 24GB (e.g., RTX 3090, RTX 4090, etc.), you may try running it with multiple GPUs.
-
-If you install our repo before 4/20/23, you may need to reinstall our fork of `transformers`: `pip install git+https://github.com/haotian-liu/transformers_llava.git@988b6abb3b7da9a5cbb5051e994706f7f88c2565`.
 
 ```Shell
 python -m llava.serve.model_worker --host 0.0.0.0 --controller http://localhost:10000 --port 40000 --worker http://localhost:40000 --model-path ./checkpoints/LLaVA-13B-v0 --multi-modal --num-gpus 2
@@ -345,7 +343,7 @@ torchrun --nnodes=1 --nproc_per_node=8 --master_port=25001 \
 
 ***
 
-Currently, PyTorch and Huggingface does not yet have stable/native support for FSDP on parameter efficient tuning (part of the parameters are frozen).  However, the feature is being developed in PyTorch nightly and shall be shipped in the next release.  We provide an experimental script to enable FSDP in pretraining.  To use it, please **create a new enviroment**, and install PyTorch nightly, and our `transformers` modified specifically for FSDP in pretraining.
+Currently, PyTorch and Huggingface does not yet have stable/native support for FSDP on parameter efficient tuning (part of the parameters are frozen).  However, the feature is being developed in PyTorch nightly and shall be shipped in the next release.  We provide an experimental script to enable FSDP in pretraining.  To use it, please **create a new enviroment** (to be safe), install PyTorch nightly (**MUST**), and `LLaVA` package following the instructions below.
 
 1. Prepare environment
 ```Shell
@@ -356,10 +354,6 @@ pip install --pre torch torchvision torchaudio --index-url https://download.pyto
 pip install -e .
 pip install einops ninja
 pip install flash-attn
-
-# Install our modified transformers
-pip uninstall transformers
-pip install git+https://github.com/haotian-liu/transformers_llava.git@d1764446896c90b1108058cdd9a9cfdb90f4c22c
 ```
 
 2. Run pretraining with FSDP (experimental)

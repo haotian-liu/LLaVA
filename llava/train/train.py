@@ -29,6 +29,7 @@ from torch.utils.data import Dataset
 from transformers import Trainer
 
 from llava import conversation as conversation_lib
+from llava import LlavaLlamaForCausalLM
 
 from PIL import Image
 import torch.nn as nn
@@ -280,13 +281,28 @@ class LazySupervisedDataset(Dataset):
             image_file = self.list_data_dict[i]['image']
             image_folder = self.multimodal_cfg['image_folder']
             processor = self.multimodal_cfg['image_processor']
-            image = Image.open(os.path.join(image_folder, image_file))
+            image = Image.open(os.path.join(image_folder, image_file)).convert('RGB')
             if self.multimodal_cfg['image_aspect_ratio'] == 'keep':
                 max_hw, min_hw = max(image.size), min(image.size)
                 aspect_ratio = max_hw / min_hw
                 max_len, min_len = 448, 224
                 shortest_edge = int(min(max_len / aspect_ratio, min_len))
                 image = processor.preprocess(image, return_tensors='pt', do_center_crop=False, size={"shortest_edge": shortest_edge})['pixel_values'][0]
+            elif self.multimodal_cfg['image_aspect_ratio'] == 'pad':
+                def expand2square(pil_img, background_color):
+                    width, height = pil_img.size
+                    if width == height:
+                        return pil_img
+                    elif width > height:
+                        result = Image.new(pil_img.mode, (width, width), background_color)
+                        result.paste(pil_img, (0, (width - height) // 2))
+                        return result
+                    else:
+                        result = Image.new(pil_img.mode, (height, height), background_color)
+                        result.paste(pil_img, ((height - width) // 2, 0))
+                        return result
+                image = expand2square(image, tuple(int(x*255) for x in processor.image_mean))
+                image = processor.preprocess(image, return_tensors='pt')['pixel_values'][0]
             else:
                 image = processor.preprocess(image, return_tensors='pt')['pixel_values'][0]
             cur_token_len = (image.shape[1]//14) * (image.shape[2]//14)   # FIXME: 14 is hardcoded patch size
@@ -344,6 +360,48 @@ class DataCollatorForSupervisedDataset(object):
         return batch
 
 
+def unwrap_model(model: nn.Module) -> nn.Module:
+    """
+    Recursively unwraps a model from potential containers (as used in distributed training).
+
+    Args:
+        model (`torch.nn.Module`): The model to unwrap.
+    """
+    # since there could be multiple levels of wrapping, unwrap recursively
+    if hasattr(model, "module"):
+        return unwrap_model(model.module)
+    else:
+        return model
+
+
+class ParameterEfficientTrainer(Trainer):
+    def _save(self, output_dir: Optional[str] = None, state_dict=None):
+        if getattr(self.args, 'tune_mm_mlp_adapter', False):
+            # Save the model
+            _state_dict = state_dict
+            if _state_dict is None:
+                # Only save the model itself if we are using distributed training
+                model_to_save = unwrap_model(self.model)
+                _state_dict = model_to_save.state_dict()
+
+            weight_to_save = {}
+            keys_to_match = ['mm_projector', 'embed_tokens', 'embed_in']
+            for k, v in _state_dict.items():
+                if any(key_match in k for key_match in keys_to_match):
+                    weight_to_save[k] = v
+
+            current_folder = output_dir.split('/')[-1]
+            parent_folder = os.path.dirname(output_dir)
+            if current_folder.startswith('checkpoint-'):
+                mm_projector_folder = os.path.join(parent_folder, "mm_projector")
+                os.makedirs(mm_projector_folder, exist_ok=True)
+                torch.save(weight_to_save, os.path.join(mm_projector_folder, f'{current_folder}.bin'))
+            else:
+                torch.save(weight_to_save, os.path.join(output_dir, f'mm_projector.bin'))
+
+        super(ParameterEfficientTrainer, self)._save(output_dir, state_dict)
+
+
 def make_supervised_data_module(tokenizer: transformers.PreTrainedTokenizer,
                                 data_args) -> Dict:
     """Make dataset and collator for supervised fine-tuning."""
@@ -369,10 +427,16 @@ def train():
         (ModelArguments, DataArguments, TrainingArguments))
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
 
-    model = transformers.LlamaForCausalLM.from_pretrained(
-        model_args.model_name_or_path,
-        cache_dir=training_args.cache_dir,
-    )
+    if model_args.vision_tower is not None:
+        model = LlavaLlamaForCausalLM.from_pretrained(
+            model_args.model_name_or_path,
+            cache_dir=training_args.cache_dir,
+        )
+    else:
+        model = transformers.LlamaForCausalLM.from_pretrained(
+            model_args.model_name_or_path,
+            cache_dir=training_args.cache_dir,
+        )
 
     if model_args.freeze_backbone:
         model.model.requires_grad_(False)
@@ -396,99 +460,52 @@ def train():
             "bos_token": DEFAULT_BOS_TOKEN,
             "unk_token": DEFAULT_UNK_TOKEN,
         })
-    if model_args.vision_tower is not None:
-        model.config.mm_vision_tower = model_args.vision_tower
 
-        from transformers import CLIPVisionModel, CLIPImageProcessor
+    if model_args.vision_tower is not None:
+        model_vision_dict = model.model.initialize_vision_modules(
+            vision_tower=model_args.vision_tower,
+            mm_vision_select_layer=model_args.mm_vision_select_layer,
+            pretrain_mm_mlp_adapter=model_args.pretrain_mm_mlp_adapter
+        )
         dtype = torch.float32
         if training_args.fp16:
             dtype = torch.float16
         if training_args.bf16:
             dtype = torch.bfloat16
+        model.model.vision_tower[0].to(dtype=dtype, device=training_args.device)
+        vision_config = model_vision_dict['vision_config']
 
-        if not hasattr(model.model, 'vision_tower'):
-            vision_tower = CLIPVisionModel.from_pretrained(model_args.vision_tower)
-        else:
-            vision_tower = model.model.vision_tower[0]
-
-        image_processor = CLIPImageProcessor.from_pretrained(model_args.vision_tower)
-
-        vision_config = vision_tower.config
-
-        num_patches = (vision_config.image_size // vision_config.patch_size) ** 2
-        data_args.image_token_len = num_patches
-        data_args.image_processor = image_processor
+        data_args.image_token_len = model_vision_dict['image_token_len']
+        data_args.image_processor = model_vision_dict['image_processor']
         data_args.is_multimodal = True
 
-        vision_tower.requires_grad_(False)
-        # model.model.vision_tower = vision_tower
-        # HACK: for FSDP
-        vision_tower.to(dtype=dtype, device=training_args.device)
-        model.model.vision_tower = [vision_tower]
-
-        model.config.use_mm_proj = True
-        model.config.mm_hidden_size = vision_config.hidden_size
-        model.config.mm_vision_select_layer = model_args.mm_vision_select_layer
-        if not hasattr(model.model, 'mm_projector'):
-            mm_projector = nn.Linear(vision_config.hidden_size, model.config.hidden_size)
-        else:
-            mm_projector = model.model.mm_projector
-        model.model.mm_projector = mm_projector
-
-        if model_args.pretrain_mm_mlp_adapter is not None:
-            mm_projector_weights = torch.load(model_args.pretrain_mm_mlp_adapter, map_location='cpu')
-            mm_projector.load_state_dict({k.split('.')[-1]: v for k, v in mm_projector_weights.items()})
-
-        model.config.tune_mm_mlp_adapter = model_args.tune_mm_mlp_adapter
+        model.config.tune_mm_mlp_adapter = training_args.tune_mm_mlp_adapter = model_args.tune_mm_mlp_adapter
         if model_args.tune_mm_mlp_adapter:
             model.requires_grad_(False)
-            for p in mm_projector.parameters():
+            for p in model.model.mm_projector.parameters():
                 p.requires_grad = True
 
-        model.config.mm_use_im_start_end = model_args.mm_use_im_start_end
-        data_args.mm_use_im_start_end = model_args.mm_use_im_start_end
-        tokenizer.add_tokens([DEFAULT_IMAGE_PATCH_TOKEN], special_tokens=True)
-        vision_config.use_im_start_end = model_args.mm_use_im_start_end
-        if model_args.mm_use_im_start_end:
-            num_new_tokens = tokenizer.add_tokens([DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN], special_tokens=True)
-            model.resize_token_embeddings(len(tokenizer))
-            vision_config.im_start_token, vision_config.im_end_token = tokenizer.convert_tokens_to_ids([DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN])
+        model.config.mm_use_im_start_end = data_args.mm_use_im_start_end = model_args.mm_use_im_start_end
+        vision_config.use_im_start_end = training_args.use_im_start_end = model_args.mm_use_im_start_end
+        model.initialize_vision_tokenizer(mm_use_im_start_end=model_args.mm_use_im_start_end, tokenizer=tokenizer, device=training_args.device,
+                                          tune_mm_mlp_adapter=model_args.tune_mm_mlp_adapter, pretrain_mm_mlp_adapter=model_args.pretrain_mm_mlp_adapter)
 
-            if num_new_tokens > 0:
-                input_embeddings = model.get_input_embeddings().weight.data
-                output_embeddings = model.get_output_embeddings().weight.data
+        if model_args.tune_mm_mlp_adapter:
+            if training_args.fsdp is not None and len(training_args.fsdp) > 0:
+                print("[WARNING] Attempting to use FSDP and MLP pretrain at the same time, this is experimental.")
 
-                input_embeddings_avg = input_embeddings[:-num_new_tokens].mean(
-                    dim=0, keepdim=True)
-                output_embeddings_avg = output_embeddings[:-num_new_tokens].mean(
-                    dim=0, keepdim=True)
+                from torch.distributed.fsdp.fully_sharded_data_parallel import FullyShardedDataParallel as FSDP
+                def patch_FSDP_use_orig_params(func):
+                    def wrap_func(*args, **kwargs):
+                        use_orig_params = kwargs.pop('use_orig_params', True)
+                        return func(*args, **kwargs, use_orig_params=use_orig_params)
+                    return wrap_func
 
-                input_embeddings[-num_new_tokens:] = input_embeddings_avg
-                output_embeddings[-num_new_tokens:] = output_embeddings_avg
-
-            if model_args.tune_mm_mlp_adapter:
-                model.model.orig_embeds_params = [model.get_input_embeddings().weight.data.clone().to(device=training_args.device)]
-                for p in model.get_input_embeddings().parameters():
-                    p.requires_grad = True
-                for p in model.get_output_embeddings().parameters():
-                    p.requires_grad = False
-
-            if model_args.pretrain_mm_mlp_adapter:
-                mm_projector_weights = torch.load(model_args.pretrain_mm_mlp_adapter, map_location='cpu')
-                embed_tokens_weight = mm_projector_weights['model.embed_tokens.weight']
-                assert num_new_tokens == 2
-                if input_embeddings.shape == embed_tokens_weight.shape:
-                    input_embeddings[-num_new_tokens:] = embed_tokens_weight[-num_new_tokens:]
-                elif embed_tokens_weight.shape[0] == num_new_tokens:
-                    input_embeddings[-num_new_tokens:] = embed_tokens_weight
-                else:
-                    raise ValueError(f"Unexpected embed_tokens_weight shape. Pretrained: {embed_tokens_weight.shape}. Current: {input_embeddings.shape}. Numer of new tokens: {num_new_tokens}.")
-
-        vision_config.im_patch_token = tokenizer.convert_tokens_to_ids([DEFAULT_IMAGE_PATCH_TOKEN])[0]
+                FSDP.__init__ = patch_FSDP_use_orig_params(FSDP.__init__)
 
     data_module = make_supervised_data_module(tokenizer=tokenizer,
                                               data_args=data_args)
-    trainer = Trainer(model=model,
+    trainer = ParameterEfficientTrainer(model=model,
                     tokenizer=tokenizer,
                     args=training_args,
                     **data_module)
