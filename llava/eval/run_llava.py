@@ -5,6 +5,7 @@ import os
 from llava.conversation import conv_templates
 from llava.utils import disable_torch_init
 from transformers import CLIPVisionModel, CLIPImageProcessor, StoppingCriteria
+from llava import LlavaLlamaForCausalLM
 
 from PIL import Image
 
@@ -54,7 +55,7 @@ def eval_model(args):
     model_name = os.path.expanduser(args.model_name)
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     if args.mm_projector is None:
-        model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16).cuda()
+        model = LlavaLlamaForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16).cuda()
         image_processor = CLIPImageProcessor.from_pretrained(model.config.mm_vision_tower, torch_dtype=torch.float16)
 
         mm_use_im_start_end = getattr(model.config, "mm_use_im_start_end", False)
@@ -72,7 +73,7 @@ def eval_model(args):
         image_token_len = (vision_config.image_size // vision_config.patch_size) ** 2
     else:
         # in case of using a pretrained model with only a MLP projector weights
-        model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16).cuda()
+        model = LlavaLlamaForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16).cuda()
 
         vision_tower = CLIPVisionModel.from_pretrained(args.vision_tower, torch_dtype=torch.float16).cuda()
         image_processor = CLIPImageProcessor.from_pretrained(args.vision_tower, torch_dtype=torch.float16)
