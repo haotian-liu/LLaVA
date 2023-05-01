@@ -26,7 +26,7 @@ import torch
 
 import transformers
 from torch.utils.data import Dataset
-from transformers import Trainer
+from llava.train.llava_trainer import LLaVATrainer
 
 from llava import conversation as conversation_lib
 from llava import LlavaLlamaForCausalLM
@@ -75,6 +75,8 @@ class TrainingArguments(transformers.TrainingArguments):
     cache_dir: Optional[str] = field(default=None)
     optim: str = field(default="adamw_torch")
     remove_unused_columns: bool = field(default=False)
+    freeze_mm_mlp_adapter: bool = field(default=False)
+    force_fsdp: bool = field(default=False)
     model_max_length: int = field(
         default=512,
         metadata={
@@ -434,48 +436,6 @@ class DataCollatorForSupervisedDataset(object):
         return batch
 
 
-def unwrap_model(model: nn.Module) -> nn.Module:
-    """
-    Recursively unwraps a model from potential containers (as used in distributed training).
-
-    Args:
-        model (`torch.nn.Module`): The model to unwrap.
-    """
-    # since there could be multiple levels of wrapping, unwrap recursively
-    if hasattr(model, "module"):
-        return unwrap_model(model.module)
-    else:
-        return model
-
-
-class ParameterEfficientTrainer(Trainer):
-    def _save(self, output_dir: Optional[str] = None, state_dict=None):
-        if getattr(self.args, 'tune_mm_mlp_adapter', False):
-            # Save the model
-            _state_dict = state_dict
-            if _state_dict is None:
-                # Only save the model itself if we are using distributed training
-                model_to_save = unwrap_model(self.model)
-                _state_dict = model_to_save.state_dict()
-
-            weight_to_save = {}
-            keys_to_match = ['mm_projector', 'embed_tokens', 'embed_in']
-            for k, v in _state_dict.items():
-                if any(key_match in k for key_match in keys_to_match):
-                    weight_to_save[k] = v
-
-            current_folder = output_dir.split('/')[-1]
-            parent_folder = os.path.dirname(output_dir)
-            if current_folder.startswith('checkpoint-'):
-                mm_projector_folder = os.path.join(parent_folder, "mm_projector")
-                os.makedirs(mm_projector_folder, exist_ok=True)
-                torch.save(weight_to_save, os.path.join(mm_projector_folder, f'{current_folder}.bin'))
-            else:
-                torch.save(weight_to_save, os.path.join(output_dir, f'mm_projector.bin'))
-
-        super(ParameterEfficientTrainer, self)._save(output_dir, state_dict)
-
-
 def make_supervised_data_module(tokenizer: transformers.PreTrainedTokenizer,
                                 data_args) -> Dict:
     """Make dataset and collator for supervised fine-tuning."""
@@ -565,13 +525,18 @@ def train():
             for p in model.model.mm_projector.parameters():
                 p.requires_grad = True
 
+        model.config.freeze_mm_mlp_adapter = training_args.freeze_mm_mlp_adapter
+        if training_args.freeze_mm_mlp_adapter:
+            for p in model.model.mm_projector.parameters():
+                p.requires_grad = False
+
         model.config.mm_use_im_start_end = data_args.mm_use_im_start_end = model_args.mm_use_im_start_end
         vision_config.use_im_start_end = training_args.use_im_start_end = model_args.mm_use_im_start_end
         model.initialize_vision_tokenizer(mm_use_im_start_end=model_args.mm_use_im_start_end, tokenizer=tokenizer, device=training_args.device,
                                           tune_mm_mlp_adapter=model_args.tune_mm_mlp_adapter, pretrain_mm_mlp_adapter=model_args.pretrain_mm_mlp_adapter)
 
         if model_args.tune_mm_mlp_adapter:
-            if training_args.fsdp is not None and len(training_args.fsdp) > 0:
+            if training_args.fsdp is not None and len(training_args.fsdp) > 0 and training_args.force_fsdp:
                 print("[WARNING] Attempting to use FSDP and MLP pretrain at the same time, this is experimental.")
 
                 from torch.distributed.fsdp.fully_sharded_data_parallel import FullyShardedDataParallel as FSDP
@@ -585,7 +550,7 @@ def train():
 
     data_module = make_supervised_data_module(tokenizer=tokenizer,
                                               data_args=data_args)
-    trainer = ParameterEfficientTrainer(model=model,
+    trainer = LLaVATrainer(model=model,
                     tokenizer=tokenizer,
                     args=training_args,
                     **data_module)
