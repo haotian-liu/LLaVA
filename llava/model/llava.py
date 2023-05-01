@@ -145,12 +145,14 @@ class LlavaLlamaModel(LlamaModel):
                 if vision_tower.config.use_im_start_end:
                     cur_image_features = image_features[cur_image_idx]
                     num_patches = cur_image_features.shape[0]
-                    assert (cur_input_ids == vision_tower.config.im_start_token).sum() == (cur_input_ids == vision_tower.config.im_end_token).sum()
+                    if (cur_input_ids == vision_tower.config.im_start_token).sum() != (cur_input_ids == vision_tower.config.im_end_token).sum():
+                        raise ValueError("The number of image start tokens and image end tokens should be the same.")
                     image_start_tokens = torch.where(cur_input_ids == vision_tower.config.im_start_token)[0]
                     for image_start_token_pos in image_start_tokens:
                         cur_image_features = image_features[cur_image_idx]
                         num_patches = cur_image_features.shape[0]
-                        assert cur_input_ids[image_start_token_pos + num_patches + 1] == vision_tower.config.im_end_token
+                        if cur_input_ids[image_start_token_pos + num_patches + 1] != vision_tower.config.im_end_token:
+                            raise ValueError("The image end token should follow the image start token.")
                         if orig_embeds_params is not None:
                             cur_new_input_embeds = torch.cat((cur_input_embeds[:image_start_token_pos].detach(), cur_input_embeds[image_start_token_pos:image_start_token_pos+1], cur_image_features, cur_input_embeds[image_start_token_pos + num_patches + 1:image_start_token_pos + num_patches + 2], cur_input_embeds[image_start_token_pos + num_patches + 2:].detach()), dim=0)
                         else:
@@ -160,10 +162,12 @@ class LlavaLlamaModel(LlamaModel):
                 else:
                     cur_image_features = image_features[cur_image_idx]
                     num_patches = cur_image_features.shape[0]
-                    assert (cur_input_ids == vision_tower.config.im_patch_token).sum() == num_patches
+                    if (cur_input_ids == vision_tower.config.im_patch_token).sum() != num_patches:
+                        raise ValueError("The number of image patch tokens should be the same as the number of image patches.")
                     masked_indices = torch.where(cur_input_ids == vision_tower.config.im_patch_token)[0]
                     mask_index_start = masked_indices[0]
-                    assert (masked_indices == torch.arange(mask_index_start, mask_index_start+num_patches, device=masked_indices.device, dtype=masked_indices.dtype)).all()
+                    if (masked_indices != torch.arange(mask_index_start, mask_index_start+num_patches, device=masked_indices.device, dtype=masked_indices.dtype)).any():
+                        raise ValueError("The image patch tokens should be consecutive.")
                     if orig_embeds_params is not None:
                         cur_new_input_embeds = torch.cat((cur_input_embeds[:mask_index_start].detach(), cur_image_features, cur_input_embeds[mask_index_start+num_patches:].detach()), dim=0)
                     else:
