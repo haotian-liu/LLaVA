@@ -84,7 +84,7 @@ pip install -e .
 ```
 
 **NOTE**:
-[Update 4/29/23] We have successfully moved LLaVA framework to this repo, without the need of a special `transformers` modified by us.  Please make sure that the `transformers` used is from `huggingface/transformers` at `cae78c46` (we will test stable versions soon).  If you install our repo before `4/29/23`, please reinstall `transformers` following the commands below.
+[Update 4/30/23] We have successfully moved LLaVA framework to this repo, without the need of a special `transformers` modified by us.  Please make sure that the `transformers` used is from `huggingface/transformers` at `cae78c46` (we will test stable versions soon).  If you install our repo before `4/30/23`, please reinstall `transformers` following the commands below.
 
 You may try running the following command to make sure the version is correct.
 
