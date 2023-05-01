@@ -191,10 +191,10 @@ def http_bot(state, model_selector, temperature, max_new_tokens, request: gr.Req
     if len(state.messages) == state.offset + 2:
         # First round of conversation
         if "llava" in model_name.lower():
-            if "v0" in model_name:
-                template_name = "multimodal"
-            else:
+            if "v1" in model_name:
                 template_name = "llava_v1"
+            else:
+                template_name = "multimodal"
         elif "koala" in model_name: # Hardcode the condition
             template_name = "bair_v1"
         elif "v1" in model_name:    # vicuna v1_1/v1_2

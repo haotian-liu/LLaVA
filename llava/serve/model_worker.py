@@ -22,6 +22,7 @@ from functools import partial
 from llava.constants import WORKER_HEART_BEAT_INTERVAL
 from llava.utils import (build_logger, server_error_msg,
     pretty_print_semaphore)
+from llava import LlavaLlamaForCausalLM
 
 GB = 1 << 30
 
@@ -55,8 +56,10 @@ def load_model(model_path, num_gpus):
         }
 
     tokenizer = AutoTokenizer.from_pretrained(model_path)
-    model = AutoModelForCausalLM.from_pretrained(
-       model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True, **kwargs)
+    if 'llava' in model_path.lower():
+        model = LlavaLlamaForCausalLM.from_pretrained(model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True, **kwargs)
+    else:
+        model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True, **kwargs)
 
     image_processor = None
 
