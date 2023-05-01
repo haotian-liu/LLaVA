@@ -422,10 +422,22 @@ python llava/train/train_mem.py \
 
 <details>
 <summary>Learn more</summary>
-Currently, PyTorch and Huggingface does not yet have stable/native support for FSDP on parameter efficient tuning (part of the parameters are frozen).  As a temporary workaround, we set frozen parameters as trainable parameters with zero learning rate.
 
+Currently, PyTorch and Huggingface does not yet have stable/native support for FSDP on parameter efficient tuning (part of the parameters are frozen).  However, the feature is being developed in PyTorch nightly and shall be shipped in the next release.  We provide an experimental script to enable FSDP in pretraining.  To use it, please **create a new enviroment** (to be safe), install PyTorch nightly (**MUST**), and `LLaVA` package following the instructions below.
+
+1. Prepare environment
 ```Shell
-# [WARNING] this is experimental!
+conda create -n llava_beta python=3.10 -y
+conda activate llava_beta
+pip install --upgrade pip
+pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu117
+pip install -e .
+pip install einops ninja
+pip install flash-attn
+```
+
+2. Run pretraining with FSDP (experimental)
+```Shell
 torchrun --nnodes=1 --nproc_per_node=8 --master_port=25001 \
     llava/train/train_mem.py \
     --model_name_or_path ./checkpoints/llama-vicuna-13b \

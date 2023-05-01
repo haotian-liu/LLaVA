@@ -100,10 +100,10 @@ class LlavaLlamaModel(LlamaModel):
 
         # HACK: replace back original embeddings for LLaVA pretraining
         orig_embeds_params = getattr(self, 'orig_embeds_params', None)
-        if orig_embeds_params is not None:
-            orig_embeds_params = orig_embeds_params[0]
-            with torch.no_grad():
-                self.get_input_embeddings().weight.data[:-2] = orig_embeds_params[:-2].data
+        # if orig_embeds_params is not None:
+        #     orig_embeds_params = orig_embeds_params[0]
+        #     with torch.no_grad():
+        #         self.get_input_embeddings().weight.data[:-2] = orig_embeds_params[:-2].data
 
         if inputs_embeds is None:
             inputs_embeds = self.embed_tokens(input_ids)
@@ -151,7 +151,10 @@ class LlavaLlamaModel(LlamaModel):
                         cur_image_features = image_features[cur_image_idx]
                         num_patches = cur_image_features.shape[0]
                         assert cur_input_ids[image_start_token_pos + num_patches + 1] == vision_tower.config.im_end_token
-                        cur_new_input_embeds = torch.cat((cur_input_embeds[:image_start_token_pos+1], cur_image_features, cur_input_embeds[image_start_token_pos + num_patches + 1:]), dim=0)
+                        if orig_embeds_params is not None:
+                            cur_new_input_embeds = torch.cat((cur_input_embeds[:image_start_token_pos].detach(), cur_input_embeds[image_start_token_pos:image_start_token_pos+1], cur_image_features, cur_input_embeds[image_start_token_pos + num_patches + 1:image_start_token_pos + num_patches + 2], cur_input_embeds[image_start_token_pos + num_patches + 2:].detach()), dim=0)
+                        else:
+                            cur_new_input_embeds = torch.cat((cur_input_embeds[:image_start_token_pos+1], cur_image_features, cur_input_embeds[image_start_token_pos + num_patches + 1:]), dim=0)
                         cur_image_idx += 1
                     new_input_embeds.append(cur_new_input_embeds)
                 else:
@@ -161,7 +164,10 @@ class LlavaLlamaModel(LlamaModel):
                     masked_indices = torch.where(cur_input_ids == vision_tower.config.im_patch_token)[0]
                     mask_index_start = masked_indices[0]
                     assert (masked_indices == torch.arange(mask_index_start, mask_index_start+num_patches, device=masked_indices.device, dtype=masked_indices.dtype)).all()
-                    cur_new_input_embeds = torch.cat((cur_input_embeds[:mask_index_start], cur_image_features, cur_input_embeds[mask_index_start+num_patches:]), dim=0)
+                    if orig_embeds_params is not None:
+                        cur_new_input_embeds = torch.cat((cur_input_embeds[:mask_index_start].detach(), cur_image_features, cur_input_embeds[mask_index_start+num_patches:].detach()), dim=0)
+                    else:
+                        cur_new_input_embeds = torch.cat((cur_input_embeds[:mask_index_start], cur_image_features, cur_input_embeds[mask_index_start+num_patches:]), dim=0)
                     new_input_embeds.append(cur_new_input_embeds)
             inputs_embeds = torch.stack(new_input_embeds, dim=0)
 

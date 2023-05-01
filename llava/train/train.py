@@ -535,9 +535,15 @@ def train():
         model.initialize_vision_tokenizer(mm_use_im_start_end=model_args.mm_use_im_start_end, tokenizer=tokenizer, device=training_args.device,
                                           tune_mm_mlp_adapter=model_args.tune_mm_mlp_adapter, pretrain_mm_mlp_adapter=model_args.pretrain_mm_mlp_adapter)
 
-        if model_args.tune_mm_mlp_adapter:
-            if training_args.fsdp is not None and len(training_args.fsdp) > 0 and training_args.force_fsdp:
-                print("[WARNING] Attempting to use FSDP and MLP pretrain at the same time, this is experimental.")
+        params_no_grad = [n for n, p in model.named_parameters() if not p.requires_grad]
+        if len(params_no_grad) > 0:
+            if training_args.fsdp is not None and len(training_args.fsdp) > 0:
+                if len(params_no_grad) < 10:
+                    print('[WARNING] Attempting to use FSDP while {} parameters do not require gradients: {}'. format(len(params_no_grad), params_no_grad))
+                else:
+                    print('[WARNING] Attempting to use FSDP while {} parameters do not require gradients: {}...(omitted)'. format(len(params_no_grad), ', '.join(params_no_grad[:10])))
+                print("[WARNING] Attempting to use FSDP with partially frozen paramters, this is experimental.")
+                print("[WARNING] As of 4/30/23, this feature requires PyTorch-nightly build.  See here for details: https://github.com/haotian-liu/LLaVA#experimental-use-fsdp-to-save-memory-in-pretraining")
 
                 from torch.distributed.fsdp.fully_sharded_data_parallel import FullyShardedDataParallel as FSDP
                 def patch_FSDP_use_orig_params(func):
