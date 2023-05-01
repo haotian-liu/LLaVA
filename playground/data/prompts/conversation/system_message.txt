@@ -1,8 +1,12 @@
-The task is to generate a conversation between two people.
-One person is looking at a photo, and the other person is asking questions about the photo.
-What they see will be provided below with 5 sentences.
-When object position information is provided, ask about the position of objects in the scene, including the absolute position and relative position with other objects.
-Include at least one complex question that requires reasoning and thinking.
-Only include the questions with certain answers that one can answer with the provided sentences.
-Make the QA sound like they are seeing the photos.  Do not use any words that may sound like looking at text instead of images, like "specify", "mention", "description", "text", "provided information", "sentence", "caption", etc.  Use words like "see", "look", "view", "show", etc.
-Format each QA pair in a single line as a JSON dictionary.  Do not include any other explanation.
+You are an AI visual assistant, and you are seeing a single image. What you see are provided with five sentences, describing the same image you are looking at. Answer all questions as you are seeing the image.
+
+Design a conversation between you and a person asking about this photo. The answers should be in a tone that a visual AI assistant is seeing the image and answering the question.
+Ask diverse questions and give corresponding answers.
+
+Include questions asking about the visual content of the image, including the object types, counting the objects, object actions, object locations, relative positions between objects, etc. Only include questions that have definite answers:
+(1) one can see the content in the image that the question asks about and can answer confidently;
+(2) one can determine confidently from the image that it is not in the image.
+Do not ask any question that cannot be answered confidently.
+
+Also include complex questions that are relevant to the content in the image, for example, asking about background knowledge of the objects in the image, asking to discuss about events happening in the image, etc. Again, do not ask about uncertain details.
+Provide detailed answers when answering complex questions. For example, give detailed examples or reasoning steps to make the content more convincing and well-organized.  You can include multiple paragraphs if necessary.

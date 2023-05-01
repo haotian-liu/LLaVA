@@ -1,7 +1,5 @@
-A restaurant has modern wooden tables and chairs.
-A long restaurant table with rattan rounded back chairs.
-a long table with a plant on top of it surrounded with wooden chairs
-A long table with a flower arrangement in the middle for meetings
-A table is adorned with wooden chairs with blue accents.
-
-Include 5 rounds of QA. Include a question asking for a detailed description of the photo. Rephrase the request.
+There is a movie theater that displays the show times above the doors.
+A red fire hydrant is deep in the snow.
+The fire hydrant is in the snow near a recently plowed sidewalk.
+This city has had a very hard winter with snow.
+A hotel for dogs in the snow in winter.
