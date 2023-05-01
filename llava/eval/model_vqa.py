@@ -6,6 +6,7 @@ import json
 from tqdm import tqdm
 import shortuuid
 
+from llava import LlavaLlamaForCausalLM
 from llava.conversation import conv_templates
 from llava.utils import disable_torch_init
 from transformers import CLIPVisionModel, CLIPImageProcessor, StoppingCriteria
@@ -32,44 +33,6 @@ DEFAULT_IM_START_TOKEN = "<im_start>"
 DEFAULT_IM_END_TOKEN = "<im_end>"
 
 
-detail_describe_instructions = [
-    "Describe the following image in detail.",
-    "Provide a detailed description of the given image.",
-    "Give an elaborate explanation of the image you see.",
-    "Share a comprehensive rundown of the presented image.",
-    "Offer a thorough analysis of the image.",
-    "Explain the various aspects of the image before you.",
-    "Clarify the contents of the displayed image with great detail.",
-    "Characterize the image using a well-detailed description.",
-    "Break down the elements of the image in a detailed manner.",
-    "Walk through the important details of the image.",
-    "Portray the image with a rich, descriptive narrative.",
-    "Narrate the contents of the image with precision.",
-    "Analyze the image in a comprehensive and detailed manner.",
-    "Illustrate the image through a descriptive explanation.",
-    "Examine the image closely and share its details.",
-    "Write an exhaustive depiction of the given image.",
-]
-
-concise_describe_instructions = [
-    "Describe the following image concisely.",
-    "Provide a brief description of the given image.",
-    "Offer a succinct explanation of the picture presented.",
-    "Summarize the visual content of the following image.",
-    "Give a short and clear explanation of the subsequent image.",
-    "Share a concise interpretation of the image provided.",
-    "Present a compact description of the photo's key features.",
-    "Relay a brief, clear account of the picture shown.",
-    "Render a clear and concise summary of the photo below.",
-    "Write a terse but informative summary of the following picture.",
-    "Create a compact narrative representing the image presented.",
-]
-
-prompt_pool = detail_describe_instructions + concise_describe_instructions
-
-prompt_pool = [ "Describe the following image in detail."]
-
-
 def patch_config(config):
     patch_dict = {
         "use_mm_proj": True,
@@ -92,7 +55,7 @@ def eval_model(args):
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     if args.mm_projector is None:
         patch_config(model_name)
-        model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16).cuda()
+        model = LlavaLlamaForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16).cuda()
         image_processor = CLIPImageProcessor.from_pretrained(model.config.mm_vision_tower, torch_dtype=torch.float16)
 
         mm_use_im_start_end = getattr(model.config, "mm_use_im_start_end", False)
@@ -110,7 +73,7 @@ def eval_model(args):
         image_token_len = (vision_config.image_size // vision_config.patch_size) ** 2
     else:
         # in case of using a pretrained model with only a MLP projector weights
-        model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16).cuda()
+        model = LlavaLlamaForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16).cuda()
 
         vision_tower = CLIPVisionModel.from_pretrained(args.vision_tower, torch_dtype=torch.float16).cuda()
         image_processor = CLIPImageProcessor.from_pretrained(args.vision_tower, torch_dtype=torch.float16)

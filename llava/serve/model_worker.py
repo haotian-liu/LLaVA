@@ -22,6 +22,7 @@ from functools import partial
 from llava.constants import WORKER_HEART_BEAT_INTERVAL
 from llava.utils import (build_logger, server_error_msg,
     pretty_print_semaphore)
+from llava import LlavaLlamaForCausalLM
 
 GB = 1 << 30
 
@@ -45,7 +46,7 @@ def heart_beat_worker(controller):
         controller.send_heart_beat()
 
 
-def load_model(model_path, num_gpus, is_multi_modal):
+def load_model(model_path, num_gpus):
     if num_gpus == 1:
         kwargs = {}
     else:
@@ -55,12 +56,14 @@ def load_model(model_path, num_gpus, is_multi_modal):
         }
 
     tokenizer = AutoTokenizer.from_pretrained(model_path)
-    model = AutoModelForCausalLM.from_pretrained(
-       model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True, **kwargs)
+    if 'llava' in model_path.lower():
+        model = LlavaLlamaForCausalLM.from_pretrained(model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True, **kwargs)
+    else:
+        model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True, **kwargs)
 
     image_processor = None
 
-    if is_multi_modal:
+    if 'llava' in model_path.lower():
         from transformers import CLIPImageProcessor, CLIPVisionModel
         image_processor = CLIPImageProcessor.from_pretrained(model.config.mm_vision_tower, torch_dtype=torch.float16)
 
@@ -96,7 +99,7 @@ class ModelWorker:
     def __init__(self, controller_addr, worker_addr,
                  worker_id, no_register,
                  model_path, model_name,
-                 is_multi_modal, keep_aspect_ratio,
+                 keep_aspect_ratio,
                  num_gpus):
         self.controller_addr = controller_addr
         self.worker_addr = worker_addr
@@ -113,10 +116,10 @@ class ModelWorker:
             self.model_name = model_name
 
         logger.info(f"Loading the model {self.model_name} on worker {worker_id} ...")
-        self.is_multi_modal = is_multi_modal
         self.keep_aspect_ratio = keep_aspect_ratio
         self.tokenizer, self.model, self.image_processor, self.context_len = load_model(
-            model_path, num_gpus, is_multi_modal)
+            model_path, num_gpus)
+        self.is_multimodal = 'llava' in model_path.lower()
 
         if not no_register:
             self.register_to_controller()
@@ -178,7 +181,7 @@ class ModelWorker:
         prompt = params["prompt"]
         ori_prompt = prompt
         images = params.get("images", None)
-        if images is not None:
+        if images is not None and self.is_multimodal:
             from PIL import Image
             from io import BytesIO
             import base64
@@ -213,6 +216,10 @@ class ModelWorker:
                     prompt = prompt.replace(DEFAULT_IMAGE_TOKEN, replace_token)
             else:
                 images = None
+            image_args = {"images": images}
+        else:
+            images = None
+            image_args = {}
 
         l_prompt = len(prompt)
         temperature = float(params.get("temperature", 1.0))
@@ -230,9 +237,9 @@ class ModelWorker:
         for i in range(max_new_tokens):
             if i == 0:
                 out = model(
-                    torch.as_tensor([input_ids]).cuda(), 
-                    images=images,
-                    use_cache=True)
+                    torch.as_tensor([input_ids]).cuda(),
+                    use_cache=True,
+                    **image_args)
                 logits = out.logits
                 past_key_values = out.past_key_values
             else:
@@ -261,21 +268,12 @@ class ModelWorker:
                 stopped = False
 
             if i % args.stream_interval == 0 or i == max_new_tokens - 1 or stopped:
-                output = tokenizer.decode(output_ids, skip_special_tokens=True)
-
-                if images is not None:
-                    # HACK: deal with images
-                    cur_out = tokenizer.decode(pred_ids, skip_special_tokens=True)
-                    pos = cur_out.rfind(stop_str)
-                    if pos != -1:
-                        cur_out = cur_out[:pos]
-                        stopped = True
-                    output = ori_prompt + cur_out
-                else:
-                    pos = output.rfind(stop_str, l_prompt)
-                    if pos != -1:
-                        output = output[:pos]
-                        stopped = True
+                cur_out = tokenizer.decode(pred_ids, skip_special_tokens=True)
+                pos = cur_out.rfind(stop_str)
+                if pos != -1:
+                    cur_out = cur_out[:pos]
+                    stopped = True
+                output = ori_prompt + cur_out
 
                 ret = {
                     "text": output,
@@ -349,7 +347,7 @@ if __name__ == "__main__":
         default="http://localhost:21001")
     parser.add_argument("--model-path", type=str, default="facebook/opt-350m")
     parser.add_argument("--model-name", type=str)
-    parser.add_argument("--multi-modal", action="store_true")
+    parser.add_argument("--multi-modal", action="store_true", help="Multimodal mode is automatically detected with model name, please make sure `llava` is included in the model path.")
     parser.add_argument("--keep-aspect-ratio", action="store_true")
     parser.add_argument("--num-gpus", type=int, default=1)
     parser.add_argument("--limit-model-concurrency", type=int, default=5)
@@ -358,13 +356,15 @@ if __name__ == "__main__":
     args = parser.parse_args()
     logger.info(f"args: {args}")
 
+    if args.multi_modal:
+        logger.warning("Multimodal mode is automatically detected with model name, please make sure `llava` is included in the model path.")
+
     worker = ModelWorker(args.controller_address,
                          args.worker_address,
                          worker_id,
                          args.no_register,
                          args.model_path,
                          args.model_name,
-                         args.multi_modal,
                          args.keep_aspect_ratio,
                          args.num_gpus)
     uvicorn.run(app, host=args.host, port=args.port, log_level="info")

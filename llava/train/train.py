@@ -26,7 +26,7 @@ import torch
 
 import transformers
 from torch.utils.data import Dataset
-from transformers import Trainer
+from llava.train.llava_trainer import LLaVATrainer
 
 from llava import conversation as conversation_lib
 from llava import LlavaLlamaForCausalLM
@@ -50,6 +50,7 @@ DEFAULT_IM_END_TOKEN = "<im_end>"
 @dataclass
 class ModelArguments:
     model_name_or_path: Optional[str] = field(default="facebook/opt-125m")
+    version: Optional[str] = field(default="v0")
     freeze_backbone: bool = field(default=False)
     tune_mm_mlp_adapter: bool = field(default=False)
     vision_tower: Optional[str] = field(default=None)
@@ -74,6 +75,8 @@ class TrainingArguments(transformers.TrainingArguments):
     cache_dir: Optional[str] = field(default=None)
     optim: str = field(default="adamw_torch")
     remove_unused_columns: bool = field(default=False)
+    freeze_mm_mlp_adapter: bool = field(default=False)
+    force_fsdp: bool = field(default=False)
     model_max_length: int = field(
         default=512,
         metadata={
@@ -201,6 +204,77 @@ def preprocess_multimodal(
     return sources
 
 
+def preprocess_v1(
+    sources,
+    tokenizer: transformers.PreTrainedTokenizer,
+) -> Dict:
+    conv = conversation_lib.default_conversation.copy()
+    roles = {"human": conv.roles[0], "gpt": conv.roles[1]}
+
+    # Apply prompt templates
+    conversations = []
+    for i, source in enumerate(sources):
+        if roles[source[0]["from"]] != conv.roles[0]:
+            # Skip the first one if it is not from human
+            source = source[1:]
+
+        conv.messages = []
+        for j, sentence in enumerate(source):
+            role = roles[sentence["from"]]
+            assert role == conv.roles[j % 2], f"{i}"
+            conv.append_message(role, sentence["value"])
+        conversations.append(conv.get_prompt())
+
+    # Tokenize conversations
+    input_ids = tokenizer(
+        conversations,
+        return_tensors="pt",
+        padding="longest",
+        max_length=tokenizer.model_max_length,
+        truncation=True,
+    ).input_ids
+    targets = input_ids.clone()
+
+    assert conv.sep_style == conversation_lib.SeparatorStyle.TWO
+
+    # Mask targets
+    sep = conv.sep + conv.roles[1] + ": "
+    for conversation, target in zip(conversations, targets):
+        total_len = int(target.ne(tokenizer.pad_token_id).sum())
+
+        rounds = conversation.split(conv.sep2)
+        cur_len = 1
+        target[:cur_len] = IGNORE_INDEX
+        for i, rou in enumerate(rounds):
+            if rou == "":
+                break
+
+            parts = rou.split(sep)
+            if len(parts) != 2:
+                break
+            parts[0] += sep
+            round_len = len(tokenizer(rou).input_ids)
+            instruction_len = len(tokenizer(parts[0]).input_ids) - 2
+
+            target[cur_len : cur_len + instruction_len] = IGNORE_INDEX
+
+            cur_len += round_len
+        target[cur_len:] = IGNORE_INDEX
+
+        if cur_len < tokenizer.model_max_length:
+            if cur_len != total_len:
+                target[:] = IGNORE_INDEX
+                print(
+                    f"WARNING: tokenization mismatch: {cur_len} vs. {total_len}."
+                    f" (ignored)"
+                )
+
+    return dict(
+        input_ids=input_ids,
+        labels=targets,
+    )
+
+
 def preprocess(
     sources: Sequence[str],
     tokenizer: transformers.PreTrainedTokenizer,
@@ -212,6 +286,8 @@ def preprocess(
     3. Tokenize the concatenated conversation;
     4. Make a deepcopy as the target. Mask human words with IGNORE_INDEX.
     """
+    if conversation_lib.default_conversation.version == "v1":
+        return preprocess_v1(sources, tokenizer)
     # add end signal and concatenate together
     conversations = []
     for source in sources:
@@ -360,48 +436,6 @@ class DataCollatorForSupervisedDataset(object):
         return batch
 
 
-def unwrap_model(model: nn.Module) -> nn.Module:
-    """
-    Recursively unwraps a model from potential containers (as used in distributed training).
-
-    Args:
-        model (`torch.nn.Module`): The model to unwrap.
-    """
-    # since there could be multiple levels of wrapping, unwrap recursively
-    if hasattr(model, "module"):
-        return unwrap_model(model.module)
-    else:
-        return model
-
-
-class ParameterEfficientTrainer(Trainer):
-    def _save(self, output_dir: Optional[str] = None, state_dict=None):
-        if getattr(self.args, 'tune_mm_mlp_adapter', False):
-            # Save the model
-            _state_dict = state_dict
-            if _state_dict is None:
-                # Only save the model itself if we are using distributed training
-                model_to_save = unwrap_model(self.model)
-                _state_dict = model_to_save.state_dict()
-
-            weight_to_save = {}
-            keys_to_match = ['mm_projector', 'embed_tokens', 'embed_in']
-            for k, v in _state_dict.items():
-                if any(key_match in k for key_match in keys_to_match):
-                    weight_to_save[k] = v
-
-            current_folder = output_dir.split('/')[-1]
-            parent_folder = os.path.dirname(output_dir)
-            if current_folder.startswith('checkpoint-'):
-                mm_projector_folder = os.path.join(parent_folder, "mm_projector")
-                os.makedirs(mm_projector_folder, exist_ok=True)
-                torch.save(weight_to_save, os.path.join(mm_projector_folder, f'{current_folder}.bin'))
-            else:
-                torch.save(weight_to_save, os.path.join(output_dir, f'mm_projector.bin'))
-
-        super(ParameterEfficientTrainer, self)._save(output_dir, state_dict)
-
-
 def make_supervised_data_module(tokenizer: transformers.PreTrainedTokenizer,
                                 data_args) -> Dict:
     """Make dataset and collator for supervised fine-tuning."""
@@ -437,6 +471,7 @@ def train():
             model_args.model_name_or_path,
             cache_dir=training_args.cache_dir,
         )
+    model.config.use_cache = False
 
     if model_args.freeze_backbone:
         model.model.requires_grad_(False)
@@ -448,18 +483,23 @@ def train():
         padding_side="right",
         use_fast=False,
     )
-    if tokenizer.pad_token is None:
-        smart_tokenizer_and_embedding_resize(
-            special_tokens_dict=dict(pad_token=DEFAULT_PAD_TOKEN),
-            tokenizer=tokenizer,
-            model=model,
-        )
-    if "llama" in model_args.model_name_or_path:
-        tokenizer.add_special_tokens({
-            "eos_token": DEFAULT_EOS_TOKEN,
-            "bos_token": DEFAULT_BOS_TOKEN,
-            "unk_token": DEFAULT_UNK_TOKEN,
-        })
+
+    if model_args.version == "v0":
+        if tokenizer.pad_token is None:
+            smart_tokenizer_and_embedding_resize(
+                special_tokens_dict=dict(pad_token=DEFAULT_PAD_TOKEN),
+                tokenizer=tokenizer,
+                model=model,
+            )
+        if "llama" in model_args.model_name_or_path:
+            tokenizer.add_special_tokens({
+                "eos_token": DEFAULT_EOS_TOKEN,
+                "bos_token": DEFAULT_BOS_TOKEN,
+                "unk_token": DEFAULT_UNK_TOKEN,
+            })
+    else:
+        tokenizer.pad_token = tokenizer.unk_token
+        conversation_lib.default_conversation = conversation_lib.conv_templates["vicuna_v1_1"]
 
     if model_args.vision_tower is not None:
         model_vision_dict = model.model.initialize_vision_modules(
@@ -485,14 +525,25 @@ def train():
             for p in model.model.mm_projector.parameters():
                 p.requires_grad = True
 
+        model.config.freeze_mm_mlp_adapter = training_args.freeze_mm_mlp_adapter
+        if training_args.freeze_mm_mlp_adapter:
+            for p in model.model.mm_projector.parameters():
+                p.requires_grad = False
+
         model.config.mm_use_im_start_end = data_args.mm_use_im_start_end = model_args.mm_use_im_start_end
         vision_config.use_im_start_end = training_args.use_im_start_end = model_args.mm_use_im_start_end
         model.initialize_vision_tokenizer(mm_use_im_start_end=model_args.mm_use_im_start_end, tokenizer=tokenizer, device=training_args.device,
                                           tune_mm_mlp_adapter=model_args.tune_mm_mlp_adapter, pretrain_mm_mlp_adapter=model_args.pretrain_mm_mlp_adapter)
 
-        if model_args.tune_mm_mlp_adapter:
+        params_no_grad = [n for n, p in model.named_parameters() if not p.requires_grad]
+        if len(params_no_grad) > 0:
             if training_args.fsdp is not None and len(training_args.fsdp) > 0:
-                print("[WARNING] Attempting to use FSDP and MLP pretrain at the same time, this is experimental.")
+                if len(params_no_grad) < 10:
+                    print('[WARNING] Attempting to use FSDP while {} parameters do not require gradients: {}'. format(len(params_no_grad), params_no_grad))
+                else:
+                    print('[WARNING] Attempting to use FSDP while {} parameters do not require gradients: {}...(omitted)'. format(len(params_no_grad), ', '.join(params_no_grad[:10])))
+                print("[WARNING] Attempting to use FSDP with partially frozen paramters, this is experimental.")
+                print("[WARNING] As of 4/30/23, this feature requires PyTorch-nightly build.  See here for details: https://github.com/haotian-liu/LLaVA#experimental-use-fsdp-to-save-memory-in-pretraining")
 
                 from torch.distributed.fsdp.fully_sharded_data_parallel import FullyShardedDataParallel as FSDP
                 def patch_FSDP_use_orig_params(func):
@@ -505,7 +556,7 @@ def train():
 
     data_module = make_supervised_data_module(tokenizer=tokenizer,
                                               data_args=data_args)
-    trainer = ParameterEfficientTrainer(model=model,
+    trainer = LLaVATrainer(model=model,
                     tokenizer=tokenizer,
                     args=training_args,
                     **data_module)
