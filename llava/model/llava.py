@@ -149,7 +149,7 @@ class LlavaLlamaModel(LlamaModel):
                         raise ValueError("The number of image start tokens and image end tokens should be the same.")
                     image_start_tokens = torch.where(cur_input_ids == vision_tower.config.im_start_token)[0]
                     for image_start_token_pos in image_start_tokens:
-                        cur_image_features = image_features[cur_image_idx]
+                        cur_image_features = image_features[cur_image_idx].to(device=cur_input_embeds.device)
                         num_patches = cur_image_features.shape[0]
                         if cur_input_ids[image_start_token_pos + num_patches + 1] != vision_tower.config.im_end_token:
                             raise ValueError("The image end token should follow the image start token.")
