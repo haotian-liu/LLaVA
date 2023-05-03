@@ -6,6 +6,7 @@ from llava.conversation import conv_templates
 from llava.utils import disable_torch_init
 from transformers import CLIPVisionModel, CLIPImageProcessor, StoppingCriteria
 from llava import LlavaLlamaForCausalLM
+from llava.model.utils import KeywordsStoppingCriteria
 
 from PIL import Image
 
@@ -19,25 +20,6 @@ DEFAULT_IMAGE_TOKEN = "<image>"
 DEFAULT_IMAGE_PATCH_TOKEN = "<im_patch>"
 DEFAULT_IM_START_TOKEN = "<im_start>"
 DEFAULT_IM_END_TOKEN = "<im_end>"
-
-
-# new stopping implementation
-class KeywordsStoppingCriteria(StoppingCriteria):
-    def __init__(self, keywords, tokenizer, input_ids):
-        self.keywords = keywords
-        self.tokenizer = tokenizer
-        self.start_len = None
-        self.input_ids = input_ids
-
-    def __call__(self, output_ids: torch.LongTensor, scores: torch.FloatTensor, **kwargs) -> bool:
-        if self.start_len is None:
-            self.start_len = self.input_ids.shape[1]
-        else:
-            outputs = self.tokenizer.batch_decode(output_ids[:, self.start_len:], skip_special_tokens=True)[0]
-            for keyword in self.keywords:
-                if keyword in outputs:
-                    return True
-        return False
 
 
 def load_image(image_file):

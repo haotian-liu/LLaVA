@@ -15,6 +15,8 @@
 
 ## Release
 
+- [5/2] 🔥 We are releasing LLaVA-Lighting!  Train a lite, multimodal GPT-4 with just $40 in 3 hours!  See [here](#train-llava-lightning) for more details.
+- [5/2] We upgrade LLaVA package to v0.1 to support Vicuna v0 and v1 checkpoints, please upgrade following instructions [here](#install).
 - [4/30] Our checkpoint with Vicuna-7b-v0 has been released [here](#llava-7b)! This checkpoint is more accessible and device friendly.  Stay tuned for a major upgrade next week!
 - [4/27] Thanks to the community effort, LLaVA-13B with 4-bit quantization allows you to run on a GPU with as few as 12GB VRAM!  Try it out [here](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/llava).
 - [4/17] 🔥 We released **LLaVA: Large Language and Vision Assistant**. We propose visual instruction tuning, towards building large language and vision models with GPT-4 level capabilities.  Checkout the [paper](https://arxiv.org/abs/2304.08485) and [demo](https://llava.hliu.cc/).
@@ -39,6 +41,7 @@
 | Data file name | Size |
 | --- | ---: |
 | [llava_instruct_150k.json](https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K/raw/main/llava_instruct_150k.json) | 229 MB |
+| [llava_instruct_80k.json](https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K/raw/main/llava_instruct_80k.json) | 229 MB |
 | [conversation_58k.json](https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K/raw/main/conversation_58k.json) | 126 MB |
 | [detail_23k.json](https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K/raw/main/detail_23k.json) | 20.5 MB |
 | [complex_reasoning_77k.json](https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K/raw/main/complex_reasoning_77k.json) | 79.6 MB |
@@ -55,7 +58,8 @@ If you already have CC-3M dataset on your disk, the image names follow this form
 
 | Data | Chat File | Meta Data | Size |
 | --- |  --- |  --- | ---: |
-| CC-3M Pretrain 595K | [chat.json](https://huggingface.co/datasets/liuhaotian/LLaVA-CC3M-Pretrain-595K/raw/main/chat.json) | [metadata.json](https://huggingface.co/datasets/liuhaotian/LLaVA-CC3M-Pretrain-595K/raw/main/metadata.json) | 211 MB
+| CC-3M Concept-balanced 595K | [chat.json](https://huggingface.co/datasets/liuhaotian/LLaVA-CC3M-Pretrain-595K/raw/main/chat.json) | [metadata.json](https://huggingface.co/datasets/liuhaotian/LLaVA-CC3M-Pretrain-595K/raw/main/metadata.json) | 211 MB
+| LAION/CC/SBU BLIP-Caption Concept-balanced 558K | [blip_laion_cc_sbu_558k.json](https://huggingface.co/datasets/liuhaotian/LLaVA-Pretrain/raw/main/blip_laion_cc_sbu_558k.json) | [metadata.json](#) | 181 MB
 
 **Important notice**: Upon the request from the community, as ~15% images of the original CC-3M dataset are no longer accessible, we upload [`images.zip`](https://huggingface.co/datasets/liuhaotian/LLaVA-CC3M-Pretrain-595K/blob/main/images.zip) for better reproducing our work in research community. It must not be used for any other purposes. The use of these images must comply with the CC-3M license. This may be taken down at any time when requested by the original CC-3M dataset owner or owners of the referenced images.
 
@@ -84,19 +88,23 @@ pip install -e .
 ```
 
 **NOTE**:
-[Update 4/30/23] We have successfully moved LLaVA framework to this repo, without the need of a special `transformers` modified by us.  Please make sure that the `transformers` used is from `huggingface/transformers` at `cae78c46` (we will test stable versions soon).  If you install our repo before `4/30/23`, please reinstall `transformers` following the commands below.
-
-You may try running the following command to make sure the version is correct.
-
-```Shell
-pip uninstall transformers
-pip install git+https://github.com/huggingface/transformers@cae78c46
-```
+[Update 4/30/23] We have successfully moved LLaVA framework to this repo, without the need of a special `transformers` modified by us.  If you install our repo before `4/30/23`, please reinstall `transformers` following the instructions [here](#upgrade-to-v01).
 
 3. Install additional packages for training cases
 ```
 pip install ninja
 pip install flash-attn
+```
+
+### Upgrade to v0.1
+
+**NOTE**:
+If you install our package before 4/30/23, please make sure to execute the command below to correctly upgrade to v0.1.  You may try a [clean install](#install) as well.
+
+```Shell
+pip uninstall transformers
+pip install git+https://github.com/huggingface/transformers@cae78c46
+pip install -e .
 ```
 
 ## LLaVA Weights
@@ -106,7 +114,7 @@ You can add our delta to the original LLaMA weights to obtain the LLaVA weights.
 Instructions:
 
 1. Get the original LLaMA weights in the huggingface format by following the instructions [here](https://huggingface.co/docs/transformers/main/model_doc/llama).
-2. Use the following scripts to get LLaVA weights by applying our delta ([13b](https://huggingface.co/liuhaotian/LLaVA-13b-delta-v0), [7b](https://huggingface.co/liuhaotian/LLaVA-7b-delta-v0)). It will automatically download delta weights from our Hugging Face account.
+2. Use the following scripts to get LLaVA weights by applying our delta ([13b-v0](https://huggingface.co/liuhaotian/LLaVA-13b-delta-v0), [7b-v0](https://huggingface.co/liuhaotian/LLaVA-7b-delta-v0), [lightning-7B-v1-1](https://huggingface.co/liuhaotian/LLaVA-Lightning-7B-delta-v1-1)). It will automatically download delta weights from our Hugging Face account.
 
 ### LLaVA-13B
 This conversion command needs around 60 GB of CPU RAM.
@@ -517,6 +525,29 @@ torchrun --nnodes=1 --nproc_per_node=8 --master_port=25001 \
     --lazy_preprocess True \
     --report_to wandb
 ```
+
+### Train LLaVA Lightning
+LLaVA-Lightning can be trained on 8x A100 GPUs in just 3 hours, including both pretraining and finetuning. When using spot instances, it costs just ~$40. *We are working on [SkyPilot](https://github.com/skypilot-org/skypilot.git) tutorial to make spot instance training even easier, stay tuned!*
+
+Please make sure to: (1) [install](#install) or [upgrade](#upgrade-to-v01) to the latest code base, and (2) pass the correct model version identifier `v0`/`v1` to ensure the correct conversation template is loaded.
+
+```Shell
+bash ./scripts/train_lightning.sh {v0,v1}
+```
+
+#### Hyperparameters
+
+1. Pretraining
+
+| Hyperparameter | Global Batch Size | Learning rate | Epochs | Max length | Weight decay |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| LLaVA-Lightning-7B | 128 | 2e-3 | 1 | 2048 | 0 |
+
+2. Finetuning
+
+| Hyperparameter | Global Batch Size | Learning rate | Epochs | Max length | Weight decay |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| LLaVA-Lightning-7B | 128 | 2e-5 | 1 | 2048 | 0 |
 
 ## Acknowledgement
 

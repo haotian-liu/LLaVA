@@ -342,18 +342,17 @@ def build_demo(embed_mode):
                 image_process_mode = gr.Radio(
                     ["Crop", "Resize", "Pad"],
                     value="Crop",
-                    label="Preprocess",
-                    info="When the image is not square, you may try adjusting this .")
-
-                with gr.Accordion("Parameters", open=False, visible=False) as parameter_row:
-                    temperature = gr.Slider(minimum=0.0, maximum=1.0, value=0.7, step=0.1, interactive=True, label="Temperature",)
-                    max_output_tokens = gr.Slider(minimum=0, maximum=1024, value=512, step=64, interactive=True, label="Max output tokens",)
+                    label="Preprocess for non-square image")
 
                 cur_dir = os.path.dirname(os.path.abspath(__file__))
                 gr.Examples(examples=[
                     [f"{cur_dir}/examples/extreme_ironing.jpg", "What is unusual about this image?"],
                     [f"{cur_dir}/examples/waterview.jpg", "What are the things I should be cautious about when I visit here?"],
                 ], inputs=[imagebox, textbox])
+
+                with gr.Accordion("Parameters", open=False, visible=False) as parameter_row:
+                    temperature = gr.Slider(minimum=0.0, maximum=1.0, value=0.2, step=0.1, interactive=True, label="Temperature",)
+                    max_output_tokens = gr.Slider(minimum=0, maximum=1024, value=512, step=64, interactive=True, label="Max output tokens",)
 
             with gr.Column(scale=6):
                 chatbot = grChatbot(elem_id="chatbot", label="LLaVA Chatbot", visible=False).style(height=550)
