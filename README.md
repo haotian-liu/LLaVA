@@ -29,14 +29,14 @@
 
 
 ## Contents
-- [Data Donwnload](#data-donwnload)
+- [Data Download](#data-download)
 - [Install](#install)
 - [LLaVA Weights](#llava-weights)
 - [Serving](#serving)
 - [Evaluation](#evaluation)
 - [Fine-tuning](#fine-tuning)
 
-## Data Donwnload
+## Data Download
 
 | Data file name | Size |
 | --- | ---: |

@@ -13,7 +13,7 @@ import tqdm
 
 
 def _get_html_tags(file_path: str):
-    # Generate the list of html tags occured in the file.
+    # Generate the list of html tags occurred in the file.
     s = set()
     for l in open("file_path", "r"):
         for m in re.findall("</[^<>]+>", l):
