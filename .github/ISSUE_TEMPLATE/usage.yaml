@@ -1,0 +1,42 @@
+name: Usage issues
+description: Report issues in usage.
+title: "[Usage] "
+assignees:
+  - octocat
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this form.  Please give as detailed description as possible for us to better assist with the issue :)
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: Describe the issue
+      description: A clear and concise description of what the bug is.
+      placeholder: Tell us what you see!
+      value: ""
+    validations:
+      required: true
+  - type: textarea
+    id: command-log
+    attributes:
+      label: Command and logs
+      description: The command that you use which triggered this error.  Please paste the **FULL** error log here, so that we can better understand the issue.
+Wrap the log with ``` for better readability in GitHub.
+      placeholder: Command and logs
+      value: |
+        Command:
+        Log: 
+        ```
+        PASTE THE LOGS HERE.
+        ```
+    validations:
+      required: true
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Verify `transformers` installation
+      description: If you are using the latest code base, please verify the `transformers` version is correct: [here](https://github.com/haotian-liu/LLaVA#upgrade-to-v01).  If you are using an older version, please check INSTALL section.
+      options:
+        - label: I have verified the `transformers` installation
+          required: true
