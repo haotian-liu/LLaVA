@@ -21,8 +21,7 @@ body:
     id: command-log
     attributes:
       label: Command and logs
-      description: The command that you use which triggered this error.  Please paste the **FULL** error log here, so that we can better understand the issue.
-Wrap the log with ``` for better readability in GitHub.
+      description: The command that you use which triggered this error.  Please paste the **FULL** error log here, so that we can better understand the issue. Wrap the log with ``` for better readability in GitHub.
       placeholder: Command and logs
       value: |
         Command:
