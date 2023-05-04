@@ -12,23 +12,23 @@ body:
     id: what-happened
     attributes:
       label: Describe the issue
-      description: A clear and concise description of what the bug is.
-      placeholder: Tell us what you see!
-      value: "Issue"
-    validations:
-      required: true
-  - type: textarea
-    id: command-log
-    attributes:
-      label: Command and logs
-      description: The command that you use which triggered this error.  Please paste the **FULL** error log here, so that we can better understand the issue. Wrap the log with ``` for better readability in GitHub.
-      placeholder: Command and logs
+      description: Please give as detailed description as possible for us to better assist with the issue.  Please paste the **FULL** error log here, so that we can better understand the issue. Wrap the log with ``` for better readability in GitHub.
+      placeholder: Issue
       value: |
+        Issue:
+        
         Command:
+        ```
+        PASTE THE COMMANDS HERE.
+        ```
+        
         Log: 
         ```
         PASTE THE LOGS HERE.
         ```
+        
+        Screenshots:
+        You may attach screenshots if it better explains the issue.
     validations:
       required: true
   - type: dropdown
