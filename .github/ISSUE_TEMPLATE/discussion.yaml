@@ -9,4 +9,5 @@ body:
   - type: textarea
     id: discussion
     attributes:
+      label: discussion
       placeholder: Start discussion here...
