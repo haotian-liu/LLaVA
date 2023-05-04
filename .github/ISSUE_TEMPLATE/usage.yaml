@@ -31,11 +31,13 @@ body:
         ```
     validations:
       required: true
-  - type: checkboxes
-    id: terms
+  - type: dropdown
+    id: clone date
     attributes:
-      label: Verify `transformers` installation
-      description: If you are using the latest code base, please verify the `transformers` version is correct ([here](https://github.com/haotian-liu/LLaVA#upgrade-to-v01)).  If you are using an older version, please check your INSTALL section.
+      label: When did you clone/download our code?
       options:
-        - label: I have verified the `transformers` installation
-          required: true
+        - I cloned/downloaded the code base after 5/1/23
+        - I cloned/downloaded the code base before 5/1/23, but have pulled the latest code base
+        - I cloned/downloaded the code base before 5/1/23, and have not upgraded yet
+    validations:
+      required: true
