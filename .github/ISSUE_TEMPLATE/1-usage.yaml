@@ -1,0 +1,41 @@
+name: Usage issues
+description: Report issues in usage.
+title: "[Usage] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this form.  Please give as detailed description as possible for us to better assist with the issue :)
+  - type: dropdown
+    id: clone-date
+    attributes:
+      label: When did you clone our code?
+      options:
+        - I cloned the code base after 5/1/23
+        - I cloned the code base before 5/1/23, but have pulled the latest code base
+        - I cloned the code base before 5/1/23, and have not upgraded yet
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: Describe the issue
+      description: Please give as detailed description as possible for us to better assist with the issue.  Please paste the **FULL** error log here, so that we can better understand the issue. Wrap the log with ``` for better readability in GitHub.
+      placeholder: Issue
+      value: |
+        Issue:
+        
+        Command:
+        ```
+        PASTE THE COMMANDS HERE.
+        ```
+        
+        Log: 
+        ```
+        PASTE THE LOGS HERE.
+        ```
+        
+        Screenshots:
+        You may attach screenshots if it better explains the issue.
+    validations:
+      required: true
