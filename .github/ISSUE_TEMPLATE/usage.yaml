@@ -1,13 +1,21 @@
 name: Usage issues
 description: Report issues in usage.
 title: "[Usage] "
-assignees:
-  - octocat
 body:
   - type: markdown
     attributes:
       value: |
         Thanks for taking the time to fill out this form.  Please give as detailed description as possible for us to better assist with the issue :)
+  - type: dropdown
+    id: clone-date
+    attributes:
+      label: When did you clone our code?
+      options:
+        - I cloned the code base after 5/1/23
+        - I cloned the code base before 5/1/23, but have pulled the latest code base
+        - I cloned the code base before 5/1/23, and have not upgraded yet
+    validations:
+      required: true
   - type: textarea
     id: what-happened
     attributes:
@@ -29,15 +37,5 @@ body:
         
         Screenshots:
         You may attach screenshots if it better explains the issue.
-    validations:
-      required: true
-  - type: dropdown
-    id: clone-date
-    attributes:
-      label: When did you clone our code?
-      options:
-        - I cloned the code base after 5/1/23
-        - I cloned the code base before 5/1/23, but have pulled the latest code base
-        - I cloned the code base before 5/1/23, and have not upgraded yet
     validations:
       required: true
