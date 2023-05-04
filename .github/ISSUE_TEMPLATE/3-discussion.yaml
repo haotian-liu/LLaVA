@@ -1,6 +1,6 @@
 name: Questions & Discussions
 description: General discussions or questions about the work
-title: "[Usage] "
+title: "[Discussion] "
 body:
   - type: markdown
     attributes:

@@ -1,0 +1,13 @@
+name: Feature Request
+description: Request for a new feature
+title: "[Feature request] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for your interest in our work.  Please share your thoughts of the new features below.
+  - type: textarea
+    id: feature
+    attributes:
+      label: feature
+      placeholder: Start your thoughts here...
