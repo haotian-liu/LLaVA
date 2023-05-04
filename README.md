@@ -102,6 +102,7 @@ pip install flash-attn
 If you install our package before 4/30/23, please make sure to execute the command below to correctly upgrade to v0.1.  You may try a [clean install](#install) as well.
 
 ```Shell
+git pull
 pip uninstall transformers
 pip install git+https://github.com/huggingface/transformers@cae78c46
 pip install -e .
