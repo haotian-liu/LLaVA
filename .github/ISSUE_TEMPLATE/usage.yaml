@@ -14,7 +14,7 @@ body:
       label: Describe the issue
       description: A clear and concise description of what the bug is.
       placeholder: Tell us what you see!
-      value: ""
+      value: "Issue"
     validations:
       required: true
   - type: textarea
