@@ -1,0 +1,13 @@
+name: Discussions
+description: General discussions about the work
+title: "[Discussion] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for your interest in our work.  For this type of question, it may be more suitable to go to [discussion](https://github.com/haotian-liu/LLaVA/discussions) sections.  If you believe an issue would be better for your request, please continue your post below :)
+  - type: textarea
+    id: discussion
+    attributes:
+      label: Discussion
+      placeholder: Start discussion here...
