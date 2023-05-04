@@ -34,10 +34,10 @@ body:
   - type: dropdown
     id: clone-date
     attributes:
-      label: When did you clone/download our code?
+      label: When did you clone our code?
       options:
-        - I cloned/downloaded the code base after 5/1/23
-        - I cloned/downloaded the code base before 5/1/23, but have pulled the latest code base
-        - I cloned/downloaded the code base before 5/1/23, and have not upgraded yet
+        - I cloned the code base after 5/1/23
+        - I cloned the code base before 5/1/23, but have pulled the latest code base
+        - I cloned the code base before 5/1/23, and have not upgraded yet
     validations:
       required: true
