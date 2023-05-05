@@ -114,7 +114,7 @@ def eval_model(args):
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     if args.mm_projector is None:
         patch_config(model_name)
-        model = LlavaLlamaForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16).cuda()
+        model = LlavaLlamaForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16, use_cache=True).cuda()
         image_processor = CLIPImageProcessor.from_pretrained(model.config.mm_vision_tower, torch_dtype=torch.float16)
 
         mm_use_im_start_end = getattr(model.config, "mm_use_im_start_end", False)
@@ -132,7 +132,7 @@ def eval_model(args):
         image_token_len = (vision_config.image_size // vision_config.patch_size) ** 2
     else:
         # in case of using a pretrained model with only a MLP projector weights
-        model = LlavaLlamaForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16).cuda()
+        model = LlavaLlamaForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16, use_cache=True).cuda()
 
         mm_use_im_start_end = getattr(model.config, "mm_use_im_start_end", False)
         tokenizer.add_tokens([DEFAULT_IMAGE_PATCH_TOKEN], special_tokens=True)
@@ -179,7 +179,10 @@ def eval_model(args):
             image = Image.open(os.path.join(args.image_folder, image_file))
             image_tensor = image_processor.preprocess(image, return_tensors='pt')['pixel_values'][0]
             images = image_tensor.unsqueeze(0).half().cuda()
-            qs = qs + '\n' + DEFAULT_IMAGE_PATCH_TOKEN * image_token_len
+            if getattr(model.config, 'mm_use_im_start_end', False):
+                qs = qs + '\n' + DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_PATCH_TOKEN * image_token_len + DEFAULT_IM_END_TOKEN
+            else:
+                qs = qs + '\n' + DEFAULT_IMAGE_PATCH_TOKEN * image_token_len
             cur_prompt = cur_prompt + '\n' + '<image>'
         else:
             images = None
