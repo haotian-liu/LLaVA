@@ -550,6 +550,94 @@ bash ./scripts/train_lightning.sh {v0,v1}
 | --- | ---: | ---: | ---: | ---: | ---: |
 | LLaVA-Lightning-7B | 128 | 2e-5 | 1 | 2048 | 0 |
 
+### Fine-tuning on ScienceQA
+**NOTE**: Due to that ScienceQA experiments were done earlier, the current checkpoints are trained *without* `<im_start>` and `<im_end>` tokens.  Checkpoints with these tokens will be updated later.  Here we provide our training scripts for the current checkpoints.
+
+<details>
+<summary>1. Pretraining</summary>
+
+```Shell
+torchrun --nnodes=1 --nproc_per_node=8 --master_port=25001 \
+    llava/train/train_mem.py \
+    --model_name_or_path ./checkpoints/llama-vicuna-13b \
+    --data_path /path/to/cc3m_595k.json \
+    --image_folder /path/to/cc3m_595k \
+    --vision_tower openai/clip-vit-large-patch14 \
+    --tune_mm_mlp_adapter True \
+    --mm_vision_select_layer -2 \
+    --bf16 True \
+    --output_dir ./checkpoints/llava-13b-pretrain-no_im_start_end_token \
+    --num_train_epochs 1 \
+    --per_device_train_batch_size 16 \
+    --per_device_eval_batch_size 4 \
+    --gradient_accumulation_steps 1 \
+    --evaluation_strategy "no" \
+    --save_strategy "steps" \
+    --save_steps 2400 \
+    --save_total_limit 1 \
+    --learning_rate 2e-3 \
+    --weight_decay 0. \
+    --warmup_ratio 0.03 \
+    --lr_scheduler_type "cosine" \
+    --logging_steps 1 \
+    --tf32 True \
+    --model_max_length 2048 \
+    --gradient_checkpointing True \
+    --lazy_preprocess True \
+    --report_to wandb
+```
+</details>
+
+<details>
+<summary>2. Extract projector features</summary>
+
+```Shell
+python scripts/extract_mm_projector.py \
+  --model_name_or_path ./checkpoints/llava-13b-pretrain-no_im_start_end_token \
+  --output ./checkpoints/mm_projector/llava-13b-pretrain-no_im_start_end_token.bin
+```
+</details>
+
+<details>
+<summary>3. Finetuning</summary>
+
+You may download our pretrained `llava-13b-pretrain-no_im_start_end_token.bin` [here](https://huggingface.co/liuhaotian/LLaVA-13b-pretrain-projector-v0/blob/main/LLaVA-13b-pretrain-projector-v0-CC3M-595K-original_caption-no_im_token.bin).
+
+```Shell
+torchrun --nnodes=1 --nproc_per_node=8 --master_port=25001 \
+    llava/train/train_mem.py \
+    --model_name_or_path /path/to/llama-vicuna-13b \
+    --data_path /path/to/scienceqa/llava_train_QCM-LEPA.json \
+    --image_folder /path/to/scienceqa/images/train \
+    --vision_tower openai/clip-vit-large-patch14 \
+    --pretrain_mm_mlp_adapter ./checkpoints/mm_projector/llava-13b-pretrain-no_im_start_end_token.bin \
+    --mm_vision_select_layer -2 \
+    --bf16 True \
+    --output_dir ./checkpoints/llava-13b-pretrain-no_im_start_end_token-finetune_scienceqa \
+    --num_train_epochs 12 \
+    --per_device_train_batch_size 4 \
+    --per_device_eval_batch_size 4 \
+    --gradient_accumulation_steps 1 \
+    --evaluation_strategy "no" \
+    --save_strategy "steps" \
+    --save_steps 5000 \
+    --save_total_limit 3 \
+    --learning_rate 2e-5 \
+    --weight_decay 0. \
+    --warmup_ratio 0.03 \
+    --lr_scheduler_type "cosine" \
+    --logging_steps 1 \
+    --tf32 True \
+    --fsdp "full_shard auto_wrap" \
+    --fsdp_transformer_layer_cls_to_wrap 'LlamaDecoderLayer' \
+    --model_max_length 2048 \
+    --gradient_checkpointing True \
+    --lazy_preprocess True \
+    --report_to wandb
+```
+</details>
+
+
 ## Acknowledgement
 
 - [Vicuna](https://github.com/lm-sys/FastChat): the codebase we built upon, and our base model Vicuna-13B that has the amazing language capabilities!
