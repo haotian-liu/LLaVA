@@ -53,7 +53,7 @@ class LlavaMPTModel(MPTModel):
             # self.vision_tower = CLIPVisionModel.from_pretrained(config.mm_vision_tower)
 
         if hasattr(config, "use_mm_proj"):
-            self.mm_projector = nn.Linear(config.mm_hidden_size, config.hidden_size)
+            self.mm_projector = nn.Linear(config.mm_hidden_size, config.d_model)
 
     def initialize_vision_modules(self, vision_tower, mm_vision_select_layer,
                                   pretrain_mm_mlp_adapter=None, tune_mm_mlp_adapter=False):
@@ -81,7 +81,7 @@ class LlavaMPTModel(MPTModel):
 
         if pretrain_mm_mlp_adapter is not None:
             mm_projector_weights = torch.load(pretrain_mm_mlp_adapter, map_location='cpu')
-            self.mm_projector.load_state_dict({k.split('.')[-1]: v for k, v in mm_projector_weights.items()})
+            self.mm_projector.load_state_dict({k.split('.')[-1]: v for k, v in mm_projector_weights.items() if 'mm_projector' in k})
 
         return dict(
             image_processor=image_processor,
@@ -266,7 +266,7 @@ class LlavaMPTForCausalLM(MPTForCausalLM):
 
             if pretrain_mm_mlp_adapter:
                 mm_projector_weights = torch.load(pretrain_mm_mlp_adapter, map_location='cpu')
-                embed_tokens_weight = mm_projector_weights['model.embed_tokens.weight']
+                embed_tokens_weight = mm_projector_weights['transformer.wte.weight']
                 assert num_new_tokens == 2
                 if input_embeddings.shape == embed_tokens_weight.shape:
                     input_embeddings[-num_new_tokens:] = embed_tokens_weight[-num_new_tokens:]

@@ -17,7 +17,7 @@ if __name__ == '__main__':
     args = parse_args()
     model_indices = json.load(open(os.path.join(args.model_name_or_path, 'pytorch_model.bin.index.json')))
 
-    keys_to_match = ['mm_projector', 'embed_tokens']
+    keys_to_match = ['mm_projector', 'embed_tokens', 'transformer.wte']
     ckpt_to_key = defaultdict(list)
     for k, v in model_indices['weight_map'].items():
         if any(key_match in k for key_match in keys_to_match):
