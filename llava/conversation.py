@@ -7,6 +7,7 @@ class SeparatorStyle(Enum):
     """Different separator style."""
     SINGLE = auto()
     TWO = auto()
+    MPT = auto()
 
 
 @dataclasses.dataclass
@@ -44,6 +45,16 @@ class Conversation:
                     ret += role + ": " + message + seps[i % 2]
                 else:
                     ret += role + ":"
+            return ret
+        if self.sep_style == SeparatorStyle.MPT:
+            ret = self.system + self.sep
+            for role, message in self.messages:
+                if message:
+                    if type(message) is tuple:
+                        message, _, _ = message
+                    ret += role + message + self.sep
+                else:
+                    ret += role
             return ret
         else:
             raise ValueError(f"Invalid style: {self.sep_style}")
@@ -230,6 +241,18 @@ conv_vicuna_v1_1 = Conversation(
     sep2="</s>",
 )
 
+conv_mpt = Conversation(
+    system="""<|im_start|>system
+A chat between a curious user and an artificial intelligence assistant.
+The assistant gives helpful, detailed, and polite answers to the user's questions.""",
+    roles=("<|im_start|>user\n", "<|im_start|>assistant\n"),
+    version="mpt",
+    messages=(),
+    offset=0,
+    sep_style=SeparatorStyle.MPT,
+    sep="<|im_end|>",
+)
+
 conv_bair_v1 = Conversation(
     system="BEGINNING OF CONVERSATION:",
     roles=("USER", "GPT"),
@@ -307,6 +330,7 @@ conv_templates = {
     "v1": conv_v1_2,
     "bair_v1": conv_bair_v1,
     "vicuna_v1_1": conv_vicuna_v1_1,
+    "mpt": conv_mpt,
 }
 
 

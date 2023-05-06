@@ -29,7 +29,7 @@ from torch.utils.data import Dataset
 from llava.train.llava_trainer import LLaVATrainer
 
 from llava import conversation as conversation_lib
-from llava import LlavaLlamaForCausalLM
+from llava.model import *
 
 from PIL import Image
 import torch.nn as nn
@@ -279,6 +279,77 @@ def preprocess_v1(
         labels=targets,
     )
 
+def preprocess_mpt(
+    sources,
+    tokenizer: transformers.PreTrainedTokenizer,
+) -> Dict:
+    conv = conversation_lib.default_conversation.copy()
+    roles = {"human": conv.roles[0], "gpt": conv.roles[1]}
+
+    # Apply prompt templates
+    conversations = []
+    for i, source in enumerate(sources):
+        if roles[source[0]["from"]] != conv.roles[0]:
+            # Skip the first one if it is not from human
+            source = source[1:]
+
+        conv.messages = []
+        for j, sentence in enumerate(source):
+            role = roles[sentence["from"]]
+            assert role == conv.roles[j % 2], f"{i}"
+            conv.append_message(role, sentence["value"])
+        conversations.append(conv.get_prompt())
+
+    # Tokenize conversations
+    input_ids = tokenizer(
+        conversations,
+        return_tensors="pt",
+        padding="longest",
+        max_length=tokenizer.model_max_length,
+        truncation=True,
+    ).input_ids
+    targets = input_ids.clone()
+    assert conv.sep_style == conversation_lib.SeparatorStyle.MPT
+
+    # Mask targets
+    sep = conv.sep + conv.roles[1]
+    for conversation, target in zip(conversations, targets):
+        total_len = int(target.ne(tokenizer.pad_token_id).sum())
+
+        rounds = conversation.split(conv.sep)
+        re_rounds = [conv.sep.join(rounds[:3])] # system + user + gpt
+        for conv_idx in range(3, len(rounds), 2):
+            re_rounds.append(conv.sep.join(rounds[conv_idx:conv_idx+2]))    # user + gpt
+        cur_len = 0
+        target[:cur_len] = IGNORE_INDEX
+        for i, rou in enumerate(re_rounds):
+            if rou == "":
+                break
+
+            parts = rou.split(sep)
+            if len(parts) != 2:
+                break
+            parts[0] += sep
+            round_len = len(tokenizer(rou).input_ids) + len(tokenizer(conv.sep).input_ids)
+            instruction_len = len(tokenizer(parts[0]).input_ids)
+            target[cur_len : cur_len + instruction_len] = IGNORE_INDEX
+
+            cur_len += round_len
+        target[cur_len:] = IGNORE_INDEX
+
+        if cur_len < tokenizer.model_max_length:
+            if cur_len != total_len:
+                target[:] = IGNORE_INDEX
+                print(
+                    f"WARNING: tokenization mismatch: {cur_len} vs. {total_len}."
+                    f" (ignored)"
+                )
+
+    return dict(
+        input_ids=input_ids,
+        labels=targets,
+    )
+
 
 def preprocess(
     sources: Sequence[str],
@@ -293,6 +364,8 @@ def preprocess(
     """
     if conversation_lib.default_conversation.version == "v1":
         return preprocess_v1(sources, tokenizer)
+    if conversation_lib.default_conversation.version == "mpt":
+        return preprocess_mpt(sources, tokenizer)
     # add end signal and concatenate together
     conversations = []
     for source in sources:
@@ -468,10 +541,24 @@ def train():
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
 
     if model_args.vision_tower is not None:
-        model = LlavaLlamaForCausalLM.from_pretrained(
-            model_args.model_name_or_path,
-            cache_dir=training_args.cache_dir,
-        )
+        if 'mpt' in model_args.model_name_or_path:
+            # config = LlavaMPTConfig.from_pretrained(model_args.model_name_or_path)
+            # config.attn_config['attn_impl'] = 'triton'
+
+            # model = LlavaMPTForCausalLM.from_pretrained(
+            #     model_args.model_name_or_path,
+            #     config=config,
+            #     cache_dir=training_args.cache_dir,
+            # )
+            model = LlavaMPTForCausalLM.from_pretrained(
+                model_args.model_name_or_path,
+                cache_dir=training_args.cache_dir,
+            )
+        else:
+            model = LlavaLlamaForCausalLM.from_pretrained(
+                model_args.model_name_or_path,
+                cache_dir=training_args.cache_dir,
+            )
     else:
         model = transformers.LlamaForCausalLM.from_pretrained(
             model_args.model_name_or_path,
@@ -482,13 +569,21 @@ def train():
     if model_args.freeze_backbone:
         model.model.requires_grad_(False)
 
-    tokenizer = transformers.AutoTokenizer.from_pretrained(
-        model_args.model_name_or_path,
-        cache_dir=training_args.cache_dir,
-        model_max_length=training_args.model_max_length,
-        padding_side="right",
-        use_fast=False,
-    )
+    if 'mpt' in model_args.model_name_or_path:
+        tokenizer = transformers.AutoTokenizer.from_pretrained(
+            model_args.model_name_or_path,
+            cache_dir=training_args.cache_dir,
+            model_max_length=training_args.model_max_length,
+            padding_side="right"
+        )
+    else:
+        tokenizer = transformers.AutoTokenizer.from_pretrained(
+            model_args.model_name_or_path,
+            cache_dir=training_args.cache_dir,
+            model_max_length=training_args.model_max_length,
+            padding_side="right",
+            use_fast=False,
+        )
 
     if model_args.version == "v0":
         if tokenizer.pad_token is None:
@@ -505,10 +600,13 @@ def train():
             })
     else:
         tokenizer.pad_token = tokenizer.unk_token
-        conversation_lib.default_conversation = conversation_lib.conv_templates["vicuna_v1_1"]
+        if "mpt" in model_args.model_name_or_path:
+            conversation_lib.default_conversation = conversation_lib.conv_templates["mpt"]
+        else:
+            conversation_lib.default_conversation = conversation_lib.conv_templates["vicuna_v1_1"]
 
     if model_args.vision_tower is not None:
-        model_vision_dict = model.model.initialize_vision_modules(
+        model_vision_dict = model.get_model().initialize_vision_modules(
             vision_tower=model_args.vision_tower,
             mm_vision_select_layer=model_args.mm_vision_select_layer,
             pretrain_mm_mlp_adapter=model_args.pretrain_mm_mlp_adapter
@@ -518,7 +616,7 @@ def train():
             dtype = torch.float16
         if training_args.bf16:
             dtype = torch.bfloat16
-        model.model.vision_tower[0].to(dtype=dtype, device=training_args.device)
+        model.get_model().vision_tower[0].to(dtype=dtype, device=training_args.device)
         vision_config = model_vision_dict['vision_config']
 
         data_args.image_token_len = model_vision_dict['image_token_len']
@@ -528,12 +626,12 @@ def train():
         model.config.tune_mm_mlp_adapter = training_args.tune_mm_mlp_adapter = model_args.tune_mm_mlp_adapter
         if model_args.tune_mm_mlp_adapter:
             model.requires_grad_(False)
-            for p in model.model.mm_projector.parameters():
+            for p in model.get_model().mm_projector.parameters():
                 p.requires_grad = True
 
         model.config.freeze_mm_mlp_adapter = training_args.freeze_mm_mlp_adapter
         if training_args.freeze_mm_mlp_adapter:
-            for p in model.model.mm_projector.parameters():
+            for p in model.get_model().mm_projector.parameters():
                 p.requires_grad = False
 
         model.config.mm_use_im_start_end = data_args.mm_use_im_start_end = model_args.mm_use_im_start_end
