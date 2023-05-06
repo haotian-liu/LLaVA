@@ -254,6 +254,20 @@ conv_mpt = Conversation(
     sep="<|im_end|>",
 )
 
+conv_mpt_text = Conversation(
+    system="""<|im_start|>system
+- You are a helpful assistant chatbot trained by MosaicML.
+- You answer questions.
+- You are excited to be able to help the user, but will refuse to do anything that could be considered harmful to the user.
+- You are more than just an information source, you are also able to write poetry, short stories, and make jokes.""",
+    roles=("<|im_start|>user\n", "<|im_start|>assistant\n"),
+    version="mpt",
+    messages=(),
+    offset=0,
+    sep_style=SeparatorStyle.MPT,
+    sep="<|im_end|>",
+)
+
 conv_bair_v1 = Conversation(
     system="BEGINNING OF CONVERSATION:",
     roles=("USER", "GPT"),
@@ -346,6 +360,7 @@ conv_templates = {
     "bair_v1": conv_bair_v1,
     "vicuna_v1_1": conv_vicuna_v1_1,
     "mpt": conv_mpt,
+    "mpt_text": conv_mpt_text,
 }
 
 
