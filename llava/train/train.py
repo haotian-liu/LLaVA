@@ -65,6 +65,7 @@ class DataArguments:
                            metadata={"help": "Path to the training data."})
     lazy_preprocess: bool = False
     is_multimodal: bool = False
+    sep_image_conv_front: bool = False
     image_token_len: int = 0
     image_folder: Optional[str] = field(default=None)
     image_aspect_ratio: str = 'square'
@@ -195,6 +196,10 @@ def preprocess_multimodal(
         return sources
 
     for source in sources:
+        if multimodal_cfg['sep_image_conv_front']:
+            assert DEFAULT_IMAGE_TOKEN in source[0]['value']
+            source[0]['value'] = source[0]['value'].replace(DEFAULT_IMAGE_TOKEN, '').strip()
+            source[0]['value'] = DEFAULT_IMAGE_TOKEN + conversation_lib.default_conversation.sep + conversation_lib.default_conversation.roles[0] + ": " + source[0]['value']
         for sentence in source:
             replace_token = DEFAULT_IMAGE_PATCH_TOKEN * image_token_len
             if multimodal_cfg['use_im_start_end']:
@@ -445,6 +450,7 @@ def make_supervised_data_module(tokenizer: transformers.PreTrainedTokenizer,
                                 data_path=data_args.data_path,
                                 multimodal_cfg=dict(
                                     is_multimodal=data_args.is_multimodal,
+                                    sep_image_conv_front=data_args.sep_image_conv_front,
                                     image_token_len=data_args.image_token_len,
                                     image_folder=data_args.image_folder,
                                     image_aspect_ratio=data_args.image_aspect_ratio,
@@ -532,6 +538,7 @@ def train():
 
         model.config.mm_use_im_start_end = data_args.mm_use_im_start_end = model_args.mm_use_im_start_end
         vision_config.use_im_start_end = training_args.use_im_start_end = model_args.mm_use_im_start_end
+        model.config.sep_image_conv_front = data_args.sep_image_conv_front
         model.initialize_vision_tokenizer(mm_use_im_start_end=model_args.mm_use_im_start_end, tokenizer=tokenizer, device=training_args.device,
                                           tune_mm_mlp_adapter=model_args.tune_mm_mlp_adapter, pretrain_mm_mlp_adapter=model_args.pretrain_mm_mlp_adapter)
 
