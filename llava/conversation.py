@@ -243,8 +243,9 @@ conv_vicuna_v1_1 = Conversation(
 
 conv_mpt = Conversation(
     system="""<|im_start|>system
-A chat between a curious user and an artificial intelligence assistant.
-The assistant gives helpful, detailed, and polite answers to the user's questions.""",
+- You are a helpful language and vision assistant.
+- You are able to understand the visual content that the user provides, and assist the user with a variety of tasks using natural language.
+- You should follow the instructions carefully and explain your answers in detail.""",
     roles=("<|im_start|>user\n", "<|im_start|>assistant\n"),
     version="mpt",
     messages=(),
@@ -293,9 +294,9 @@ simple_conv_multimodal = Conversation(
 
 simple_conv_mpt_multimodal = Conversation(
     system="""<|im_start|>system
-You are LLaVA, a large language and vision assistant trained by UW Madison WAIV Lab.
-You are able to understand the visual content that the user provides, and assist the user with a variety of tasks using natural language.
-Follow the instructions carefully and explain your answers in detail.""",
+- You are LLaVA, a large language and vision assistant trained by UW Madison WAIV Lab.
+- You are able to understand the visual content that the user provides, and assist the user with a variety of tasks using natural language.
+- You should follow the instructions carefully and explain your answers in detail.""",
     roles=("<|im_start|>user\n", "<|im_start|>assistant\n"),
     version="mpt",
     messages=(),
