@@ -193,8 +193,12 @@ def http_bot(state, model_selector, temperature, max_new_tokens, request: gr.Req
         if "llava" in model_name.lower():
             if "v1" in model_name:
                 template_name = "llava_v1"
+            elif "mpt" in model_name:
+                template_name = "mpt_multimodal"
             else:
                 template_name = "multimodal"
+        elif "mpt" in model_name:
+            template_name = "mpt_text"
         elif "koala" in model_name: # Hardcode the condition
             template_name = "bair_v1"
         elif "v1" in model_name:    # vicuna v1_1/v1_2
@@ -237,7 +241,7 @@ def http_bot(state, model_selector, temperature, max_new_tokens, request: gr.Req
         "prompt": prompt,
         "temperature": float(temperature),
         "max_new_tokens": min(int(max_new_tokens), 1536),
-        "stop": state.sep if state.sep_style == SeparatorStyle.SINGLE else state.sep2,
+        "stop": state.sep if state.sep_style in [SeparatorStyle.SINGLE, SeparatorStyle.MPT] else state.sep2,
         "images": f'List of {len(state.get_images())} images: {all_image_hash}',
     }
     logger.info(f"==== request ====\n{pload}")

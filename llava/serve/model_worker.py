@@ -22,7 +22,7 @@ from functools import partial
 from llava.constants import WORKER_HEART_BEAT_INTERVAL
 from llava.utils import (build_logger, server_error_msg,
     pretty_print_semaphore)
-from llava import LlavaLlamaForCausalLM
+from llava.model import *
 
 GB = 1 << 30
 
@@ -57,7 +57,12 @@ def load_model(model_path, num_gpus):
 
     tokenizer = AutoTokenizer.from_pretrained(model_path)
     if 'llava' in model_path.lower():
-        model = LlavaLlamaForCausalLM.from_pretrained(model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True, **kwargs)
+        if 'mpt' in model_path.lower():
+            model = LlavaMPTForCausalLM.from_pretrained(model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True, **kwargs)
+        else:
+            model = LlavaLlamaForCausalLM.from_pretrained(model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True, **kwargs)
+    elif 'mpt' in model_path.lower():
+        model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True, trust_remote_code=True, **kwargs)
     else:
         model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True, **kwargs)
 
@@ -72,10 +77,10 @@ def load_model(model_path, num_gpus):
         if mm_use_im_start_end:
             tokenizer.add_tokens([DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN], special_tokens=True)
 
-        vision_tower = model.model.vision_tower[0]
+        vision_tower = model.get_model().vision_tower[0]
         if vision_tower.device.type == 'meta':
             vision_tower = CLIPVisionModel.from_pretrained(vision_tower.config._name_or_path, torch_dtype=torch.float16, low_cpu_mem_usage=True).cuda()
-            model.model.vision_tower[0] = vision_tower
+            model.get_model().vision_tower[0] = vision_tower
         else:
             vision_tower.to(device='cuda', dtype=torch.float16)
         vision_config = vision_tower.config

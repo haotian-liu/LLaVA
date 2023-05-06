@@ -14,17 +14,21 @@
 
 
 from typing import List, Optional, Tuple, Union
+import warnings
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import CrossEntropyLoss
 
+import math
+
 from transformers import AutoConfig, AutoModelForCausalLM, \
-                         LlamaConfig, LlamaModel, LlamaForCausalLM, \
                          CLIPVisionModel, CLIPImageProcessor
 
 from transformers.modeling_outputs import BaseModelOutputWithPast, CausalLMOutputWithPast
+
+from .mpt.modeling_mpt import MPTConfig, MPTForCausalLM, MPTModel
 
 
 DEFAULT_IMAGE_TOKEN = "<image>"
@@ -33,15 +37,15 @@ DEFAULT_IM_START_TOKEN = "<im_start>"
 DEFAULT_IM_END_TOKEN = "<im_end>"
 
 
-class LlavaConfig(LlamaConfig):
-    model_type = "llava"
+class LlavaMPTConfig(MPTConfig):
+    model_type = "llava_mpt"
 
 
-class LlavaLlamaModel(LlamaModel):
-    config_class = LlavaConfig
+class LlavaMPTModel(MPTModel):
+    config_class = LlavaMPTConfig
 
-    def __init__(self, config: LlamaConfig, mm_vision_tower=None, mm_hidden_size=None):
-        super(LlavaLlamaModel, self).__init__(config)
+    def __init__(self, config: MPTConfig, mm_vision_tower=None, mm_hidden_size=None):
+        super(LlavaMPTModel, self).__init__(config)
 
         if hasattr(config, "mm_vision_tower"):
             # HACK: for FSDP
@@ -49,7 +53,7 @@ class LlavaLlamaModel(LlamaModel):
             # self.vision_tower = CLIPVisionModel.from_pretrained(config.mm_vision_tower)
 
         if hasattr(config, "use_mm_proj"):
-            self.mm_projector = nn.Linear(config.mm_hidden_size, config.hidden_size)
+            self.mm_projector = nn.Linear(config.mm_hidden_size, config.d_model)
 
     def initialize_vision_modules(self, vision_tower, mm_vision_select_layer,
                                   pretrain_mm_mlp_adapter=None, tune_mm_mlp_adapter=False):
@@ -73,11 +77,11 @@ class LlavaLlamaModel(LlamaModel):
         self.config.mm_vision_select_layer = mm_vision_select_layer
 
         if not hasattr(self, 'mm_projector'):
-            self.mm_projector = nn.Linear(vision_config.hidden_size, self.config.hidden_size)
+            self.mm_projector = nn.Linear(vision_config.hidden_size, self.config.d_model)
 
         if pretrain_mm_mlp_adapter is not None:
             mm_projector_weights = torch.load(pretrain_mm_mlp_adapter, map_location='cpu')
-            self.mm_projector.load_state_dict({k.split('.')[-1]: v for k, v in mm_projector_weights.items()})
+            self.mm_projector.load_state_dict({k.split('.')[-1]: v for k, v in mm_projector_weights.items() if 'mm_projector' in k})
 
         return dict(
             image_processor=image_processor,
@@ -85,18 +89,7 @@ class LlavaLlamaModel(LlamaModel):
             vision_config=vision_config
         )
 
-    def forward(
-        self,
-        input_ids: torch.LongTensor = None,
-        attention_mask: Optional[torch.Tensor] = None,
-        past_key_values: Optional[List[torch.FloatTensor]] = None,
-        inputs_embeds: Optional[torch.FloatTensor] = None,
-        use_cache: Optional[bool] = None,
-        output_attentions: Optional[bool] = None,
-        output_hidden_states: Optional[bool] = None,
-        images: Optional[torch.FloatTensor] = None,
-        return_dict: Optional[bool] = None,
-    ) -> Union[Tuple, BaseModelOutputWithPast]:
+    def forward(self, input_ids: torch.LongTensor, past_key_values: Optional[List[Tuple[torch.FloatTensor]]]=None, attention_mask: Optional[torch.ByteTensor]=None, prefix_mask: Optional[torch.ByteTensor]=None, sequence_id: Optional[torch.LongTensor]=None, return_dict: Optional[bool]=None, output_attentions: Optional[bool]=None, output_hidden_states: Optional[bool]=None, use_cache: Optional[bool]=None, images=None):
 
         # HACK: replace back original embeddings for LLaVA pretraining
         orig_embeds_params = getattr(self, 'orig_embeds_params', None)
@@ -105,8 +98,7 @@ class LlavaLlamaModel(LlamaModel):
         #     with torch.no_grad():
         #         self.get_input_embeddings().weight.data[:-2] = orig_embeds_params[:-2].data
 
-        if inputs_embeds is None:
-            inputs_embeds = self.embed_tokens(input_ids)
+        inputs_embeds = self.wte(input_ids)
 
         vision_tower = getattr(self, 'vision_tower', None)
         if vision_tower is not None and (input_ids.shape[1] != 1 or self.training) and images is not None:
@@ -175,110 +167,71 @@ class LlavaLlamaModel(LlamaModel):
                     new_input_embeds.append(cur_new_input_embeds)
             inputs_embeds = torch.stack(new_input_embeds, dim=0)
 
-        return super(LlavaLlamaModel, self).forward(
-            input_ids=None, attention_mask=attention_mask, past_key_values=past_key_values,
-            inputs_embeds=inputs_embeds, use_cache=use_cache,
-            output_attentions=output_attentions, output_hidden_states=output_hidden_states,
-            return_dict=return_dict
-        )
+        return super(LlavaMPTModel, self).forward(input_ids=None, past_key_values=past_key_values, attention_mask=attention_mask, prefix_mask=prefix_mask, sequence_id=sequence_id, return_dict=return_dict, output_attentions=output_attentions, output_hidden_states=output_hidden_states, use_cache=use_cache, tok_emb=inputs_embeds)
 
 
-class LlavaLlamaForCausalLM(LlamaForCausalLM):
-    config_class = LlavaConfig
+class LlavaMPTForCausalLM(MPTForCausalLM):
+    config_class = LlavaMPTConfig
+    supports_gradient_checkpointing = True
 
     def __init__(self, config):
-        super(LlamaForCausalLM, self).__init__(config)
-        self.model = LlavaLlamaModel(config)
+        super(MPTForCausalLM, self).__init__(config)
 
-        self.lm_head = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
-
-        # Initialize weights and apply final processing
-        self.post_init()
+        if not config.tie_word_embeddings:
+            raise ValueError('MPTForCausalLM only supports tied word embeddings')
+        self.transformer = LlavaMPTModel(config)
+        self.logit_scale = None
+        if config.logit_scale is not None:
+            logit_scale = config.logit_scale
+            if isinstance(logit_scale, str):
+                if logit_scale == 'inv_sqrt_d_model':
+                    logit_scale = 1 / math.sqrt(config.d_model)
+                else:
+                    raise ValueError(f"logit_scale={logit_scale!r} is not recognized as an option; use numeric value or 'inv_sqrt_d_model'.")
+            self.logit_scale = logit_scale
 
     def get_model(self):
-        return self.model
+        return self.transformer
 
-    def forward(
-        self,
-        input_ids: torch.LongTensor = None,
-        attention_mask: Optional[torch.Tensor] = None,
-        past_key_values: Optional[List[torch.FloatTensor]] = None,
-        inputs_embeds: Optional[torch.FloatTensor] = None,
-        labels: Optional[torch.LongTensor] = None,
-        use_cache: Optional[bool] = None,
-        output_attentions: Optional[bool] = None,
-        output_hidden_states: Optional[bool] = None,
-        images: Optional[torch.FloatTensor] = None,
-        return_dict: Optional[bool] = None,
-    ) -> Union[Tuple, CausalLMOutputWithPast]:
-        output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
-        output_hidden_states = (
-            output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
-        )
-        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+    def _set_gradient_checkpointing(self, module, value=False):
+        if isinstance(module, LlavaMPTModel):
+            module.gradient_checkpointing = value
 
-        # decoder outputs consists of (dec_features, layer_state, dec_hidden, dec_attn)
-        outputs = self.model(
-            input_ids=input_ids,
-            attention_mask=attention_mask,
-            past_key_values=past_key_values,
-            inputs_embeds=inputs_embeds,
-            use_cache=use_cache,
-            output_attentions=output_attentions,
-            output_hidden_states=output_hidden_states,
-            return_dict=return_dict,
-            images=images
-        )
-
-        hidden_states = outputs[0]
-        logits = self.lm_head(hidden_states)
-
+    def forward(self, input_ids: torch.LongTensor, past_key_values: Optional[List[Tuple[torch.FloatTensor]]]=None, attention_mask: Optional[torch.ByteTensor]=None, prefix_mask: Optional[torch.ByteTensor]=None, sequence_id: Optional[torch.LongTensor]=None, labels: Optional[torch.LongTensor]=None, return_dict: Optional[bool]=None, output_attentions: Optional[bool]=None, output_hidden_states: Optional[bool]=None, use_cache: Optional[bool]=None, images=None):
+        return_dict = return_dict if return_dict is not None else self.config.return_dict
+        use_cache = use_cache if use_cache is not None else self.config.use_cache
+        outputs = self.transformer(input_ids=input_ids, past_key_values=past_key_values, attention_mask=attention_mask, prefix_mask=prefix_mask, sequence_id=sequence_id, return_dict=return_dict, output_attentions=output_attentions, output_hidden_states=output_hidden_states, use_cache=use_cache, images=images)
+        logits = F.linear(outputs.last_hidden_state, self.transformer.wte.weight)
+        if self.logit_scale is not None:
+            if self.logit_scale == 0:
+                warnings.warn(f'Multiplying logits by self.logit_scale={self.logit_scale!r}. This will produce uniform (uninformative) outputs.')
+            logits *= self.logit_scale
         loss = None
         if labels is not None:
-            # Shift so that tokens < n predict n
-            shift_logits = logits[..., :-1, :].contiguous()
-            shift_labels = labels[..., 1:].contiguous()
-            # Flatten the tokens
-            loss_fct = CrossEntropyLoss()
-            shift_logits = shift_logits.view(-1, self.config.vocab_size)
-            shift_labels = shift_labels.view(-1)
-            # Enable model/pipeline parallelism
-            shift_labels = shift_labels.to(shift_logits.device)
-            loss = loss_fct(shift_logits, shift_labels)
+            labels = torch.roll(labels, shifts=-1)
+            labels[:, -1] = -100
+            loss = F.cross_entropy(logits.view(-1, logits.size(-1)), labels.to(logits.device).view(-1))
+        return CausalLMOutputWithPast(loss=loss, logits=logits, past_key_values=outputs.past_key_values, hidden_states=outputs.hidden_states)
 
-        if not return_dict:
-            output = (logits,) + outputs[1:]
-            return (loss,) + output if loss is not None else output
-
-        return CausalLMOutputWithPast(
-            loss=loss,
-            logits=logits,
-            past_key_values=outputs.past_key_values,
-            hidden_states=outputs.hidden_states,
-            attentions=outputs.attentions,
-        )
-
-    def prepare_inputs_for_generation(
-        self, input_ids, past_key_values=None, attention_mask=None, inputs_embeds=None, **kwargs
-    ):
-        if past_key_values:
-            input_ids = input_ids[:, -1:]
-
-        # if `inputs_embeds` are passed, we only want to use them in the 1st generation step
-        if inputs_embeds is not None and past_key_values is None:
-            model_inputs = {"inputs_embeds": inputs_embeds}
+    def prepare_inputs_for_generation(self, input_ids, past_key_values=None, inputs_embeds=None, **kwargs):
+        if inputs_embeds is not None:
+            raise NotImplementedError('inputs_embeds is not implemented for MPT yet')
+        attention_mask = kwargs['attention_mask'].bool()
+        if attention_mask[:, -1].sum() != attention_mask.shape[0]:
+            raise NotImplementedError('MPT does not support generation with right padding.')
+        if self.transformer.attn_uses_sequence_id and self.training:
+            sequence_id = torch.zeros_like(input_ids[:1])
         else:
-            model_inputs = {"input_ids": input_ids}
-
-        model_inputs.update(
-            {
-                "past_key_values": past_key_values,
-                "use_cache": kwargs.get("use_cache"),
-                "attention_mask": attention_mask,
-                "images": kwargs.get("images", None),
-            }
-        )
-        return model_inputs
+            sequence_id = None
+        if past_key_values is not None:
+            input_ids = input_ids[:, -1].unsqueeze(-1)
+        if self.transformer.prefix_lm:
+            prefix_mask = torch.ones_like(attention_mask)
+            if kwargs.get('use_cache') == False:
+                raise NotImplementedError('MPT with prefix_lm=True does not support use_cache=False.')
+        else:
+            prefix_mask = None
+        return {'input_ids': input_ids, 'attention_mask': attention_mask, 'prefix_mask': prefix_mask, 'sequence_id': sequence_id, 'past_key_values': past_key_values, 'use_cache': kwargs.get('use_cache', True), "images": kwargs.get("images", None)}
 
     def initialize_vision_tokenizer(self, mm_use_im_start_end, tokenizer, device,
                                     tune_mm_mlp_adapter=False, pretrain_mm_mlp_adapter=None):
@@ -313,7 +266,7 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM):
 
             if pretrain_mm_mlp_adapter:
                 mm_projector_weights = torch.load(pretrain_mm_mlp_adapter, map_location='cpu')
-                embed_tokens_weight = mm_projector_weights['model.embed_tokens.weight']
+                embed_tokens_weight = mm_projector_weights['transformer.wte.weight']
                 assert num_new_tokens == 2
                 if input_embeddings.shape == embed_tokens_weight.shape:
                     input_embeddings[-num_new_tokens:] = embed_tokens_weight[-num_new_tokens:]
@@ -324,5 +277,5 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM):
 
         vision_config.im_patch_token = tokenizer.convert_tokens_to_ids([DEFAULT_IMAGE_PATCH_TOKEN])[0]
 
-AutoConfig.register("llava", LlavaConfig)
-AutoModelForCausalLM.register(LlavaConfig, LlavaLlamaForCausalLM)
+AutoConfig.register("llava_mpt", LlavaMPTConfig)
+AutoModelForCausalLM.register(LlavaMPTConfig, LlavaMPTForCausalLM)

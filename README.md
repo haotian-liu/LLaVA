@@ -15,6 +15,7 @@
 
 ## Release
 
+- [5/6] 🔥 We are releasing [LLaVA-Lighting-MPT-7B-preview](https://huggingface.co/liuhaotian/LLaVA-Lightning-MPT-7B-preview), based on MPT-7B-Chat!  See [here](#LLaVA-MPT-7b) for more details.
 - [5/2] 🔥 We are releasing LLaVA-Lighting!  Train a lite, multimodal GPT-4 with just $40 in 3 hours!  See [here](#train-llava-lightning) for more details.
 - [5/2] We upgrade LLaVA package to v0.1 to support Vicuna v0 and v1 checkpoints, please upgrade following instructions [here](#install).
 - [4/30] Our checkpoint with Vicuna-7b-v0 has been released [here](#llava-7b)! This checkpoint is more accessible and device friendly.  Stay tuned for a major upgrade next week!
@@ -550,6 +551,33 @@ bash ./scripts/train_lightning.sh {v0,v1}
 | --- | ---: | ---: | ---: | ---: | ---: |
 | LLaVA-Lightning-7B | 128 | 2e-5 | 1 | 2048 | 0 |
 
+#### LLaVA-MPT-7b
+Thanks to LLaVA-Lightning, we are able to train a checkpoint based on MPT-7b-Chat on 8x A100 GPUs in just 3 hours, including both pretraining and finetuning.
+
+**NOTE**: This is a research preview of the LLaVA-Lightning based on MPT-7B-chat checkpoint. The usage of the model should comply with MPT-7B-chat license and agreements.
+
+**NOTE**: Unlike other LLaVA models, this model should be used directly without delta weights conversion!
+
+**NOTE**: You need to upgrade to our latest code base to use LLaVA-MPT-7b!
+
+1. Usage
+
+You do not need to download our checkpoint, it will directly load from our Hugging Face model: [`liuhaotian/LLaVA-Lightning-MPT-7B-preview`](https://huggingface.co/liuhaotian/LLaVA-Lightning-MPT-7B-preview).
+
+```Shell
+python -m llava.serve.controller --host 0.0.0.0 --port 10000
+python -m llava.serve.model_worker --host 0.0.0.0 --controller http://localhost:10000 --port 40000 --worker http://localhost:40000 --model-path liuhaotian/LLaVA-Lightning-MPT-7B-preview
+python -m llava.serve.gradio_web_server --controller http://localhost:10000
+```
+
+2. Training
+
+We use the same set of training dataset, and the hyperparameters as other Lightning checkpoints.
+
+```Shell
+bash ./scripts/train_lightning_mpt.sh
+```
+
 ### Fine-tuning on ScienceQA
 **NOTE**: Due to that ScienceQA experiments were done earlier, the current checkpoints are trained *without* `<im_start>` and `<im_end>` tokens.  Checkpoints with these tokens will be updated later.  Here we provide our training scripts for the current checkpoints.
 
@@ -636,7 +664,6 @@ torchrun --nnodes=1 --nproc_per_node=8 --master_port=25001 \
     --report_to wandb
 ```
 </details>
-
 
 ## Acknowledgement
 

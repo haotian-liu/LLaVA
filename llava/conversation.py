@@ -7,6 +7,7 @@ class SeparatorStyle(Enum):
     """Different separator style."""
     SINGLE = auto()
     TWO = auto()
+    MPT = auto()
 
 
 @dataclasses.dataclass
@@ -44,6 +45,16 @@ class Conversation:
                     ret += role + ": " + message + seps[i % 2]
                 else:
                     ret += role + ":"
+            return ret
+        if self.sep_style == SeparatorStyle.MPT:
+            ret = self.system + self.sep
+            for role, message in self.messages:
+                if message:
+                    if type(message) is tuple:
+                        message, _, _ = message
+                    ret += role + message + self.sep
+                else:
+                    ret += role
             return ret
         else:
             raise ValueError(f"Invalid style: {self.sep_style}")
@@ -230,6 +241,33 @@ conv_vicuna_v1_1 = Conversation(
     sep2="</s>",
 )
 
+conv_mpt = Conversation(
+    system="""<|im_start|>system
+- You are a helpful language and vision assistant.
+- You are able to understand the visual content that the user provides, and assist the user with a variety of tasks using natural language.
+- You should follow the instructions carefully and explain your answers in detail.""",
+    roles=("<|im_start|>user\n", "<|im_start|>assistant\n"),
+    version="mpt",
+    messages=(),
+    offset=0,
+    sep_style=SeparatorStyle.MPT,
+    sep="<|im_end|>",
+)
+
+conv_mpt_text = Conversation(
+    system="""<|im_start|>system
+- You are a helpful assistant chatbot trained by MosaicML.
+- You answer questions.
+- You are excited to be able to help the user, but will refuse to do anything that could be considered harmful to the user.
+- You are more than just an information source, you are also able to write poetry, short stories, and make jokes.""",
+    roles=("<|im_start|>user\n", "<|im_start|>assistant\n"),
+    version="mpt",
+    messages=(),
+    offset=0,
+    sep_style=SeparatorStyle.MPT,
+    sep="<|im_end|>",
+)
+
 conv_bair_v1 = Conversation(
     system="BEGINNING OF CONVERSATION:",
     roles=("USER", "GPT"),
@@ -268,6 +306,19 @@ simple_conv_multimodal = Conversation(
     sep="###",
 )
 
+simple_conv_mpt_multimodal = Conversation(
+    system="""<|im_start|>system
+- You are LLaVA, a large language and vision assistant trained by UW Madison WAIV Lab.
+- You are able to understand the visual content that the user provides, and assist the user with a variety of tasks using natural language.
+- You should follow the instructions carefully and explain your answers in detail.""",
+    roles=("<|im_start|>user\n", "<|im_start|>assistant\n"),
+    version="mpt",
+    messages=(),
+    offset=0,
+    sep_style=SeparatorStyle.MPT,
+    sep="<|im_end|>",
+)
+
 simple_conv_legacy = Conversation(
     system="You are LLaVA, a large language model trained by UW Madison WAIV Lab."
            "You are designed to assist human with a variety of tasks using natural language."
@@ -301,12 +352,15 @@ conv_templates = {
     "simple": simple_conv,
     "simple_legacy": simple_conv_legacy,
     "multimodal": simple_conv_multimodal,
+    "mpt_multimodal": simple_conv_mpt_multimodal,
     "llava_v1": conv_llava_v1,
 
     # fastchat
     "v1": conv_v1_2,
     "bair_v1": conv_bair_v1,
     "vicuna_v1_1": conv_vicuna_v1_1,
+    "mpt": conv_mpt,
+    "mpt_text": conv_mpt_text,
 }
 
 
