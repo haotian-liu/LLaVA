@@ -141,6 +141,7 @@ class LlavaLlamaModel(LlamaModel):
                     # multimodal LLM, but the current sample is not multimodal
                     cur_input_embeds = cur_input_embeds + (0. * dummy_image_features).sum()
                     new_input_embeds.append(cur_input_embeds)
+                    cur_image_idx += 1
                     continue
                 if vision_tower.config.use_im_start_end:
                     cur_image_features = image_features[cur_image_idx]
@@ -173,6 +174,7 @@ class LlavaLlamaModel(LlamaModel):
                     else:
                         cur_new_input_embeds = torch.cat((cur_input_embeds[:mask_index_start], cur_image_features, cur_input_embeds[mask_index_start+num_patches:]), dim=0)
                     new_input_embeds.append(cur_new_input_embeds)
+                    cur_image_idx += 1
             inputs_embeds = torch.stack(new_input_embeds, dim=0)
 
         return super(LlavaLlamaModel, self).forward(
