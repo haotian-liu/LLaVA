@@ -66,7 +66,7 @@ torchrun --nnodes=1 --nproc_per_node=8 --master_port=25001 \
     --logging_steps 1 \
     --tf32 True \
     --fsdp "full_shard auto_wrap" \
-    --fsdp_transformer_layer_cls_to_wrap 'LlamaDecoderLayer' \
+    --fsdp_transformer_layer_cls_to_wrap 'MPTBlock' \
     --model_max_length 2048 \
     --gradient_checkpointing True \
     --dataloader_num_workers 4 \
