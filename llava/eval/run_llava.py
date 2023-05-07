@@ -2,10 +2,10 @@ import argparse
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
 import os
-from llava.conversation import conv_templates
+from llava.conversation import conv_templates, SeparatorStyle
 from llava.utils import disable_torch_init
 from transformers import CLIPVisionModel, CLIPImageProcessor, StoppingCriteria
-from llava import LlavaLlamaForCausalLM
+from llava.model import *
 from llava.model.utils import KeywordsStoppingCriteria
 
 from PIL import Image
@@ -36,49 +36,30 @@ def eval_model(args):
     disable_torch_init()
     model_name = os.path.expanduser(args.model_name)
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-    if args.mm_projector is None:
-        model = LlavaLlamaForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16).cuda()
-        image_processor = CLIPImageProcessor.from_pretrained(model.config.mm_vision_tower, torch_dtype=torch.float16)
 
-        mm_use_im_start_end = getattr(model.config, "mm_use_im_start_end", False)
-        tokenizer.add_tokens([DEFAULT_IMAGE_PATCH_TOKEN], special_tokens=True)
-        if mm_use_im_start_end:
-            tokenizer.add_tokens([DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN], special_tokens=True)
-
-        vision_tower = model.model.vision_tower[0]
-        vision_tower.to(device='cuda', dtype=torch.float16)
-        vision_config = vision_tower.config
-        vision_config.im_patch_token = tokenizer.convert_tokens_to_ids([DEFAULT_IMAGE_PATCH_TOKEN])[0]
-        vision_config.use_im_start_end = mm_use_im_start_end
-        if mm_use_im_start_end:
-            vision_config.im_start_token, vision_config.im_end_token = tokenizer.convert_tokens_to_ids([DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN])
-        image_token_len = (vision_config.image_size // vision_config.patch_size) ** 2
+    if "mpt" in model_name.lower():
+        model = LlavaMPTForCausalLM.from_pretrained(model_name, low_cpu_mem_usage=True, torch_dtype=torch.float16, use_cache=True).cuda()
     else:
-        # in case of using a pretrained model with only a MLP projector weights
-        model = LlavaLlamaForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16).cuda()
+        model = LlavaLlamaForCausalLM.from_pretrained(model_name, low_cpu_mem_usage=True, torch_dtype=torch.float16, use_cache=True).cuda()
+    image_processor = CLIPImageProcessor.from_pretrained(model.config.mm_vision_tower, torch_dtype=torch.float16)
 
-        vision_tower = CLIPVisionModel.from_pretrained(args.vision_tower, torch_dtype=torch.float16).cuda()
-        image_processor = CLIPImageProcessor.from_pretrained(args.vision_tower, torch_dtype=torch.float16)
+    mm_use_im_start_end = getattr(model.config, "mm_use_im_start_end", False)
+    tokenizer.add_tokens([DEFAULT_IMAGE_PATCH_TOKEN], special_tokens=True)
+    if mm_use_im_start_end:
+        tokenizer.add_tokens([DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN], special_tokens=True)
 
-        mm_use_im_start_end = getattr(model.config, "mm_use_im_start_end", False)
-        tokenizer.add_tokens([DEFAULT_IMAGE_PATCH_TOKEN], special_tokens=True)
-        if mm_use_im_start_end:
-            tokenizer.add_tokens([DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN], special_tokens=True)
-
-        vision_config = vision_tower.config
-        vision_config.im_patch_token = tokenizer.convert_tokens_to_ids([DEFAULT_IMAGE_PATCH_TOKEN])[0]
-        vision_config.use_im_start_end = mm_use_im_start_end
-        if mm_use_im_start_end:
-            vision_config.im_start_token, vision_config.im_end_token = tokenizer.convert_tokens_to_ids([DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN])
-
-        image_token_len = (vision_config.image_size // vision_config.patch_size) ** 2
-
-        mm_projector = torch.nn.Linear(vision_config.hidden_size, model.config.hidden_size)
-        mm_projector_weights = torch.load(args.mm_projector, map_location='cpu')
-        mm_projector.load_state_dict({k.split('.')[-1]: v for k, v in mm_projector_weights.items()})
-
-        model.model.mm_projector = mm_projector.cuda().half()
-        model.model.vision_tower = [vision_tower]
+    vision_tower = model.get_model().vision_tower[0]
+    if vision_tower.device.type == 'meta':
+        vision_tower = CLIPVisionModel.from_pretrained(vision_tower.config._name_or_path, torch_dtype=torch.float16, low_cpu_mem_usage=True).cuda()
+        model.get_model().vision_tower[0] = vision_tower
+    else:
+        vision_tower.to(device='cuda', dtype=torch.float16)
+    vision_config = vision_tower.config
+    vision_config.im_patch_token = tokenizer.convert_tokens_to_ids([DEFAULT_IMAGE_PATCH_TOKEN])[0]
+    vision_config.use_im_start_end = mm_use_im_start_end
+    if mm_use_im_start_end:
+        vision_config.im_start_token, vision_config.im_end_token = tokenizer.convert_tokens_to_ids([DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN])
+    image_token_len = (vision_config.image_size // vision_config.patch_size) ** 2
 
     qs = args.query
     if mm_use_im_start_end:
@@ -86,8 +67,21 @@ def eval_model(args):
     else:
         qs = qs + '\n' + DEFAULT_IMAGE_PATCH_TOKEN * image_token_len
 
+    if "v1" in model_name.lower():
+        conv_mode = "llava_v1"
+    elif "mpt" in model_name.lower():
+        conv_mode = "mpt_multimodal"
+    else:
+        conv_mode = "multimodal"
+
+    if args.conv_mode is not None and conv_mode != args.conv_mode:
+        print('[WARNING] the auto inferred conversation mode is {}, while `--conv-mode` is {}, using {}'.format(conv_mode, args.conv_mode, args.conv_mode))
+    else:
+        args.conv_mode = conv_mode
+
     conv = conv_templates[args.conv_mode].copy()
     conv.append_message(conv.roles[0], qs)
+    conv.append_message(conv.roles[1], None)
     prompt = conv.get_prompt()
     inputs = tokenizer([prompt])
 
@@ -96,7 +90,8 @@ def eval_model(args):
 
     input_ids = torch.as_tensor(inputs.input_ids).cuda()
 
-    keywords = ['###']
+    stop_str = conv.sep if conv.sep_style != SeparatorStyle.TWO else conv.sep2
+    keywords = [stop_str]
     stopping_criteria = KeywordsStoppingCriteria(keywords, tokenizer, input_ids)
 
     with torch.inference_mode():
@@ -104,7 +99,7 @@ def eval_model(args):
             input_ids,
             images=image_tensor.unsqueeze(0).half().cuda(),
             do_sample=True,
-            temperature=0.7,
+            temperature=0.2,
             max_new_tokens=1024,
             stopping_criteria=[stopping_criteria])
 
@@ -113,23 +108,10 @@ def eval_model(args):
     if n_diff_input_output > 0:
         print(f'[Warning] {n_diff_input_output} output_ids are not the same as the input_ids')
     outputs = tokenizer.batch_decode(output_ids[:, input_token_len:], skip_special_tokens=True)[0]
-
-    while True:
-        cur_len = len(outputs)
-        outputs = outputs.strip()
-        for pattern in ['###', 'Assistant:', 'Response:']:
-            if outputs.startswith(pattern):
-                outputs = outputs[len(pattern):].strip()
-        if len(outputs) == cur_len:
-            break
-
-    try:
-        index = outputs.index(conv.sep)
-    except ValueError:
-        outputs += conv.sep
-        index = outputs.index(conv.sep)
-
-    outputs = outputs[:index].strip()
+    outputs = outputs.strip()
+    if outputs.endswith(stop_str):
+        outputs = outputs[:-len(stop_str)]
+    outputs = outputs.strip()
     print(outputs)
 
 if __name__ == "__main__":
@@ -137,11 +119,7 @@ if __name__ == "__main__":
     parser.add_argument("--model-name", type=str, default="facebook/opt-350m")
     parser.add_argument("--image-file", type=str, required=True)
     parser.add_argument("--query", type=str, required=True)
-    parser.add_argument("--mm-projector", type=str, default=None)
-    parser.add_argument("--vision-tower", type=str, default=None)
-    parser.add_argument("--conv-mode", type=str, default="multimodal")
-    parser.add_argument("--num-chunks", type=int, default=1)
-    parser.add_argument("--chunk-idx", type=int, default=0)
+    parser.add_argument("--conv-mode", type=str, default=None)
     args = parser.parse_args()
 
     eval_model(args)

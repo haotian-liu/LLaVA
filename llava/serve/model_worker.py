@@ -230,6 +230,13 @@ class ModelWorker:
         temperature = float(params.get("temperature", 1.0))
         max_new_tokens = min(int(params.get("max_new_tokens", 256)), 1024)
         stop_str = params.get("stop", None)
+        stop_idx = None
+        if stop_str is not None:
+            stop_idx = tokenizer(stop_str).input_ids
+            if len(stop_idx) == 1:
+                stop_idx = stop_idx[0]
+            else:
+                stop_idx = None
 
         input_ids = tokenizer(prompt).input_ids
         output_ids = list(input_ids)
@@ -267,7 +274,9 @@ class ModelWorker:
             output_ids.append(token)
             pred_ids.append(token)
 
-            if token == tokenizer.eos_token_id:
+            if stop_idx is not None and token == stop_idx:
+                stopped = True
+            elif token == tokenizer.eos_token_id:
                 stopped = True
             else:
                 stopped = False
