@@ -152,15 +152,11 @@ def add_text(state, text, image, image_process_mode, request: gr.Request):
 
     text = text[:1536]  # Hard cut-off
     if image is not None:
-        multimodal_msg = None
         text = text[:1200]  # Hard cut-off for images
         if '<image>' not in text:
             text = text + '\n<image>'
-
-        if multimodal_msg is not None:
-            return (state, state.to_gradio_chatbot(), multimodal_msg, None) + (
-                no_change_btn,) * 5
         text = (text, image, image_process_mode)
+        state = default_conversation.copy()
     state.append_message(state.roles[0], text)
     state.append_message(state.roles[1], None)
     state.skip_next = False
