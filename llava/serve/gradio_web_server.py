@@ -197,6 +197,8 @@ def http_bot(state, model_selector, temperature, max_new_tokens, request: gr.Req
                 template_name = "mpt_multimodal"
             else:
                 template_name = "multimodal"
+        elif "mpt" in model_name:
+            template_name = "mpt_text"
         elif "koala" in model_name: # Hardcode the condition
             template_name = "bair_v1"
         elif "v1" in model_name:    # vicuna v1_1/v1_2
