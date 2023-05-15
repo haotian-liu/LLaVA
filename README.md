@@ -166,12 +166,6 @@ python -m llava.serve.model_worker --host 0.0.0.0 --controller http://localhost:
 ```
 Wait until the process finishes loading the model and you see "Uvicorn running on ...".
 
-
-#### Send a test message
-```Shell
-python -m llava.serve.test_message --model-name LLaVA-13B-v0 --controller http://localhost:10000
-```
-
 #### Launch a gradio web server.
 ```Shell
 python -m llava.serve.gradio_web_server --controller http://localhost:10000
