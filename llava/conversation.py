@@ -279,13 +279,12 @@ conv_bair_v1 = Conversation(
 )
 
 simple_conv = Conversation(
-    system="You are LLaVA, a large language model trained by UW Madison WAIV Lab, based on LLaMA architecture."
-           "You are designed to assist human with a variety of tasks using natural language."
-           "Follow the instructions carefully.",
+    system="A chat between a curious human and an artificial intelligence assistant. "
+           "The assistant gives helpful, detailed, and polite answers to the human's questions.",
     roles=("Human", "Assistant"),
     messages=(
         ("Human", "Hi!"),
-        ("Assistant", "Hi there!  How can I help you today?\n")
+        ("Assistant", "Hi there! How can I help you today?")
     ),
     offset=2,
     sep_style=SeparatorStyle.SINGLE,
