@@ -14,7 +14,7 @@
 
 
 ## Release
-
+- [5/13] 🔥 Interested in quantifying the zero-shot performance of LLaVA and open-sourced LMM? Please check out the paper ["On the Hidden Mystery of OCR in Large Multimodal Models"](https://arxiv.org/abs/2305.07895), where LLaVA consistently outperforms miniGPT4 on 17 out of 18 datasets, despite LlaVA being trained with an order of magnitude smaller training data.
 - [5/6] 🔥 We are releasing [LLaVA-Lighting-MPT-7B-preview](https://huggingface.co/liuhaotian/LLaVA-Lightning-MPT-7B-preview), based on MPT-7B-Chat!  See [here](#LLaVA-MPT-7b) for more details.
 - [5/2] 🔥 We are releasing LLaVA-Lighting!  Train a lite, multimodal GPT-4 with just $40 in 3 hours!  See [here](#train-llava-lightning) for more details.
 - [5/2] We upgrade LLaVA package to v0.1 to support Vicuna v0 and v1 checkpoints, please upgrade following instructions [here](#install).
