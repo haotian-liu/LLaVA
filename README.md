@@ -94,7 +94,7 @@ pip install -e .
 3. Install additional packages for training cases
 ```
 pip install ninja
-pip install flash-attn
+pip install flash-attn==1.0.2
 ```
 
 ### Upgrade to v0.1
