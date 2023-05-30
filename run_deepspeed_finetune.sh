@@ -1,0 +1,31 @@
+deepspeed --include=localhost:2,3 --master_port 26002 \
+    llava/train/train_mem.py \
+    --deepspeed deepspeed.json \
+    --model_name_or_path ./checkpoints/vicuna-7b-v0 \
+    --data_path ./playground/data/llava_instruct/conv_reason_no_overlap_80k.json \
+    --image_folder /Data/haotian/coco/train2017 \
+    --vision_tower openai/clip-vit-large-patch14 \
+    --pretrain_mm_mlp_adapter ./checkpoints/mm_projector/llava-vicuna-7b-v0-pretrain-cc_595k-1epoch.bin \
+    --mm_vision_select_layer -2 \
+    --mm_use_im_start_end True \
+    --bf16 True \
+    --output_dir ./checkpoints/deepspeed_llava-vicuna-7b-v0-pretrain_cc3m_595k_1e-instruct_80k-lr8e_5-3epoch \
+    --num_train_epochs 3 \
+    --per_device_train_batch_size 64 \
+    --per_device_eval_batch_size 4 \
+    --gradient_accumulation_steps 1 \
+    --evaluation_strategy "no" \
+    --save_strategy "steps" \
+    --save_steps 50 \
+    --save_total_limit 1 \
+    --learning_rate 8e-5 \
+    --weight_decay 0. \
+    --warmup_ratio 0.03 \
+    --lr_scheduler_type "cosine" \
+    --logging_steps 1 \
+    --tf32 True \
+    --model_max_length 2048 \
+    --gradient_checkpointing True \
+    --lazy_preprocess True \
+    --dataloader_num_workers 4 \
+    --report_to tensorboard

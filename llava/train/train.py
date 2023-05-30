@@ -90,6 +90,11 @@ class TrainingArguments(transformers.TrainingArguments):
 def safe_save_model_for_hf_trainer(trainer: transformers.Trainer,
                                    output_dir: str):
     """Collects the state dict and dump to disk."""
+    if trainer.deepspeed:
+        torch.cuda.synchronize()
+        trainer.save_model(output_dir)
+        return
+
     state_dict = trainer.model.state_dict()
     if trainer.args.should_save:
         cpu_state_dict = {
@@ -603,12 +608,7 @@ def train():
             mm_vision_select_layer=model_args.mm_vision_select_layer,
             pretrain_mm_mlp_adapter=model_args.pretrain_mm_mlp_adapter
         )
-        dtype = torch.float32
-        if training_args.fp16:
-            dtype = torch.float16
-        if training_args.bf16:
-            dtype = torch.bfloat16
-        model.get_model().vision_tower[0].to(dtype=dtype, device=training_args.device)
+        model.get_vision_tower().to(dtype=torch.float16, device=training_args.device)
         vision_config = model_vision_dict['vision_config']
 
         data_args.image_token_len = model_vision_dict['image_token_len']

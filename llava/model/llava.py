@@ -45,8 +45,8 @@ class LlavaLlamaModel(LlamaModel):
 
         if hasattr(config, "mm_vision_tower"):
             # HACK: for FSDP
-            self.vision_tower = [CLIPVisionModel.from_pretrained(config.mm_vision_tower)]
-            # self.vision_tower = CLIPVisionModel.from_pretrained(config.mm_vision_tower)
+            # self.vision_tower = [CLIPVisionModel.from_pretrained(config.mm_vision_tower)]
+            self.vision_tower = CLIPVisionModel.from_pretrained(config.mm_vision_tower)
 
         if hasattr(config, "use_mm_proj"):
             self.mm_projector = nn.Linear(config.mm_hidden_size, config.hidden_size)
@@ -60,10 +60,10 @@ class LlavaLlamaModel(LlamaModel):
         if not hasattr(self, 'vision_tower'):
             vision_tower = CLIPVisionModel.from_pretrained(vision_tower)
         else:
-            vision_tower = self.vision_tower[0]
+            vision_tower = self.vision_tower
         vision_tower.requires_grad_(False)
-        vision_tower = vision_tower.to(torch.float16)
-        self.vision_tower = [vision_tower]
+        # vision_tower = vision_tower.to(torch.float16)
+        self.vision_tower = vision_tower
 
         vision_config = vision_tower.config
         num_patches = (vision_config.image_size // vision_config.patch_size) ** 2
@@ -111,7 +111,7 @@ class LlavaLlamaModel(LlamaModel):
         vision_tower = getattr(self, 'vision_tower', None)
         if vision_tower is not None and (input_ids.shape[1] != 1 or self.training) and images is not None:
             # TODO: this is a modified multimodal LLM -- Haotian Liu
-            vision_tower = vision_tower[0]  # HACK: for FSDP
+            vision_tower = vision_tower  # HACK: for FSDP
             with torch.no_grad():
                 if type(images) is list:
                     # variable length images
@@ -123,10 +123,10 @@ class LlavaLlamaModel(LlamaModel):
                         image_feature = select_hidden_state[:, 1:]
                         image_features.append(image_feature)
                 else:
-                    image_forward_outs = vision_tower(images, output_hidden_states=True)
+                    image_forward_outs = vision_tower(images.to(vision_tower.dtype), output_hidden_states=True)
                     select_hidden_state_layer = getattr(self.config, "mm_vision_select_layer", -1)
                     select_hidden_state = image_forward_outs.hidden_states[select_hidden_state_layer]
-                    image_features = select_hidden_state[:, 1:]
+                    image_features = select_hidden_state[:, 1:].to(images.dtype)
             if type(images) is list:
                 image_features = [self.mm_projector(image_feature)[0] for image_feature in image_features]
             else:
@@ -199,6 +199,13 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM):
 
     def get_model(self):
         return self.model
+
+    def get_vision_tower(self):
+        model = self.get_model()
+        vision_tower = model.vision_tower
+        if type(vision_tower) is list:
+            vision_tower = vision_tower[0]
+        return vision_tower
 
     def forward(
         self,
@@ -284,7 +291,7 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM):
 
     def initialize_vision_tokenizer(self, mm_use_im_start_end, tokenizer, device,
                                     tune_mm_mlp_adapter=False, pretrain_mm_mlp_adapter=None):
-        vision_config = self.get_model().vision_tower[0].config
+        vision_config = self.get_vision_tower().config
         vision_config.use_im_start_end = mm_use_im_start_end
         tokenizer.add_tokens([DEFAULT_IMAGE_PATCH_TOKEN], special_tokens=True)
         self.resize_token_embeddings(len(tokenizer))
