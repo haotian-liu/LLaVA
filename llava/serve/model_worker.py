@@ -46,7 +46,7 @@ def heart_beat_worker(controller):
         controller.send_heart_beat()
 
 
-def load_model(model_path, num_gpus):
+def load_model(model_path, model_name, num_gpus):
     if num_gpus == 1:
         kwargs = {}
     else:
@@ -56,19 +56,19 @@ def load_model(model_path, num_gpus):
         }
 
     tokenizer = AutoTokenizer.from_pretrained(model_path)
-    if 'llava' in model_path.lower():
-        if 'mpt' in model_path.lower():
+    if 'llava' in model_name.lower():
+        if 'mpt' in model_name.lower():
             model = LlavaMPTForCausalLM.from_pretrained(model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True, **kwargs)
         else:
             model = LlavaLlamaForCausalLM.from_pretrained(model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True, **kwargs)
-    elif 'mpt' in model_path.lower():
+    elif 'mpt' in model_name.lower():
         model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True, trust_remote_code=True, **kwargs)
     else:
         model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True, **kwargs)
 
     image_processor = None
 
-    if 'llava' in model_path.lower():
+    if 'llava' in model_name.lower():
         from transformers import CLIPImageProcessor, CLIPVisionModel
         image_processor = CLIPImageProcessor.from_pretrained(model.config.mm_vision_tower, torch_dtype=torch.float16)
 
@@ -123,7 +123,7 @@ class ModelWorker:
         logger.info(f"Loading the model {self.model_name} on worker {worker_id} ...")
         self.keep_aspect_ratio = keep_aspect_ratio
         self.tokenizer, self.model, self.image_processor, self.context_len = load_model(
-            model_path, num_gpus)
+            model_path, self.model_name, num_gpus)
         self.is_multimodal = 'llava' in model_path.lower()
 
         if not no_register:
@@ -186,7 +186,7 @@ class ModelWorker:
         prompt = params["prompt"]
         ori_prompt = prompt
         images = params.get("images", None)
-        if images is not None and self.is_multimodal:
+        if images is not None and len(images) > 0 and self.is_multimodal:
             from PIL import Image
             from io import BytesIO
             import base64

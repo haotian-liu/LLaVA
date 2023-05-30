@@ -14,7 +14,7 @@
 
 
 ## Release
-
+- [5/13] 🔥 Interested in quantifying the emerged **zero-shot OCR** performance of LLaVA and open-sourced LMM? Please check out the paper ["On the Hidden Mystery of OCR in Large Multimodal Models"](https://arxiv.org/abs/2305.07895), where LLaVA consistently outperforms miniGPT4 on 17 out of 18 datasets, despite LlaVA being trained with an order of magnitude smaller training data.
 - [5/6] 🔥 We are releasing [LLaVA-Lighting-MPT-7B-preview](https://huggingface.co/liuhaotian/LLaVA-Lightning-MPT-7B-preview), based on MPT-7B-Chat!  See [here](#LLaVA-MPT-7b) for more details.
 - [5/2] 🔥 We are releasing LLaVA-Lighting!  Train a lite, multimodal GPT-4 with just $40 in 3 hours!  See [here](#train-llava-lightning) for more details.
 - [5/2] We upgrade LLaVA package to v0.1 to support Vicuna v0 and v1 checkpoints, please upgrade following instructions [here](#install).
@@ -94,7 +94,7 @@ pip install -e .
 3. Install additional packages for training cases
 ```
 pip install ninja
-pip install flash-attn
+pip install flash-attn==1.0.2
 ```
 
 ### Upgrade to v0.1
@@ -165,12 +165,6 @@ If your the VRAM of your GPU is less than 24GB (e.g., RTX 3090, RTX 4090, etc.),
 python -m llava.serve.model_worker --host 0.0.0.0 --controller http://localhost:10000 --port 40000 --worker http://localhost:40000 --model-path ./checkpoints/LLaVA-13B-v0 --multi-modal --num-gpus 2
 ```
 Wait until the process finishes loading the model and you see "Uvicorn running on ...".
-
-
-#### Send a test message
-```Shell
-python -m llava.serve.test_message --model-name LLaVA-13B-v0 --controller http://localhost:10000
-```
 
 #### Launch a gradio web server.
 ```Shell
