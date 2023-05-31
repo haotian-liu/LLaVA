@@ -85,10 +85,18 @@ class TrainingArguments(transformers.TrainingArguments):
             "Maximum sequence length. Sequences will be right padded (and possibly truncated)."
         },
     )
-
-
-@dataclass
-class LoraArguments:
+    double_quant: bool = field(
+        default=True,
+        metadata={"help": "Compress the quantization statistics through double quantization."}
+    )
+    quant_type: str = field(
+        default="nf4",
+        metadata={"help": "Quantization data type to use. Should be one of `fp4` or `nf4`."}
+    )
+    bits: int = field(
+        default=16,
+        metadata={"help": "How many bits to use."}
+    )
     lora_enable: bool = False
     lora_r: int = 64
     lora_alpha: int = 16
@@ -97,11 +105,11 @@ class LoraArguments:
     lora_bias: str = "none"
 
 
-def maybe_zero_3(param):
+def maybe_zero_3(param, ignore_status=False):
     from deepspeed import zero
     from deepspeed.runtime.zero.partition_parameters import ZeroParamStatus
     if hasattr(param, "ds_id"):
-        assert param.ds_status == ZeroParamStatus.NOT_AVAILABLE
+        assert param.ds_status == ZeroParamStatus.NOT_AVAILABLE or ignore_status
         with zero.GatheredParameters([param]):
             param = param.data.detach().cpu().clone()
     else:
@@ -139,7 +147,7 @@ def get_peft_state_non_lora_maybe_zero_3(named_params, require_grad_only=True):
     to_return = {k: t for k, t in named_params if "lora_" not in k}
     if require_grad_only:
         to_return = {k: t for k, t in to_return.items() if t.requires_grad}
-    to_return = {k: maybe_zero_3(v).cpu() for k, v in to_return.items()}
+    to_return = {k: maybe_zero_3(v, ignore_status=True).cpu() for k, v in to_return.items()}
     return to_return
 
 
@@ -612,44 +620,73 @@ def make_supervised_data_module(tokenizer: transformers.PreTrainedTokenizer,
 
 def train():
     parser = transformers.HfArgumentParser(
-        (ModelArguments, DataArguments, TrainingArguments, LoraArguments))
-    model_args, data_args, training_args, lora_args = parser.parse_args_into_dataclasses()
+        (ModelArguments, DataArguments, TrainingArguments))
+    model_args, data_args, training_args = parser.parse_args_into_dataclasses()
+    compute_dtype = (torch.float16 if training_args.fp16 else (torch.bfloat16 if training_args.bf16 else torch.float32))
+
+    bnb_model_from_pretrained_args = {}
+    if training_args.bits in [4, 8]:
+        from transformers import BitsAndBytesConfig
+        from peft import prepare_model_for_int8_training
+        bnb_model_from_pretrained_args.update(dict(
+            device_map={"": training_args.device},
+            load_in_4bit=training_args.bits == 4,
+            load_in_8bit=training_args.bits == 8,
+            quantization_config=BitsAndBytesConfig(
+                load_in_4bit=training_args.bits == 4,
+                load_in_8bit=training_args.bits == 8,
+                llm_int8_threshold=6.0,
+                llm_int8_has_fp16_weight=False,
+                bnb_4bit_compute_dtype=compute_dtype,
+                bnb_4bit_use_double_quant=training_args.double_quant,
+                bnb_4bit_quant_type=training_args.quant_type # {'fp4', 'nf4'}
+            )
+        ))
 
     if model_args.vision_tower is not None:
         if 'mpt' in model_args.model_name_or_path:
             model = LlavaMPTForCausalLM.from_pretrained(
                 model_args.model_name_or_path,
                 cache_dir=training_args.cache_dir,
+                **bnb_model_from_pretrained_args
             )
         else:
             model = LlavaLlamaForCausalLM.from_pretrained(
                 model_args.model_name_or_path,
                 cache_dir=training_args.cache_dir,
+                **bnb_model_from_pretrained_args
             )
     else:
         model = transformers.LlamaForCausalLM.from_pretrained(
             model_args.model_name_or_path,
             cache_dir=training_args.cache_dir,
+            **bnb_model_from_pretrained_args
         )
     model.config.use_cache = False
 
     if model_args.freeze_backbone:
         model.model.requires_grad_(False)
 
-    if lora_args.lora_enable:
+    if training_args.bits in [4, 8]:
+        model.config.torch_dtype=(torch.float32 if training_args.fp16 else (torch.bfloat16 if training_args.bf16 else torch.float32))
+        model = prepare_model_for_int8_training(model, use_gradient_checkpointing=training_args.gradient_checkpointing)
+
+    if training_args.lora_enable:
         from peft import LoraConfig, get_peft_model
         lora_config = LoraConfig(
-            r=lora_args.lora_r,
-            lora_alpha=lora_args.lora_alpha,
+            r=training_args.lora_r,
+            lora_alpha=training_args.lora_alpha,
             target_modules=find_all_linear_names(model),
-            lora_dropout=lora_args.lora_dropout,
-            bias=lora_args.lora_bias,
+            lora_dropout=training_args.lora_dropout,
+            bias=training_args.lora_bias,
             task_type="CAUSAL_LM",
         )
-        if training_args.bf16:
-            model.to(torch.bfloat16)
-        if training_args.fp16:
-            model.to(torch.float16)
+        if training_args.bits == 16:
+            if training_args.bf16:
+                model.to(torch.bfloat16)
+            if training_args.fp16:
+                model.to(torch.float16)
+        logging.warning("Adding LoRA adapters...")
         model = get_peft_model(model, lora_config)
 
     if 'mpt' in model_args.model_name_or_path:
@@ -712,6 +749,9 @@ def train():
             for p in model.get_model().mm_projector.parameters():
                 p.requires_grad = False
 
+        if training_args.bits in [4, 8]:
+            model.get_model().mm_projector.to(dtype=compute_dtype, device=training_args.device)
+
         model.config.mm_use_im_start_end = data_args.mm_use_im_start_end = model_args.mm_use_im_start_end
         vision_config.use_im_start_end = training_args.use_im_start_end = model_args.mm_use_im_start_end
         model.config.sep_image_conv_front = data_args.sep_image_conv_front
@@ -737,6 +777,19 @@ def train():
 
                 FSDP.__init__ = patch_FSDP_use_orig_params(FSDP.__init__)
 
+    if training_args.bits in [4, 8]:
+        from peft.tuners.lora import LoraLayer
+        for name, module in model.named_modules():
+            if isinstance(module, LoraLayer):
+                if training_args.bf16:
+                    module = module.to(torch.bfloat16)
+            if 'norm' in name:
+                module = module.to(torch.float32)
+            if 'lm_head' in name or 'embed_tokens' in name:
+                if hasattr(module, 'weight'):
+                    if training_args.bf16 and module.weight.dtype == torch.float32:
+                        module = module.to(torch.bfloat16)
+
     data_module = make_supervised_data_module(tokenizer=tokenizer,
                                               data_args=data_args)
     trainer = LLaVATrainer(model=model,
@@ -750,9 +803,9 @@ def train():
         trainer.train()
     trainer.save_state()
 
-    if lora_args.lora_enable:
+    if training_args.lora_enable:
         state_dict = get_peft_state_maybe_zero_3(
-            model.named_parameters(), lora_args.lora_bias
+            model.named_parameters(), training_args.lora_bias
         )
         non_lora_state_dict = get_peft_state_non_lora_maybe_zero_3(
             model.named_parameters()
