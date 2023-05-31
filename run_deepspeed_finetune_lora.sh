@@ -1,6 +1,7 @@
 deepspeed --include=localhost:4,5,6,7 --master_port 26003 \
     llava/train/train_mem.py \
     --deepspeed deepspeed.json \
+    --lora_enable True \
     --model_name_or_path ./checkpoints/vicuna-7b-v0 \
     --data_path ./playground/data/llava_instruct/conv_reason_no_overlap_80k.json \
     --image_folder /Data/haotian/coco/train2017 \
