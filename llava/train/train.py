@@ -90,12 +90,9 @@ class TrainingArguments(transformers.TrainingArguments):
 @dataclass
 class LoraArguments:
     lora_enable: bool = False
-    lora_r: int = 8
+    lora_r: int = 64
     lora_alpha: int = 16
     lora_dropout: float = 0.05
-    lora_target_modules: List[str] = field(
-        default_factory=lambda: ["q_proj", "v_proj"]
-    )
     lora_weight_path: str = ""
     lora_bias: str = "none"
 
@@ -136,6 +133,20 @@ def get_peft_state_maybe_zero_3(named_params, bias):
         raise NotImplementedError
     to_return = {k: maybe_zero_3(v) for k, v in to_return.items()}
     return to_return
+
+
+def find_all_linear_names(model):
+    cls = torch.nn.Linear
+    lora_module_names = set()
+    for name, module in model.named_modules():
+        if isinstance(module, cls):
+            names = name.split('.')
+            lora_module_names.add(names[0] if len(names) == 1 else names[-1])
+
+
+    if 'lm_head' in lora_module_names: # needed for 16-bit
+        lora_module_names.remove('lm_head')
+    return list(lora_module_names)
 
 
 def safe_save_model_for_hf_trainer(trainer: transformers.Trainer,
@@ -622,7 +633,7 @@ def train():
         lora_config = LoraConfig(
             r=lora_args.lora_r,
             lora_alpha=lora_args.lora_alpha,
-            target_modules=lora_args.lora_target_modules,
+            target_modules=find_all_linear_names(model),
             lora_dropout=lora_args.lora_dropout,
             bias=lora_args.lora_bias,
             task_type="CAUSAL_LM",
