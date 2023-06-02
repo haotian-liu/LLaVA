@@ -14,6 +14,13 @@
 
 
 ## Release
+- [6/1] 🔥 We released **LLaVA-Med: Large Language and Vision Assistant for Biomedicine**, a step towards building biomedical domain large language and vision models with GPT-4 level capabilities.  Checkout the [paper](https://arxiv.org/abs/2306.00890) and [page](https://github.com/microsoft/LLaVA-Med).
+<p align="center">
+    <img src="https://github.com/microsoft/LLaVA-Med/blob/5ba196e06e6f2e9f2bc918b6be57de2a7e701306/images/llava_med_pipeline.png" width="90%"> <br>
+    
+  *LLaVA-Med was initialized with the general-domain LLaVA and then continuously trained in a curriculum learning fashion (first biomedical concept alignment then full-blown instruction-tuning). We evaluated LLaVA-Med on standard visual conversation and question answering tasks.*
+</p>
+
 - [5/13] 🔥 Interested in quantifying the emerged **zero-shot OCR** performance of LLaVA and open-sourced LMM? Please check out the paper ["On the Hidden Mystery of OCR in Large Multimodal Models"](https://arxiv.org/abs/2305.07895), where LLaVA consistently outperforms miniGPT4 on 17 out of 18 datasets, despite LlaVA being trained with an order of magnitude smaller training data.
 - [5/6] 🔥 We are releasing [LLaVA-Lighting-MPT-7B-preview](https://huggingface.co/liuhaotian/LLaVA-Lightning-MPT-7B-preview), based on MPT-7B-Chat!  See [here](#LLaVA-MPT-7b) for more details.
 - [5/2] 🔥 We are releasing LLaVA-Lighting!  Train a lite, multimodal GPT-4 with just $40 in 3 hours!  See [here](#train-llava-lightning) for more details.
