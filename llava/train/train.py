@@ -105,11 +105,13 @@ class TrainingArguments(transformers.TrainingArguments):
     lora_bias: str = "none"
 
 
-def maybe_zero_3(param, ignore_status=False):
+def maybe_zero_3(param, ignore_status=False, name=None):
     from deepspeed import zero
     from deepspeed.runtime.zero.partition_parameters import ZeroParamStatus
     if hasattr(param, "ds_id"):
-        assert param.ds_status == ZeroParamStatus.NOT_AVAILABLE or ignore_status
+        if param.ds_status == ZeroParamStatus.NOT_AVAILABLE:
+            if not ignore_status:
+                logging.warning(f"{name}: param.ds_status != ZeroParamStatus.NOT_AVAILABLE: {param.ds_status}")
         with zero.GatheredParameters([param]):
             param = param.data.detach().cpu().clone()
     else:
@@ -139,7 +141,7 @@ def get_peft_state_maybe_zero_3(named_params, bias):
                 to_return[bias_name] = t
     else:
         raise NotImplementedError
-    to_return = {k: maybe_zero_3(v) for k, v in to_return.items()}
+    to_return = {k: maybe_zero_3(v, name=k) for k, v in to_return.items()}
     return to_return
 
 
