@@ -737,7 +737,8 @@ def train():
         model_vision_dict = model.get_model().initialize_vision_modules(
             vision_tower=model_args.vision_tower,
             mm_vision_select_layer=model_args.mm_vision_select_layer,
-            pretrain_mm_mlp_adapter=model_args.pretrain_mm_mlp_adapter
+            pretrain_mm_mlp_adapter=model_args.pretrain_mm_mlp_adapter,
+            fsdp=training_args.fsdp
         )
         model.get_vision_tower().to(dtype=torch.float16, device=training_args.device)
         vision_config = model_vision_dict['vision_config']
