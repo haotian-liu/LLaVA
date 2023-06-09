@@ -7,6 +7,8 @@ import tqdm
 import ray
 import time
 
+NUM_SECONDS_TO_SLEEP = 5
+
 @ray.remote(num_cpus=4)
 def get_eval(content: str, max_tokens: int):
     while True:
@@ -28,7 +30,7 @@ def get_eval(content: str, max_tokens: int):
             pass
         except Exception as e:
             print(e)
-        time.sleep(1)
+        time.sleep(NUM_SECONDS_TO_SLEEP)
 
     print('success!')
     return response['choices'][0]['message']['content']
@@ -105,7 +107,7 @@ if __name__ == '__main__':
         idx += 1
         handles.append(get_eval.remote(content, args.max_tokens))
         # To avoid the rate limit set by OpenAI
-        time.sleep(1)
+        time.sleep(NUM_SECONDS_TO_SLEEP)
 
     reviews = ray.get(handles)
     for idx, review in enumerate(reviews):
