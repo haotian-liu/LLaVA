@@ -1,23 +1,29 @@
-deepspeed --include=localhost:0,1,2,3 --master_port 26002 \
+#!/bin/bash
+
+PROMPT_VERSION=v1
+
+MODEL="30b"
+PORT=26000
+GPUS="0,1,2,3,4,5,6,7"
+
+deepspeed --include=localhost:$GPUS --master_port $PORT \
     llava/train/train_mem.py \
     --deepspeed deepspeed.json \
-    --model_name_or_path ./checkpoints/llama_hf/llama_13b \
-    --data_path ./playground/data/llava_instruct/conv_reason_no_overlap_80k.json \
-    --image_folder /Data/haotian/coco/train2017 \
-    --vision_tower openai/clip-vit-large-patch14 \
-    --mm_vision_select_layer -2 \
-    --mm_use_im_start_end True \
+    --lora_enable True \
+    --model_name_or_path ./checkpoints/llama_hf/llama_$MODEL \
+    --version $PROMPT_VERSION \
+    --data_path ./playground/data/sg_90k_clean_new_splitlong.json \
     --bf16 True \
-    --output_dir ./checkpoints/deepspeed_llava_dev_finetune \
-    --num_train_epochs 1 \
+    --output_dir ./checkpoints/deepspeed_llama-$MODEL-$PROMPT_VERSION-sg90k_clean_splitlong-finetune_lora \
+    --num_train_epochs 3 \
     --per_device_train_batch_size 8 \
     --per_device_eval_batch_size 4 \
     --gradient_accumulation_steps 1 \
     --evaluation_strategy "no" \
     --save_strategy "steps" \
-    --save_steps 5000 \
+    --save_steps 50000 \
     --save_total_limit 1 \
-    --learning_rate 2e-5 \
+    --learning_rate 2e-4 \
     --weight_decay 0. \
     --warmup_ratio 0.03 \
     --lr_scheduler_type "cosine" \
@@ -27,4 +33,4 @@ deepspeed --include=localhost:0,1,2,3 --master_port 26002 \
     --gradient_checkpointing True \
     --lazy_preprocess True \
     --dataloader_num_workers 4 \
-    --report_to tensorboard
+    --report_to wandb

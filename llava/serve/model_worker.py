@@ -5,6 +5,7 @@ import argparse
 import asyncio
 import dataclasses
 import logging
+import os
 import json
 import time
 from typing import List, Union
@@ -14,7 +15,7 @@ import uuid
 from fastapi import FastAPI, Request, BackgroundTasks
 from fastapi.responses import StreamingResponse
 import requests
-from transformers import AutoTokenizer, AutoModelForCausalLM
+from transformers import AutoTokenizer, AutoModelForCausalLM, AutoConfig
 import torch
 import uvicorn
 from functools import partial
@@ -46,7 +47,7 @@ def heart_beat_worker(controller):
         controller.send_heart_beat()
 
 
-def load_model(model_path, model_name, num_gpus):
+def load_model(model_path, model_base, model_name, num_gpus):
     if num_gpus == 1:
         kwargs = {}
     else:
@@ -55,16 +56,43 @@ def load_model(model_path, model_name, num_gpus):
             "max_memory": {i: "13GiB" for i in range(num_gpus)},
         }
 
-    tokenizer = AutoTokenizer.from_pretrained(model_path)
-    if 'llava' in model_name.lower():
-        if 'mpt' in model_name.lower():
-            model = LlavaMPTForCausalLM.from_pretrained(model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True, **kwargs)
-        else:
-            model = LlavaLlamaForCausalLM.from_pretrained(model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True, **kwargs)
-    elif 'mpt' in model_name.lower():
-        model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True, trust_remote_code=True, **kwargs)
+    if 'lora' in model_name.lower():
+        lora_cfg_pretrained = AutoConfig.from_pretrained(model_path)
+        tokenizer = AutoTokenizer.from_pretrained(model_base)
+        print('Loading LLaVA from base model...')
+        model = LlavaLlamaForCausalLM.from_pretrained(model_base, low_cpu_mem_usage=True, config=lora_cfg_pretrained, torch_dtype=torch.float16)
+        token_num, tokem_dim = model.lm_head.out_features, model.lm_head.in_features
+        model.lm_head.weight = torch.nn.Parameter(torch.empty(token_num, tokem_dim))
+        model.model.embed_tokens.weight = torch.nn.Parameter(torch.empty(token_num, tokem_dim))
+
+        print('Loading LLaVA trainable weights...')
+        non_lora_trainables = torch.load(os.path.join(model_path, 'non_lora_trainables.bin'), map_location='cpu')
+        non_lora_trainables = {(k[11:] if k.startswith('base_model.') else k): v for k, v in non_lora_trainables.items()}
+        if any(k.startswith('model.model.embed_tokens') for k in non_lora_trainables):
+            non_lora_trainables = {(k[6:] if k.startswith('model.') else k): v for k, v in non_lora_trainables.items()}
+        non_lora_trainables = {k: v.to(torch.float16) for k, v in non_lora_trainables.items()}
+        model.load_state_dict(non_lora_trainables, strict=False)
+
+        from peft import PeftModel
+        print('Loading LoRA weights...')
+        model = PeftModel.from_pretrained(model, model_path)
+        print('Merging LoRA weights...')
+        model = model.merge_and_unload()
+        print('Convert to FP16...')
+        model.to(torch.float16)
+        print('Moving to CUDA...')
+        model = model.cuda()
     else:
-        model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True, **kwargs)
+        tokenizer = AutoTokenizer.from_pretrained(model_path)
+        if 'llava' in model_name.lower():
+            if 'mpt' in model_name.lower():
+                model = LlavaMPTForCausalLM.from_pretrained(model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True, **kwargs)
+            else:
+                model = LlavaLlamaForCausalLM.from_pretrained(model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True, **kwargs)
+        elif 'mpt' in model_name.lower():
+            model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True, trust_remote_code=True, **kwargs)
+        else:
+            model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True, **kwargs)
 
     image_processor = None
 
@@ -103,7 +131,7 @@ def load_model(model_path, model_name, num_gpus):
 class ModelWorker:
     def __init__(self, controller_addr, worker_addr,
                  worker_id, no_register,
-                 model_path, model_name,
+                 model_path, model_base, model_name,
                  keep_aspect_ratio,
                  num_gpus):
         self.controller_addr = controller_addr
@@ -123,7 +151,7 @@ class ModelWorker:
         logger.info(f"Loading the model {self.model_name} on worker {worker_id} ...")
         self.keep_aspect_ratio = keep_aspect_ratio
         self.tokenizer, self.model, self.image_processor, self.context_len = load_model(
-            model_path, self.model_name, num_gpus)
+            model_path, model_base, self.model_name, num_gpus)
         self.is_multimodal = 'llava' in model_path.lower()
 
         if not no_register:
@@ -360,6 +388,7 @@ if __name__ == "__main__":
     parser.add_argument("--controller-address", type=str,
         default="http://localhost:21001")
     parser.add_argument("--model-path", type=str, default="facebook/opt-350m")
+    parser.add_argument("--model-base", type=str, default=None)
     parser.add_argument("--model-name", type=str)
     parser.add_argument("--multi-modal", action="store_true", help="Multimodal mode is automatically detected with model name, please make sure `llava` is included in the model path.")
     parser.add_argument("--keep-aspect-ratio", action="store_true")
@@ -378,6 +407,7 @@ if __name__ == "__main__":
                          worker_id,
                          args.no_register,
                          args.model_path,
+                         args.model_base,
                          args.model_name,
                          args.keep_aspect_ratio,
                          args.num_gpus)
