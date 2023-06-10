@@ -39,7 +39,7 @@ import torch.nn as nn
 IGNORE_INDEX = -100
 DEFAULT_PAD_TOKEN = "[PAD]"
 DEFAULT_EOS_TOKEN = "</s>"
-DEFAULT_BOS_TOKEN = "</s>"
+DEFAULT_BOS_TOKEN = "<s>"
 DEFAULT_UNK_TOKEN = "<unk>"
 DEFAULT_IMAGE_TOKEN = "<image>"
 DEFAULT_IMAGE_PATCH_TOKEN = "<im_patch>"
@@ -716,12 +716,7 @@ def train():
         )
 
     if model_args.version == "v0":
-        if tokenizer.pad_token is None:
-            smart_tokenizer_and_embedding_resize(
-                special_tokens_dict=dict(pad_token=DEFAULT_PAD_TOKEN),
-                tokenizer=tokenizer,
-                model=model,
-            )
+        tokenizer.pad_token = tokenizer.unk_token
         if "llama" in model_args.model_name_or_path:
             tokenizer.add_special_tokens({
                 "eos_token": DEFAULT_EOS_TOKEN,
