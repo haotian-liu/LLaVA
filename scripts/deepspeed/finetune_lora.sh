@@ -1,22 +1,25 @@
 #!/bin/bash
 
+WEIGHT_VERSION=v1-1
 PROMPT_VERSION=v1
-
-MODEL="30b"
-PORT=26000
-GPUS="0,1,2,3,4,5,6,7"
+MODEL_VERSION="7b"
 
 deepspeed --include=localhost:$GPUS --master_port $PORT \
     llava/train/train_mem.py \
     --deepspeed deepspeed.json \
     --lora_enable True \
-    --model_name_or_path ./checkpoints/llama_hf/llama_$MODEL \
+    --model_name_or_path ./checkpoints/vicuna-$MODEL_VERSION-$WEIGHT_VERSION \
     --version $PROMPT_VERSION \
-    --data_path ./playground/data/sg_90k_clean_new_splitlong.json \
+    --data_path ./playground/data/llava_instruct_158k.json \
+    --image_folder /Data/haotian/coco/train2017 \
+    --vision_tower openai/clip-vit-large-patch14 \
+    --pretrain_mm_mlp_adapter ./checkpoints/mm_projector/deepspeed_llava-$MODEL_VERSION-$WEIGHT_VERSION-pretrain.bin \
+    --mm_vision_select_layer -2 \
+    --mm_use_im_start_end True \
     --bf16 True \
-    --output_dir ./checkpoints/deepspeed_llama-$MODEL-$PROMPT_VERSION-sg90k_clean_splitlong-finetune_lora \
+    --output_dir ./checkpoints/deepspeed_llava-$MODEL_VERSION-$WEIGHT_VERSION-finetune_lora \
     --num_train_epochs 3 \
-    --per_device_train_batch_size 8 \
+    --per_device_train_batch_size 4 \
     --per_device_eval_batch_size 4 \
     --gradient_accumulation_steps 1 \
     --evaluation_strategy "no" \
