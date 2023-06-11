@@ -65,7 +65,7 @@ def load_model(model_path, model_base, model_name, num_gpus):
         model.lm_head.weight = torch.nn.Parameter(torch.empty(token_num, tokem_dim))
         model.model.embed_tokens.weight = torch.nn.Parameter(torch.empty(token_num, tokem_dim))
 
-        print('Loading LLaVA trainable weights...')
+        print('Loading additional LLaVA weights...')
         if os.path.exists(os.path.join(model_path, 'non_lora_trainables.bin')):
             non_lora_trainables = torch.load(os.path.join(model_path, 'non_lora_trainables.bin'), map_location='cpu')
         else:

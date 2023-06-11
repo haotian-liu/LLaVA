@@ -188,7 +188,10 @@ def http_bot(state, model_selector, temperature, max_new_tokens, request: gr.Req
         # First round of conversation
         if "llava" in model_name.lower():
             if "v1" in model_name.lower():
-                template_name = "llava_v1"
+                if "lora" in model_name.lower():
+                    template_name = "vicuna_v1_1"
+                else:
+                    template_name = "llava_v1"
             elif "mpt" in model_name.lower():
                 template_name = "mpt_multimodal"
             else:

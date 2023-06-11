@@ -64,7 +64,7 @@ def eval_model(args):
             llama_state_dict = AutoModelForCausalLM.from_pretrained(args.base_model_path, torch_dtype=torch.float16).state_dict()
             model = LlavaLlamaForCausalLM.from_pretrained(args.base_model_path, config=lora_cfg_pretrained, state_dict=llama_state_dict, torch_dtype=torch.float16, ignore_mismatched_sizes=True)
 
-            print('Loading LLaVA trainable weights...')
+            print('Loading additional LLaVA weights...')
             if os.path.exists(os.path.join(model_name, 'non_lora_trainables.bin')):
                 non_lora_trainables = torch.load(os.path.join(model_name, 'non_lora_trainables.bin'), map_location='cpu')
             else:
