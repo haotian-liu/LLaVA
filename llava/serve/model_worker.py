@@ -66,7 +66,18 @@ def load_model(model_path, model_base, model_name, num_gpus):
         model.model.embed_tokens.weight = torch.nn.Parameter(torch.empty(token_num, tokem_dim))
 
         print('Loading LLaVA trainable weights...')
-        non_lora_trainables = torch.load(os.path.join(model_path, 'non_lora_trainables.bin'), map_location='cpu')
+        if os.path.exists(os.path.join(model_path, 'non_lora_trainables.bin')):
+            non_lora_trainables = torch.load(os.path.join(model_path, 'non_lora_trainables.bin'), map_location='cpu')
+        else:
+            # this is probably from HF Hub
+            from huggingface_hub import hf_hub_download
+            def load_from_hf(repo_id, filename, subfolder=None):
+                cache_file = hf_hub_download(
+                    repo_id=repo_id,
+                    filename=filename,
+                    subfolder=subfolder)
+                return torch.load(cache_file, map_location='cpu')
+            non_lora_trainables = load_from_hf(model_path, 'non_lora_trainables.bin')
         non_lora_trainables = {(k[11:] if k.startswith('base_model.') else k): v for k, v in non_lora_trainables.items()}
         if any(k.startswith('model.model.embed_tokens') for k in non_lora_trainables):
             non_lora_trainables = {(k[6:] if k.startswith('model.') else k): v for k, v in non_lora_trainables.items()}
