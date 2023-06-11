@@ -6,7 +6,7 @@ MODEL_VERSION="7b"
 
 deepspeed --include=localhost:$GPUS --master_port $PORT \
     llava/train/train_mem.py \
-    --deepspeed deepspeed.json \
+    --deepspeed /path/to/deepspeed.json \
     --lora_enable True \
     --model_name_or_path ./checkpoints/vicuna-$MODEL_VERSION-$WEIGHT_VERSION \
     --version $PROMPT_VERSION \

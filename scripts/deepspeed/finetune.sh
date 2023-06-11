@@ -5,7 +5,7 @@ PROMPT_VERSION=v1
 MODEL_VERSION="7b"
 
 deepspeed llava/train/train_mem.py \
-    --deepspeed deepspeed.json \
+    --deepspeed /path/to/deepspeed.json \
     --model_name_or_path ./checkpoints/vicuna-$MODEL_VERSION-$WEIGHT_VERSION \
     --version $WEIGHT_VERSION \
     --data_path ./playground/data/llava_instruct_158k.json \

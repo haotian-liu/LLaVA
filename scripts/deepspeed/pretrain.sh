@@ -6,7 +6,7 @@ MODEL_VERSION="7b"
 
 # Pretraining
 deepspeed llava/train/train_mem.py \
-    --deepspeed deepspeed.json \
+    --deepspeed /path/to/deepspeed.json \
     --model_name_or_path ./checkpoints/vicuna-$MODEL_VERSION-$WEIGHT_VERSION \
     --version $WEIGHT_VERSION \
     --data_path /path/to/anno.json \
