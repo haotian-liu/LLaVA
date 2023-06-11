@@ -24,7 +24,7 @@ if __name__ == '__main__':
             if any(key_match in k for key_match in keys_to_match):
                 ckpt_to_key[v].append(k)
     except FileNotFoundError:
-        # model checkpoint saved by DeepSpeed.
+        # Smaller models or model checkpoints saved by DeepSpeed.
         v = 'pytorch_model.bin'
         for k in torch.load(os.path.join(args.model_name_or_path, v), map_location='cpu').keys():
             if any(key_match in k for key_match in keys_to_match):
