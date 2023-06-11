@@ -1,6 +1,8 @@
 # LLaVA (LoRA, Preview)
 
-NOTE: This is a technical preview, and is not yet ready for production use. You need latest code base for LoRA support (instructions [here](https://github.com/haotian-liu/LLaVA#upgrade-to-latest-code-base))
+NOTE: This is a technical preview, and is not yet ready for production use. We are still running hyperparameter search for the LoRA model, and will release the final model soon.  If you'd like to contribute to this, please contact us.
+
+You need latest code base for LoRA support (instructions [here](https://github.com/haotian-liu/LLaVA#upgrade-to-latest-code-base))
 
 ## Demo (Web UI)
 
