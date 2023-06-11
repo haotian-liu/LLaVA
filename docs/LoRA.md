@@ -1,6 +1,6 @@
 # LLaVA (LoRA, Technical Preview)
 
-NOTE: This is a technical preview, and is not yet ready for production use.
+NOTE: This is a technical preview, and is not yet ready for production use. You need latest code base for LoRA support (instructions [here](https://github.com/haotian-liu/LLaVA#upgrade-to-latest-code-base))
 
 ## Demo (Web UI)
 

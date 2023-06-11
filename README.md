@@ -14,6 +14,7 @@
 
 
 ## Release
+- [6/11] 🔥 We released the preview for the mostly requested feature: DeepSpeed and LoRA support!  Please see documentations [here](./docs/LoRA).
 - [6/1] 🔥 We released **LLaVA-Med: Large Language and Vision Assistant for Biomedicine**, a step towards building biomedical domain large language and vision models with GPT-4 level capabilities.  Checkout the [paper](https://arxiv.org/abs/2306.00890) and [page](https://github.com/microsoft/LLaVA-Med).
 - [5/13] 🔥 Interested in quantifying the emerged **zero-shot OCR** performance of LLaVA and open-sourced LMM? Please check out the paper ["On the Hidden Mystery of OCR in Large Multimodal Models"](https://arxiv.org/abs/2305.07895), where LLaVA consistently outperforms miniGPT4 on 17 out of 18 datasets, despite LlaVA being trained with an order of magnitude smaller training data.
 - [5/6] 🔥 We are releasing [LLaVA-Lighting-MPT-7B-preview](https://huggingface.co/liuhaotian/LLaVA-Lightning-MPT-7B-preview), based on MPT-7B-Chat!  See [here](#LLaVA-MPT-7b) for more details.
@@ -38,7 +39,7 @@
 - [Evaluation](#evaluation)
 - [Fine-tuning](#fine-tuning)
 
-## Data Download
+## Data
 
 | Data file name | Size |
 | --- | ---: |
@@ -85,7 +86,7 @@ pip install -e .
 ```
 
 **NOTE**:
-[Update 4/30/23] We have successfully moved LLaVA framework to this repo, without the need of a special `transformers` modified by us.  If you install our repo before `4/30/23`, please reinstall `transformers` following the instructions [here](#upgrade-to-v01).
+[Update 4/30/23] We have successfully moved LLaVA framework to this repo, without the need of a special `transformers` modified by us.  If you install our repo before `4/30/23`, please reinstall `transformers` following the instructions [here](#upgrade-to-latest-code-base).
 
 3. Install additional packages for training cases
 ```
@@ -93,10 +94,10 @@ pip install ninja
 pip install flash-attn==1.0.2
 ```
 
-### Upgrade to v0.1
+### Upgrade to latest code base
 
 **NOTE**:
-If you install our package before 4/30/23, please make sure to execute the command below to correctly upgrade to v0.1.  You may try a [clean install](#install) as well.
+If you install our package before 4/30/23, please make sure to execute the command below to correctly upgrade to the latest code base.  You may try a [clean install](#install) as well.
 
 ```Shell
 git pull
@@ -424,7 +425,7 @@ python llava/train/train_mem.py \
 ### Train LLaVA Lightning
 LLaVA-Lightning can be trained on 8x A100 GPUs in just 3 hours, including both pretraining and finetuning. When using spot instances, it costs just ~$40.
 
-Please make sure to: (1) [install](#install) or [upgrade](#upgrade-to-v01) to the latest code base, and (2) pass the correct model version identifier `v0`/`v1` to ensure the correct conversation template is loaded.
+Please make sure to: (1) [install](#install) or [upgrade](#upgrade-to-latest-code-base) to the latest code base, and (2) pass the correct model version identifier `v0`/`v1` to ensure the correct conversation template is loaded.
 
 ```Shell
 bash ./scripts/train_lightning.sh {v0,v1}
