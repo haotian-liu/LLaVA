@@ -9,7 +9,7 @@ deepspeed llava/train/train_mem.py \
     --model_name_or_path ./checkpoints/vicuna-$MODEL_VERSION-$WEIGHT_VERSION \
     --version $WEIGHT_VERSION \
     --data_path ./playground/data/llava_instruct_158k.json \
-    --image_folder /Data/haotian/coco/train2017 \
+    --image_folder /path/to/coco/train2017 \
     --vision_tower openai/clip-vit-large-patch14 \
     --pretrain_mm_mlp_adapter ./checkpoints/mm_projector/deepspeed_llava-$MODEL_VERSION-$WEIGHT_VERSION-pretrain.bin \
     --mm_vision_select_layer -2 \
