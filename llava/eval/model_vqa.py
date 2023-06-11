@@ -52,10 +52,46 @@ def eval_model(args):
     # Model
     disable_torch_init()
     model_name = os.path.expanduser(args.model_name)
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    if 'lora' in model_name.lower():
+        lora_cfg_pretrained = AutoConfig.from_pretrained(model_name)
+        tokenizer = AutoTokenizer.from_pretrained(args.base_model_path)
+    else:
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
     if args.mm_projector is None:
         patch_config(model_name)
-        model = LlavaLlamaForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16).cuda()
+        if 'lora' in model_name.lower():
+            print('Loading LLaVA from base model...')
+            llama_state_dict = AutoModelForCausalLM.from_pretrained(args.base_model_path, torch_dtype=torch.float16).state_dict()
+            model = LlavaLlamaForCausalLM.from_pretrained(args.base_model_path, config=lora_cfg_pretrained, state_dict=llama_state_dict, torch_dtype=torch.float16, ignore_mismatched_sizes=True)
+
+            print('Loading additional LLaVA weights...')
+            if os.path.exists(os.path.join(model_name, 'non_lora_trainables.bin')):
+                non_lora_trainables = torch.load(os.path.join(model_name, 'non_lora_trainables.bin'), map_location='cpu')
+            else:
+                # this is probably from HF Hub
+                from huggingface_hub import hf_hub_download
+                def load_from_hf(repo_id, filename, subfolder=None):
+                    cache_file = hf_hub_download(
+                        repo_id=repo_id,
+                        filename=filename,
+                        subfolder=subfolder)
+                    return torch.load(cache_file, map_location='cpu')
+                non_lora_trainables = load_from_hf(model_name, 'non_lora_trainables.bin')
+            non_lora_trainables = {(k[11:] if k.startswith('base_model.') else k): v for k, v in non_lora_trainables.items()}
+            if any(k.startswith('model.model.embed_tokens') for k in non_lora_trainables):
+                non_lora_trainables = {(k[6:] if k.startswith('model.') else k): v for k, v in non_lora_trainables.items()}
+            non_lora_trainables = {k: v.to(torch.float16) for k, v in non_lora_trainables.items()}
+            model.load_state_dict(non_lora_trainables, strict=False)
+
+            from peft import PeftModel
+            print('Loading LoRA weights...')
+            model = PeftModel.from_pretrained(model, model_name)
+            print('Merging LoRA weights...')
+            model = model.merge_and_unload()
+            print('Moving to CUDA...')
+            model = model.cuda()
+        else:
+            model = LlavaLlamaForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16, use_cache=True).cuda()
         image_processor = CLIPImageProcessor.from_pretrained(model.config.mm_vision_tower, torch_dtype=torch.float16)
 
         mm_use_im_start_end = getattr(model.config, "mm_use_im_start_end", False)
@@ -73,7 +109,7 @@ def eval_model(args):
         image_token_len = (vision_config.image_size // vision_config.patch_size) ** 2
     else:
         # in case of using a pretrained model with only a MLP projector weights
-        model = LlavaLlamaForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16).cuda()
+        model = LlavaLlamaForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16, use_cache=True).cuda()
 
         vision_tower = CLIPVisionModel.from_pretrained(args.vision_tower, torch_dtype=torch.float16).cuda()
         image_processor = CLIPImageProcessor.from_pretrained(args.vision_tower, torch_dtype=torch.float16)
@@ -113,16 +149,14 @@ def eval_model(args):
         else:
             qs = qs + '\n' + DEFAULT_IMAGE_PATCH_TOKEN * image_token_len
 
-        if args.conv_mode == 'simple_legacy':
-            qs += '\n\n### Response:'
-        # conv = default_conversation.copy()
         conv = conv_templates[args.conv_mode].copy()
         conv.append_message(conv.roles[0], qs)
+        if args.conv_mode != 'simple':
+            conv.append_message(conv.roles[1], "")
         prompt = conv.get_prompt()
         inputs = tokenizer([prompt])
 
         image = Image.open(os.path.join(args.image_folder, image_file))
-        # image.save(os.path.join(save_image_folder, image_file))
         image_tensor = image_processor.preprocess(image, return_tensors='pt')['pixel_values'][0]
 
         input_ids = torch.as_tensor(inputs.input_ids).cuda()
@@ -145,7 +179,10 @@ def eval_model(args):
                             return True
                 return False
 
-        keywords = ['###']
+        if args.conv_mode == 'simple':
+            keywords = ['###']
+        else:
+            keywords = [conv.sep2]
         stopping_criteria = KeywordsStoppingCriteria(keywords, tokenizer, input_ids)
 
         with torch.inference_mode():
@@ -155,15 +192,16 @@ def eval_model(args):
                 do_sample=True,
                 temperature=0.7,
                 max_new_tokens=1024,
+                use_cache=True,
                 stopping_criteria=[stopping_criteria])
 
         input_token_len = input_ids.shape[1]
         n_diff_input_output = (input_ids != output_ids[:, :input_token_len]).sum().item()
         if n_diff_input_output > 0:
             print(f'[Warning] Sample {i}: {n_diff_input_output} output_ids are not the same as the input_ids')
-        outputs = tokenizer.batch_decode(output_ids[:, input_token_len:], skip_special_tokens=True)[0]
+        outputs = tokenizer.batch_decode(output_ids[:, input_token_len:], skip_special_tokens=True)[0].strip()
 
-        if args.conv_mode == 'simple_legacy' or args.conv_mode == 'simple':
+        if args.conv_mode == 'simple':
             while True:
                 cur_len = len(outputs)
                 outputs = outputs.strip()
@@ -173,13 +211,15 @@ def eval_model(args):
                 if len(outputs) == cur_len:
                     break
 
-        try:
-            index = outputs.index(conv.sep)
-        except ValueError:
-            outputs += conv.sep
-            index = outputs.index(conv.sep)
+            try:
+                index = outputs.index(conv.sep)
+            except ValueError:
+                outputs += conv.sep
+                index = outputs.index(conv.sep)
 
-        outputs = outputs[:index].strip()
+            outputs = outputs[:index].strip()
+        else:
+            outputs = outputs.strip()
 
         ans_id = shortuuid.uuid()
         ans_file.write(json.dumps({"question_id": idx,
@@ -194,6 +234,7 @@ def eval_model(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model-name", type=str, default="facebook/opt-350m")
+    parser.add_argument("--base-model-path", type=str, default=None)
     parser.add_argument("--image-folder", type=str, default="")
     parser.add_argument("--question-file", type=str, default="tables/question.jsonl")
     parser.add_argument("--answers-file", type=str, default="answer.jsonl")
