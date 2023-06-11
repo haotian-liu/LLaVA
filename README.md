@@ -563,6 +563,7 @@ torchrun --nnodes=1 --nproc_per_node=8 --master_port=25001 \
 
 - [Vicuna](https://github.com/lm-sys/FastChat): the codebase we built upon, and our base model Vicuna-13B that has the amazing language capabilities!
 
+## Citation
 
 If you find LLaVA useful for your your research and applications, please cite using this BibTeX:
 ```bibtex
