@@ -716,7 +716,12 @@ def train():
         )
 
     if model_args.version == "v0":
-        tokenizer.pad_token = tokenizer.unk_token
+        if tokenizer.pad_token is None:
+            smart_tokenizer_and_embedding_resize(
+                special_tokens_dict=dict(pad_token=DEFAULT_PAD_TOKEN),
+                tokenizer=tokenizer,
+                model=model,
+            )
         if "llama" in model_args.model_name_or_path:
             tokenizer.add_special_tokens({
                 "eos_token": DEFAULT_EOS_TOKEN,
