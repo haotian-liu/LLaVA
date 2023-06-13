@@ -26,6 +26,6 @@ python -m llava.serve.gradio_web_server --controller http://localhost:10000
 
 ## Training
 
-Please see sample training scripts at [`./scripts/deepspeed`](./scripts/deepspeed).
+Please see sample training scripts at [`./scripts/deepspeed`](https://github.com/haotian-liu/LLaVA/tree/main/scripts/deepspeed).
 
-We provide two sample DeepSpeed configs, [`zero3.json`](./scripts/deepspeed/zero3.json) is more like PyTorch FSDP, and [`zero3_offload.json`](./scripts/deepspeed/zero3_offload.json) can further save memory consumption by offloading parameters to CPU. `zero3.json` is usually faster than `zero3_offload.json` but requires more GPU memory, therefore, we recommend trying `zero3.json` first, and if you run out of GPU memory, try `zero3_offload.json`. You can also tweek the `per_device_train_batch_size` and `gradient_accumulation_steps` in the config to save memory, and just to make sure that `per_device_train_batch_size` and `gradient_accumulation_steps` remains the same.
+We provide two sample DeepSpeed configs, [`zero3.json`](https://github.com/haotian-liu/LLaVA/tree/main/scripts/deepspeed/zero3.json) is more like PyTorch FSDP, and [`zero3_offload.json`](https://github.com/haotian-liu/LLaVA/tree/main/scripts/deepspeed/zero3_offload.json) can further save memory consumption by offloading parameters to CPU. `zero3.json` is usually faster than `zero3_offload.json` but requires more GPU memory, therefore, we recommend trying `zero3.json` first, and if you run out of GPU memory, try `zero3_offload.json`. You can also tweek the `per_device_train_batch_size` and `gradient_accumulation_steps` in the config to save memory, and just to make sure that `per_device_train_batch_size` and `gradient_accumulation_steps` remains the same.
