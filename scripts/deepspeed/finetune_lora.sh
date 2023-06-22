@@ -4,8 +4,7 @@ WEIGHT_VERSION=v1-1
 PROMPT_VERSION=v1
 MODEL_VERSION="7b"
 
-deepspeed --include=localhost:$GPUS --master_port $PORT \
-    llava/train/train_mem.py \
+deepspeed llava/train/train_mem.py \
     --deepspeed /path/to/deepspeed.json \
     --lora_enable True \
     --model_name_or_path ./checkpoints/vicuna-$MODEL_VERSION-$WEIGHT_VERSION \
