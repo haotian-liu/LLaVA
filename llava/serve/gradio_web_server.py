@@ -1,5 +1,4 @@
 import argparse
-from collections import defaultdict
 import datetime
 import json
 import os
@@ -13,8 +12,6 @@ from llava.conversation import (default_conversation, conv_templates,
 from llava.constants import LOGDIR
 from llava.utils import (build_logger, server_error_msg,
     violates_moderation, moderation_msg)
-from llava.serve.gradio_patch import Chatbot as grChatbot
-from llava.serve.gradio_css import code_highlight_css
 import hashlib
 
 
@@ -312,21 +309,10 @@ The service is a research preview intended for non-commercial use only, subject 
 """)
 
 
-css = code_highlight_css + """
-pre {
-    white-space: pre-wrap;       /* Since CSS 2.1 */
-    white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
-    white-space: -pre-wrap;      /* Opera 4-6 */
-    white-space: -o-pre-wrap;    /* Opera 7 */
-    word-wrap: break-word;       /* Internet Explorer 5.5+ */
-}
-"""
-
-
 def build_demo(embed_mode):
     textbox = gr.Textbox(show_label=False,
         placeholder="Enter text and press ENTER", visible=False).style(container=False)
-    with gr.Blocks(title="LLaVA", theme=gr.themes.Base(), css=css) as demo:
+    with gr.Blocks(title="LLaVA", theme=gr.themes.Base()) as demo:
         state = gr.State()
 
         if not embed_mode:
@@ -358,7 +344,7 @@ def build_demo(embed_mode):
                     max_output_tokens = gr.Slider(minimum=0, maximum=1024, value=512, step=64, interactive=True, label="Max output tokens",)
 
             with gr.Column(scale=6):
-                chatbot = grChatbot(elem_id="chatbot", label="LLaVA Chatbot", visible=False).style(height=550)
+                chatbot = gr.Chatbot(elem_id="chatbot", label="LLaVA Chatbot", visible=False).style(height=550)
                 with gr.Row():
                     with gr.Column(scale=8):
                         textbox.render()
