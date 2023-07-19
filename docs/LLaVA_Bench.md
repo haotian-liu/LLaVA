@@ -6,7 +6,7 @@
 
 These chatbots are presumably supported by proprietary large mulitmodal models (LMM). Compared with the open-source LMM such as LLaVA, proprietary LMM represent the scaling success upperbound of the current SoTA techniques. They are shared the goal of developing multimodal chatbots that follow human intents to complete various daily-life visual tasks in the wild. While it remains less unexplored how to evaluate multimodal chat ability, it provides useful feedback to study open-source LMMs against the commercial multimodal chatbots. In addition to the *LLaVA-Bench (COCO)* dataset we used to develop the early versions of LLaVA, we are releasing  *LLaVA-Bench (In-the-Wild)* to the community for the public use.
 
-## LLaVA-Bench (In-the-Wild)
+## LLaVA-Bench (In-the-Wild *[Ongoing work])*)
 
 To evaluate the model's capability in more challenging tasks and generalizability to novel domains, we collect a diverse set of 24 images with 60 questions in total, including indoor and outdoor scenes, memes, paintings, sketches, etc, and associate each image with a highly-detailed and manually-curated description and a proper selection of questions. Such design also assesses the model's robustness to different prompts. In this release, we also categorize questions into three categories: conversation (simple QA), detailed description, and complex reasoning. We continue to expand and improve the diversity of the LLaVA-Bench (In-the-Wild).  We mannually query Bing-Chat and Bard to get the responses. 
 
