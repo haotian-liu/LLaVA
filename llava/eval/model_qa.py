@@ -34,7 +34,7 @@ def eval_model(model_name, questions_file, answers_file):
     # Model
     disable_torch_init()
     model_name = os.path.expanduser(model_name)
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
     model = AutoModelForCausalLM.from_pretrained(model_name,
         torch_dtype=torch.float16).cuda()
 
@@ -54,6 +54,7 @@ def eval_model(model_name, questions_file, answers_file):
         output_ids = model.generate(
             input_ids,
             do_sample=True,
+            use_cache=True,
             temperature=0.7,
             max_new_tokens=1024,
             stopping_criteria=[stopping_criteria])

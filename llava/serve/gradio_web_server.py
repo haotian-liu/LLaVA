@@ -151,16 +151,18 @@ def add_text(state, text, image, image_process_mode, request: gr.Request):
     if image is not None:
         text = text[:1200]  # Hard cut-off for images
         if '<image>' not in text:
+            # text = '<Image><image></Image>' + text
             text = text + '\n<image>'
         text = (text, image, image_process_mode)
-        state = default_conversation.copy()
+        if len(state.get_images(return_pil=True)) > 0:
+            state = default_conversation.copy()
     state.append_message(state.roles[0], text)
     state.append_message(state.roles[1], None)
     state.skip_next = False
     return (state, state.to_gradio_chatbot(), "", None) + (disable_btn,) * 5
 
 
-def http_bot(state, model_selector, temperature, max_new_tokens, request: gr.Request):
+def http_bot(state, model_selector, temperature, top_p, max_new_tokens, request: gr.Request):
     logger.info(f"http_bot. ip: {request.client.host}")
     start_tstamp = time.time()
     model_name = model_selector
@@ -173,23 +175,30 @@ def http_bot(state, model_selector, temperature, max_new_tokens, request: gr.Req
     if len(state.messages) == state.offset + 2:
         # First round of conversation
         if "llava" in model_name.lower():
-            if "v1" in model_name.lower():
-                if "lora" in model_name.lower():
-                    template_name = "vicuna_v1_1"
+            if 'llama-2' in model_name.lower():
+                template_name = "llava_llama_2"
+            elif "v1" in model_name.lower():
+                if 'mmtag' in model_name.lower():
+                    template_name = "v1_mmtag"
+                elif 'plain' in model_name.lower() and 'finetune' not in model_name.lower():
+                    template_name = "v1_mmtag"
                 else:
                     template_name = "llava_v1"
             elif "mpt" in model_name.lower():
-                template_name = "mpt_multimodal"
+                template_name = "mpt"
             else:
-                template_name = "multimodal"
+                if 'mmtag' in model_name.lower():
+                    template_name = "v0_mmtag"
+                elif 'plain' in model_name.lower() and 'finetune' not in model_name.lower():
+                    template_name = "v0_mmtag"
+                else:
+                    template_name = "llava_v0"
         elif "mpt" in model_name:
             template_name = "mpt_text"
-        elif "koala" in model_name: # Hardcode the condition
-            template_name = "bair_v1"
-        elif "v1" in model_name:    # vicuna v1_1/v1_2
-            template_name = "vicuna_v1_1"
+        elif "llama-2" in model_name:
+            template_name = "llama_2"
         else:
-            template_name = "v1"
+            template_name = "vicuna_v1"
         new_state = conv_templates[template_name].copy()
         new_state.append_message(new_state.roles[0], state.messages[-2][1])
         new_state.append_message(new_state.roles[1], None)
@@ -225,6 +234,7 @@ def http_bot(state, model_selector, temperature, max_new_tokens, request: gr.Req
         "model": model_name,
         "prompt": prompt,
         "temperature": float(temperature),
+        "top_p": float(top_p),
         "max_new_tokens": min(int(max_new_tokens), 1536),
         "stop": state.sep if state.sep_style in [SeparatorStyle.SINGLE, SeparatorStyle.MPT] else state.sep2,
         "images": f'List of {len(state.get_images())} images: {all_image_hash}',
@@ -298,8 +308,7 @@ The service is a research preview intended for non-commercial use only, subject 
 
 
 def build_demo(embed_mode):
-    textbox = gr.Textbox(show_label=False,
-        placeholder="Enter text and press ENTER", visible=False).style(container=False)
+    textbox = gr.Textbox(show_label=False, placeholder="Enter text and press ENTER", visible=False, container=False)
     with gr.Blocks(title="LLaVA", theme=gr.themes.Base()) as demo:
         state = gr.State()
 
@@ -313,7 +322,8 @@ def build_demo(embed_mode):
                         choices=models,
                         value=models[0] if len(models) > 0 else "",
                         interactive=True,
-                        show_label=False).style(container=False)
+                        show_label=False,
+                        container=False)
 
                 imagebox = gr.Image(type="pil")
                 image_process_mode = gr.Radio(
@@ -329,10 +339,11 @@ def build_demo(embed_mode):
 
                 with gr.Accordion("Parameters", open=False, visible=False) as parameter_row:
                     temperature = gr.Slider(minimum=0.0, maximum=1.0, value=0.2, step=0.1, interactive=True, label="Temperature",)
+                    top_p = gr.Slider(minimum=0.0, maximum=1.0, value=0.7, step=0.1, interactive=True, label="Top P",)
                     max_output_tokens = gr.Slider(minimum=0, maximum=1024, value=512, step=64, interactive=True, label="Max output tokens",)
 
             with gr.Column(scale=6):
-                chatbot = gr.Chatbot(elem_id="chatbot", label="LLaVA Chatbot", visible=False).style(height=550)
+                chatbot = gr.Chatbot(elem_id="chatbot", label="LLaVA Chatbot", visible=False, height=550)
                 with gr.Row():
                     with gr.Column(scale=8):
                         textbox.render()
@@ -361,15 +372,15 @@ def build_demo(embed_mode):
             [state, model_selector], [textbox, upvote_btn, downvote_btn, flag_btn])
         regenerate_btn.click(regenerate, [state, image_process_mode],
             [state, chatbot, textbox, imagebox] + btn_list).then(
-            http_bot, [state, model_selector, temperature, max_output_tokens],
+            http_bot, [state, model_selector, temperature, top_p, max_output_tokens],
             [state, chatbot] + btn_list)
         clear_btn.click(clear_history, None, [state, chatbot, textbox, imagebox] + btn_list)
 
         textbox.submit(add_text, [state, textbox, imagebox, image_process_mode], [state, chatbot, textbox, imagebox] + btn_list
-            ).then(http_bot, [state, model_selector, temperature, max_output_tokens],
+            ).then(http_bot, [state, model_selector, temperature, top_p, max_output_tokens],
                    [state, chatbot] + btn_list)
         submit_btn.click(add_text, [state, textbox, imagebox, image_process_mode], [state, chatbot, textbox, imagebox] + btn_list
-            ).then(http_bot, [state, model_selector, temperature, max_output_tokens],
+            ).then(http_bot, [state, model_selector, temperature, top_p, max_output_tokens],
                    [state, chatbot] + btn_list)
 
         if args.model_list_mode == "once":

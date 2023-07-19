@@ -14,11 +14,12 @@
 
 
 ## Release
-- [6/26] 🔥 [CVPR 2023 Tutorial](https://vlp-tutorial.github.io/) on **Large Multimodal Models: Towards Building and Surpassing Multimodal GPT-4**!  Please check out [[Slides](https://datarelease.blob.core.windows.net/tutorial/vision_foundation_models_2023/slides/Chunyuan_cvpr2023_tutorial_lmm.pdf)] [[Notes](https://arxiv.org/abs/2306.14895)] [[YouTube](https://youtu.be/mkI7EPD1vp8)] [[Bilibli](https://www.bilibili.com/video/BV1Ng4y1T7v3/)].
-- [6/11] 🔥 We released the preview for the mostly requested feature: DeepSpeed and LoRA support!  Please see documentations [here](./docs/LoRA.md).
-- [6/1] 🔥 We released **LLaVA-Med: Large Language and Vision Assistant for Biomedicine**, a step towards building biomedical domain large language and vision models with GPT-4 level capabilities.  Checkout the [paper](https://arxiv.org/abs/2306.00890) and [page](https://github.com/microsoft/LLaVA-Med).
-- [5/13] 🔥 Interested in quantifying the emerged **zero-shot OCR** performance of LLaVA and open-sourced LMM? Please check out the paper ["On the Hidden Mystery of OCR in Large Multimodal Models"](https://arxiv.org/abs/2305.07895), where LLaVA consistently outperforms miniGPT4 on 17 out of 18 datasets, despite LlaVA being trained with an order of magnitude smaller training data.
-- [5/6] 🔥 We are releasing [LLaVA-Lighting-MPT-7B-preview](https://huggingface.co/liuhaotian/LLaVA-Lightning-MPT-7B-preview), based on MPT-7B-Chat!  See [here](#LLaVA-MPT-7b) for more details.
+- [7/19] 🔥 We release a major upgrade, including support for LLaMA-2, LoRA training, 4-/8-bit inference, higher resolution (336x336), and a lot more. We also support and verify training with RTX 3090 and RTX A6000. Check out [LLaVA-from-LLaMA-2](https://github.com/haotian-liu/LLaVA/blob/main/docs/LLaVA_from_LLaMA2.md), [release notes](https://github.com/haotian-liu/LLaVA/blob/main/docs/Release_Notes.md#7192023), and our [model zoo](https://github.com/haotian-liu/LLaVA/blob/main/docs/MODEL_ZOO.md)!
+- [6/26] [CVPR 2023 Tutorial](https://vlp-tutorial.github.io/) on **Large Multimodal Models: Towards Building and Surpassing Multimodal GPT-4**!  Please check out [[Slides](https://datarelease.blob.core.windows.net/tutorial/vision_foundation_models_2023/slides/Chunyuan_cvpr2023_tutorial_lmm.pdf)] [[Notes](https://arxiv.org/abs/2306.14895)] [[YouTube](https://youtu.be/mkI7EPD1vp8)] [[Bilibli](https://www.bilibili.com/video/BV1Ng4y1T7v3/)].
+- [6/11] We released the preview for the mostly requested feature: DeepSpeed and LoRA support!  Please see documentations [here](./docs/LoRA.md).
+- [6/1] We released **LLaVA-Med: Large Language and Vision Assistant for Biomedicine**, a step towards building biomedical domain large language and vision models with GPT-4 level capabilities.  Checkout the [paper](https://arxiv.org/abs/2306.00890) and [page](https://github.com/microsoft/LLaVA-Med).
+- [5/13] Interested in quantifying the emerged **zero-shot OCR** performance of LLaVA and open-sourced LMM? Please check out the paper ["On the Hidden Mystery of OCR in Large Multimodal Models"](https://arxiv.org/abs/2305.07895), where LLaVA consistently outperforms miniGPT4 on 17 out of 18 datasets, despite LlaVA being trained with an order of magnitude smaller training data.
+- [5/6] We are releasing [LLaVA-Lighting-MPT-7B-preview](https://huggingface.co/liuhaotian/LLaVA-Lightning-MPT-7B-preview), based on MPT-7B-Chat!  See [here](#LLaVA-MPT-7b) for more details.
 - [5/2] 🔥 We are releasing LLaVA-Lighting!  Train a lite, multimodal GPT-4 with just $40 in 3 hours!  See [here](#train-llava-lightning) for more details.
 - [5/2] We upgrade LLaVA package to v0.1 to support Vicuna v0 and v1 checkpoints, please upgrade following instructions [here](#install).
 - [4/30] Our checkpoint with Vicuna-7b-v0 has been released [here](#llava-7b)! This checkpoint is more accessible and device friendly.  Stay tuned for a major upgrade next week!
@@ -60,7 +61,7 @@ pip install -e .
 3. Install additional packages for training cases
 ```
 pip install ninja
-pip install flash-attn==1.0.2
+pip install flash-attn --no-build-isolation
 ```
 
 ### Upgrade to latest code base
@@ -359,11 +360,6 @@ For pretraining, we create a concept-balanced subset of LAION-CC-SBU. It consist
 
 For instruction tuning, we create a subset of LLaVA-Instruct-150K. It consists of 80K image-instruction pairs, consisting of 40K conversation and 40K complex reasoning data, with non-overlapping images. Download `llava_instruct_80k.json` [here](https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K/blob/main/llava_instruct_80k.json).
 
-
-```Shell
-bash ./scripts/train_lightning.sh {v0,v1}
-```
-
 #### Hyperparameters
 
 1. Pretraining
@@ -402,10 +398,6 @@ python -m llava.serve.gradio_web_server --controller http://localhost:10000
 2. Training
 
 We use the same set of training dataset, and the hyperparameters as other Lightning checkpoints.
-
-```Shell
-bash ./scripts/train_lightning_mpt.sh
-```
 
 ### ScienceQA
 **NOTE**: Due to that ScienceQA experiments were done earlier, the current checkpoints are trained *without* `<im_start>` and `<im_end>` tokens. Here we provide our training scripts for the current checkpoints.
@@ -569,8 +561,8 @@ python -m llava.eval.model_vqa_science \
     --question-file /path/to/ScienceQA/data/scienceqa/llava_test.json \
     --image-folder /path/to/ScienceQA/data/scienceqa/images/test \
     --answers-file vqa/results/ScienceQA/test_llava-13b.jsonl \
-    --answer-prompter
-    --conv-mode simple
+    --answer-prompter \
+    --conv-mode llava_v0
 ```
 
 (b) Evaluate the generated responses

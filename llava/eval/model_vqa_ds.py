@@ -11,6 +11,8 @@ from llava.model.builder import load_pretrained_model
 from llava.utils import disable_torch_init
 from llava.mm_utils import tokenizer_image_token, get_model_name_from_path, KeywordsStoppingCriteria
 
+import deepspeed
+
 from PIL import Image
 import math
 
@@ -31,8 +33,11 @@ def eval_model(args):
     disable_torch_init()
     model_path = os.path.expanduser(args.model_path)
     model_name = get_model_name_from_path(model_path)
-    tokenizer, model, image_processor, context_len = load_pretrained_model(model_path, args.model_base, model_name)
-
+    tokenizer, model, image_processor, context_len = load_pretrained_model(model_path, args.model_base, model_name, device_map=None)
+    vision_tower = model.model.vision_tower
+    model.model.vision_tower = None
+    model = deepspeed.init_inference(model, mp_size=1, dtype=torch.half, replace_with_kernel_inject=True)
+    model.module.model.vision_tower = vision_tower
     questions = [json.loads(q) for q in open(os.path.expanduser(args.question_file), "r")]
     questions = get_chunk(questions, args.num_chunks, args.chunk_idx)
     answers_file = os.path.expanduser(args.answers_file)
@@ -67,12 +72,10 @@ def eval_model(args):
                 input_ids,
                 images=image_tensor.unsqueeze(0).half().cuda(),
                 do_sample=True,
-                temperature=args.temperature,
-                top_p=args.top_p,
-                num_beams=args.num_beams,
-                # no_repeat_ngram_size=3,
+                temperature=0.2,
                 max_new_tokens=1024,
-                use_cache=True)
+                use_cache=True,
+                stopping_criteria=[stopping_criteria])
 
         input_token_len = input_ids.shape[1]
         n_diff_input_output = (input_ids != output_ids[:, :input_token_len]).sum().item()
@@ -104,9 +107,7 @@ if __name__ == "__main__":
     parser.add_argument("--conv-mode", type=str, default="llava_v1")
     parser.add_argument("--num-chunks", type=int, default=1)
     parser.add_argument("--chunk-idx", type=int, default=0)
-    parser.add_argument("--temperature", type=float, default=0.2)
-    parser.add_argument("--top_p", type=float, default=None)
-    parser.add_argument("--num_beams", type=int, default=1)
+    parser.add_argument("--local_rank", type=int, default=0)
     args = parser.parse_args()
 
     eval_model(args)

@@ -10,5 +10,5 @@ for IDX in {0..7}; do
         --num-chunks $CHUNKS \
         --chunk-idx $IDX \
         --answer-prompter \
-        --conv-mode simple &
+        --conv-mode llava_v0 &
 done

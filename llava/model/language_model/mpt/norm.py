@@ -25,7 +25,7 @@ class LPLayerNorm(torch.nn.LayerNorm):
             return torch.nn.functional.layer_norm(downcast_x, self.normalized_shape, downcast_weight, downcast_bias, self.eps)
 
 def rms_norm(x, weight=None, eps=1e-05):
-    output = x / torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + eps)
+    output = x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + eps)
     if weight is not None:
         return output * weight
     return output

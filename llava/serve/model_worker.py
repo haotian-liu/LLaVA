@@ -3,19 +3,14 @@ A model worker executes the model.
 """
 import argparse
 import asyncio
-import dataclasses
-import logging
-import os
 import json
 import time
-from typing import List, Union
 import threading
 import uuid
 
 from fastapi import FastAPI, Request, BackgroundTasks
 from fastapi.responses import StreamingResponse
 import requests
-from transformers import AutoTokenizer, AutoModelForCausalLM, AutoConfig
 import torch
 import uvicorn
 from functools import partial
@@ -23,7 +18,12 @@ from functools import partial
 from llava.constants import WORKER_HEART_BEAT_INTERVAL
 from llava.utils import (build_logger, server_error_msg,
     pretty_print_semaphore)
-from llava.model import *
+from llava.model.builder import load_pretrained_model
+from llava.mm_utils import process_images, load_image_from_base64, tokenizer_image_token, KeywordsStoppingCriteria
+from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
+from transformers import TextIteratorStreamer
+from threading import Thread
+
 
 GB = 1 << 30
 
@@ -34,12 +34,6 @@ global_counter = 0
 model_semaphore = None
 
 
-DEFAULT_IMAGE_TOKEN = "<image>"
-DEFAULT_IMAGE_PATCH_TOKEN = "<im_patch>"
-DEFAULT_IM_START_TOKEN = "<im_start>"
-DEFAULT_IM_END_TOKEN = "<im_end>"
-
-
 def heart_beat_worker(controller):
 
     while True:
@@ -47,104 +41,11 @@ def heart_beat_worker(controller):
         controller.send_heart_beat()
 
 
-def load_model(model_path, model_base, model_name, num_gpus):
-    if num_gpus == 1:
-        kwargs = {}
-    else:
-        kwargs = {
-            "device_map": "auto",
-            "max_memory": {i: "13GiB" for i in range(num_gpus)},
-        }
-
-    if 'lora' in model_name.lower():
-        lora_cfg_pretrained = AutoConfig.from_pretrained(model_path)
-        tokenizer = AutoTokenizer.from_pretrained(model_base)
-        print('Loading LLaVA from base model...')
-        model = LlavaLlamaForCausalLM.from_pretrained(model_base, low_cpu_mem_usage=True, config=lora_cfg_pretrained, torch_dtype=torch.float16)
-        token_num, tokem_dim = model.lm_head.out_features, model.lm_head.in_features
-        model.lm_head.weight = torch.nn.Parameter(torch.empty(token_num, tokem_dim))
-        model.model.embed_tokens.weight = torch.nn.Parameter(torch.empty(token_num, tokem_dim))
-
-        print('Loading additional LLaVA weights...')
-        if os.path.exists(os.path.join(model_path, 'non_lora_trainables.bin')):
-            non_lora_trainables = torch.load(os.path.join(model_path, 'non_lora_trainables.bin'), map_location='cpu')
-        else:
-            # this is probably from HF Hub
-            from huggingface_hub import hf_hub_download
-            def load_from_hf(repo_id, filename, subfolder=None):
-                cache_file = hf_hub_download(
-                    repo_id=repo_id,
-                    filename=filename,
-                    subfolder=subfolder)
-                return torch.load(cache_file, map_location='cpu')
-            non_lora_trainables = load_from_hf(model_path, 'non_lora_trainables.bin')
-        non_lora_trainables = {(k[11:] if k.startswith('base_model.') else k): v for k, v in non_lora_trainables.items()}
-        if any(k.startswith('model.model.embed_tokens') for k in non_lora_trainables):
-            non_lora_trainables = {(k[6:] if k.startswith('model.') else k): v for k, v in non_lora_trainables.items()}
-        non_lora_trainables = {k: v.to(torch.float16) for k, v in non_lora_trainables.items()}
-        model.load_state_dict(non_lora_trainables, strict=False)
-
-        from peft import PeftModel
-        print('Loading LoRA weights...')
-        model = PeftModel.from_pretrained(model, model_path)
-        print('Merging LoRA weights...')
-        model = model.merge_and_unload()
-        print('Convert to FP16...')
-        model.to(torch.float16)
-        print('Moving to CUDA...')
-        model = model.cuda()
-    else:
-        tokenizer = AutoTokenizer.from_pretrained(model_path)
-        if 'llava' in model_name.lower():
-            if 'mpt' in model_name.lower():
-                model = LlavaMPTForCausalLM.from_pretrained(model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True, **kwargs)
-            else:
-                model = LlavaLlamaForCausalLM.from_pretrained(model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True, **kwargs)
-        elif 'mpt' in model_name.lower():
-            model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True, trust_remote_code=True, **kwargs)
-        else:
-            model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True, **kwargs)
-
-    image_processor = None
-
-    if 'llava' in model_name.lower():
-        from transformers import CLIPImageProcessor, CLIPVisionModel
-        image_processor = CLIPImageProcessor.from_pretrained(model.config.mm_vision_tower, torch_dtype=torch.float16)
-
-        mm_use_im_start_end = getattr(model.config, "mm_use_im_start_end", False)
-        tokenizer.add_tokens([DEFAULT_IMAGE_PATCH_TOKEN], special_tokens=True)
-        if mm_use_im_start_end:
-            tokenizer.add_tokens([DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN], special_tokens=True)
-
-        vision_tower = model.get_model().vision_tower[0]
-        if vision_tower.device.type == 'meta':
-            vision_tower = CLIPVisionModel.from_pretrained(vision_tower.config._name_or_path, torch_dtype=torch.float16, low_cpu_mem_usage=True).cuda()
-            model.get_model().vision_tower[0] = vision_tower
-        else:
-            vision_tower.to(device='cuda', dtype=torch.float16)
-        vision_config = vision_tower.config
-        vision_config.im_patch_token = tokenizer.convert_tokens_to_ids([DEFAULT_IMAGE_PATCH_TOKEN])[0]
-        vision_config.use_im_start_end = mm_use_im_start_end
-        if mm_use_im_start_end:
-            vision_config.im_start_token, vision_config.im_end_token = tokenizer.convert_tokens_to_ids([DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN])
-
-    if num_gpus == 1:
-        model.cuda()
-
-    if hasattr(model.config, "max_sequence_length"):
-        context_len = model.config.max_sequence_length
-    else:
-        context_len = 2048
-
-    return tokenizer, model, image_processor, context_len
-
-
 class ModelWorker:
     def __init__(self, controller_addr, worker_addr,
                  worker_id, no_register,
                  model_path, model_base, model_name,
-                 keep_aspect_ratio,
-                 num_gpus):
+                 load_8bit, load_4bit):
         self.controller_addr = controller_addr
         self.worker_addr = worker_addr
         self.worker_id = worker_id
@@ -160,10 +61,9 @@ class ModelWorker:
             self.model_name = model_name
 
         logger.info(f"Loading the model {self.model_name} on worker {worker_id} ...")
-        self.keep_aspect_ratio = keep_aspect_ratio
-        self.tokenizer, self.model, self.image_processor, self.context_len = load_model(
-            model_path, model_base, self.model_name, num_gpus)
-        self.is_multimodal = 'llava' in model_path.lower()
+        self.tokenizer, self.model, self.image_processor, self.context_len = load_pretrained_model(
+            model_path, model_base, self.model_name, load_8bit, load_4bit)
+        self.is_multimodal = 'llava' in self.model_name.lower()
 
         if not no_register:
             self.register_to_controller()
@@ -225,39 +125,26 @@ class ModelWorker:
         prompt = params["prompt"]
         ori_prompt = prompt
         images = params.get("images", None)
+        num_image_tokens = 0
         if images is not None and len(images) > 0 and self.is_multimodal:
-            from PIL import Image
-            from io import BytesIO
-            import base64
-            assert type(images) is list
             if len(images) > 0:
-                # assert len(images) == 1, "Only support one image for now"
-                images = [Image.open(BytesIO(base64.b64decode(image))) for image in images]
-                assert len(images) == prompt.count(DEFAULT_IMAGE_TOKEN), "Number of images does not match number of <image> tokens in prompt"
+                if len(images) != prompt.count(DEFAULT_IMAGE_TOKEN):
+                    raise ValueError("Number of images does not match number of <image> tokens in prompt")
 
-                if self.keep_aspect_ratio:
-                    new_images = []
-                    for image_idx, image in enumerate(images):
-                        max_hw, min_hw = max(image.size), min(image.size)
-                        aspect_ratio = max_hw / min_hw
-                        max_len, min_len = 448, 224
-                        shortest_edge = int(min(max_len / aspect_ratio, min_len))
-                        image = image_processor.preprocess(image, return_tensors='pt', do_center_crop=False, size={"shortest_edge": shortest_edge})['pixel_values'][0]
-                        new_images.append(image.to(self.model.device, dtype=torch.float16))
-                        # replace the image token with the image patch token in the prompt (each occurrence)
-                        cur_token_len = (image.shape[1]//14) * (image.shape[2]//14)
-                        replace_token = DEFAULT_IMAGE_PATCH_TOKEN * cur_token_len
-                        if getattr(self.model.config, 'mm_use_im_start_end', False):
-                            replace_token = DEFAULT_IM_START_TOKEN + replace_token + DEFAULT_IM_END_TOKEN
-                        prompt = prompt.replace(DEFAULT_IMAGE_TOKEN, replace_token, 1)
-                    images = new_images
+                images = [load_image_from_base64(image) for image in images]
+                images = process_images(images, image_processor, model.config)
+
+                if type(images) is list:
+                    images = [image.to(self.model.device, dtype=torch.float16) for image in images]
                 else:
-                    images = image_processor(images, return_tensors='pt')['pixel_values']
                     images = images.to(self.model.device, dtype=torch.float16)
-                    replace_token = DEFAULT_IMAGE_PATCH_TOKEN * 256    # HACK: 256 is the max image token length hacked
-                    if getattr(self.model.config, 'mm_use_im_start_end', False):
-                        replace_token = DEFAULT_IM_START_TOKEN + replace_token + DEFAULT_IM_END_TOKEN
-                    prompt = prompt.replace(DEFAULT_IMAGE_TOKEN, replace_token)
+
+                replace_token = DEFAULT_IMAGE_TOKEN
+                if getattr(self.model.config, 'mm_use_im_start_end', False):
+                    replace_token = DEFAULT_IM_START_TOKEN + replace_token + DEFAULT_IM_END_TOKEN
+                prompt = prompt.replace(DEFAULT_IMAGE_TOKEN, replace_token)
+
+                num_image_tokens = prompt.count(replace_token) * model.get_vision_tower().num_patches
             else:
                 images = None
             image_args = {"images": images}
@@ -265,80 +152,43 @@ class ModelWorker:
             images = None
             image_args = {}
 
-        l_prompt = len(prompt)
         temperature = float(params.get("temperature", 1.0))
+        top_p = float(params.get("top_p", 1.0))
+        max_context_length = getattr(model.config, 'max_position_embeddings', 2048)
         max_new_tokens = min(int(params.get("max_new_tokens", 256)), 1024)
         stop_str = params.get("stop", None)
-        stop_idx = None
-        if stop_str is not None:
-            stop_idx = tokenizer(stop_str).input_ids
-            if len(stop_idx) == 1:
-                stop_idx = stop_idx[0]
-            else:
-                stop_idx = None
+        do_sample = True if temperature > 0.001 else False
 
-        input_ids = tokenizer(prompt).input_ids
-        output_ids = list(input_ids)
-        pred_ids = []
+        input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).cuda()
+        keywords = [stop_str]
+        stopping_criteria = KeywordsStoppingCriteria(keywords, tokenizer, input_ids)
+        streamer = TextIteratorStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True, timeout=15)
 
-        max_src_len = self.context_len - max_new_tokens - 8
-        input_ids = input_ids[-max_src_len:]
+        max_new_tokens = min(max_new_tokens, max_context_length - input_ids.shape[-1] - num_image_tokens)
 
-        past_key_values = None
-        for i in range(max_new_tokens):
-            if i == 0:
-                out = model(
-                    torch.as_tensor([input_ids]).cuda(),
-                    use_cache=True,
-                    **image_args)
-                logits = out.logits
-                past_key_values = out.past_key_values
-            else:
-                attention_mask = torch.ones(
-                    1, past_key_values[0][0].shape[-2] + 1, device="cuda")
-                out = model(input_ids=torch.as_tensor([[token]], device="cuda"),
-                            use_cache=True,
-                            attention_mask=attention_mask,
-                            past_key_values=past_key_values)
-                logits = out.logits
-                past_key_values = out.past_key_values
+        if max_new_tokens < 1:
+            yield json.dumps({"text": ori_prompt + "Exceeds max token length. Please start a new conversation, thanks.", "error_code": 0}).encode() + b"\0"
+            return
 
-            last_token_logits = logits[0][-1]
-            if temperature < 1e-4:
-                token = int(torch.argmax(last_token_logits))
-            else:
-                probs = torch.softmax(last_token_logits / temperature, dim=-1)
-                token = int(torch.multinomial(probs, num_samples=1))
+        thread = Thread(target=model.generate, kwargs=dict(
+            inputs=input_ids,
+            do_sample=do_sample,
+            temperature=temperature,
+            top_p=top_p,
+            max_new_tokens=max_new_tokens,
+            streamer=streamer,
+            stopping_criteria=[stopping_criteria],
+            use_cache=True,
+            **image_args
+        ))
+        thread.start()
 
-            output_ids.append(token)
-            pred_ids.append(token)
-
-            if stop_idx is not None and token == stop_idx:
-                stopped = True
-            elif token == tokenizer.eos_token_id:
-                stopped = True
-            else:
-                stopped = False
-
-            if i % args.stream_interval == 0 or i == max_new_tokens - 1 or stopped:
-                cur_out = tokenizer.decode(pred_ids, skip_special_tokens=True)
-                pos = cur_out.rfind(stop_str)
-                if pos != -1:
-                    cur_out = cur_out[:pos]
-                    stopped = True
-                output = ori_prompt + cur_out
-
-                ret = {
-                    "text": output,
-                    "error_code": 0,
-                }
-                yield json.dumps(ret).encode() + b"\0"
-
-            if stopped:
-                break
-
-        if past_key_values is not None:
-            del past_key_values
+        generated_text = ori_prompt
+        for new_text in streamer:
+            generated_text += new_text
+            if generated_text.endswith(stop_str):
+                generated_text = generated_text[:-len(stop_str)]
+            yield json.dumps({"text": generated_text, "error_code": 0}).encode() + b"\0"
 
     def generate_stream_gate(self, params):
         try:
@@ -353,6 +203,13 @@ class ModelWorker:
             yield json.dumps(ret).encode() + b"\0"
         except torch.cuda.CudaError as e:
             print("Caught torch.cuda.CudaError:", e)
+            ret = {
+                "text": server_error_msg,
+                "error_code": 1,
+            }
+            yield json.dumps(ret).encode() + b"\0"
+        except Exception as e:
+            print("Caught Unknown Error", e)
             ret = {
                 "text": server_error_msg,
                 "error_code": 1,
@@ -402,11 +259,11 @@ if __name__ == "__main__":
     parser.add_argument("--model-base", type=str, default=None)
     parser.add_argument("--model-name", type=str)
     parser.add_argument("--multi-modal", action="store_true", help="Multimodal mode is automatically detected with model name, please make sure `llava` is included in the model path.")
-    parser.add_argument("--keep-aspect-ratio", action="store_true")
-    parser.add_argument("--num-gpus", type=int, default=1)
     parser.add_argument("--limit-model-concurrency", type=int, default=5)
-    parser.add_argument("--stream-interval", type=int, default=2)
+    parser.add_argument("--stream-interval", type=int, default=1)
     parser.add_argument("--no-register", action="store_true")
+    parser.add_argument("--load-8bit", action="store_true")
+    parser.add_argument("--load-4bit", action="store_true")
     args = parser.parse_args()
     logger.info(f"args: {args}")
 
@@ -420,6 +277,6 @@ if __name__ == "__main__":
                          args.model_path,
                          args.model_base,
                          args.model_name,
-                         args.keep_aspect_ratio,
-                         args.num_gpus)
+                         args.load_8bit,
+                         args.load_4bit)
     uvicorn.run(app, host=args.host, port=args.port, log_level="info")

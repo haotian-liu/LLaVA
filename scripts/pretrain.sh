@@ -1,22 +1,28 @@
 #!/bin/bash
 
-WEIGHT_VERSION=v1-1
-PROMPT_VERSION=v1
-MODEL_VERSION="7b"
+# Uncomment and set the following variables correspondingly to run this script:
 
-# Pretraining
+# MODEL_VERSION=vicuna-v1-3-7b
+# MODEL_VERSION=llama-2-7b-chat
+
+########### DO NOT CHANGE ###########
+########### USE THIS FOR BOTH ###########
+PROMPT_VERSION=v0_plain
+########### DO NOT CHANGE ###########
+
 deepspeed llava/train/train_mem.py \
     --deepspeed /path/to/deepspeed.json \
-    --model_name_or_path ./checkpoints/vicuna-$MODEL_VERSION-$WEIGHT_VERSION \
-    --version $WEIGHT_VERSION \
-    --data_path /path/to/anno.json \
+    --model_name_or_path ./checkpoints/$MODEL_VERSION \
+    --version $PROMPT_VERSION \
+    --data_path /path/to/pretrain_data.json \
     --image_folder /path/to/images \
     --vision_tower openai/clip-vit-large-patch14 \
     --tune_mm_mlp_adapter True \
     --mm_vision_select_layer -2 \
-    --mm_use_im_start_end \
+    --mm_use_im_start_end False \
+    --mm_use_im_patch_token False \
     --bf16 True \
-    --output_dir ./checkpoints/deepspeed_llava-$MODEL_VERSION-$WEIGHT_VERSION-pretrain \
+    --output_dir ./checkpoints/llava-$MODEL_VERSION-pretrain \
     --num_train_epochs 1 \
     --per_device_train_batch_size 16 \
     --per_device_eval_batch_size 4 \
@@ -36,8 +42,3 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb
-
-# Extract projector features
-python scripts/extract_mm_projector.py \
-  --model_name_or_path ./checkpoints/deepspeed_llava-$MODEL_VERSION-$WEIGHT_VERSION-pretrain \
-  --output ./checkpoints/mm_projector/deepspeed_llava-$MODEL_VERSION-$WEIGHT_VERSION-pretrain.bin

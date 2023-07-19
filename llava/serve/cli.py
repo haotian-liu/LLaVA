@@ -1,140 +1,101 @@
-"""
-Usage:
-python3 -m fastchat.serve.cli --model ~/model_weights/llama-7b
-"""
 import argparse
-import time
-
 import torch
-from transformers import AutoTokenizer, AutoModelForCausalLM
 
+from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
 from llava.conversation import conv_templates, SeparatorStyle
+from llava.model.builder import load_pretrained_model
+from llava.utils import disable_torch_init
+from llava.mm_utils import tokenizer_image_token, get_model_name_from_path, KeywordsStoppingCriteria
+
+from PIL import Image
+
+import requests
+from PIL import Image
+from io import BytesIO
+from transformers import TextStreamer
 
 
-@torch.inference_mode()
-def generate_stream(tokenizer, model, params, device,
-                    context_len=2048, stream_interval=2):
-    """Adapted from fastchat/serve/model_worker.py::generate_stream"""
-
-    prompt = params["prompt"]
-    l_prompt = len(prompt)
-    temperature = float(params.get("temperature", 1.0))
-    max_new_tokens = int(params.get("max_new_tokens", 256))
-    stop_str = params.get("stop", None)
-
-    input_ids = tokenizer(prompt).input_ids
-    output_ids = list(input_ids)
-
-    max_src_len = context_len - max_new_tokens - 8
-    input_ids = input_ids[-max_src_len:]
-
-    for i in range(max_new_tokens):
-        if i == 0:
-            out = model(
-                torch.as_tensor([input_ids], device=device), use_cache=True)
-            logits = out.logits
-            past_key_values = out.past_key_values
-        else:
-            attention_mask = torch.ones(
-                1, past_key_values[0][0].shape[-2] + 1, device=device)
-            out = model(input_ids=torch.as_tensor([[token]], device=device),
-                        use_cache=True,
-                        attention_mask=attention_mask,
-                        past_key_values=past_key_values)
-            logits = out.logits
-            past_key_values = out.past_key_values
-
-        last_token_logits = logits[0][-1]
-        if temperature < 1e-4:
-            token = int(torch.argmax(last_token_logits))
-        else:
-            probs = torch.softmax(last_token_logits / temperature, dim=-1)
-            token = int(torch.multinomial(probs, num_samples=1))
-
-        output_ids.append(token)
-
-        if token == tokenizer.eos_token_id:
-            stopped = True
-        else:
-            stopped = False
-
-        if i % stream_interval == 0 or i == max_new_tokens - 1 or stopped:
-            output = tokenizer.decode(output_ids, skip_special_tokens=True)
-            pos = output.rfind(stop_str, l_prompt)
-            if pos != -1:
-                output = output[:pos]
-                stopped = True
-            yield output
-
-        if stopped:
-            break
-
-    del past_key_values
+def load_image(image_file):
+    if image_file.startswith('http') or image_file.startswith('https'):
+        response = requests.get(image_file)
+        image = Image.open(BytesIO(response.content)).convert('RGB')
+    else:
+        image = Image.open(image_file).convert('RGB')
+    return image
 
 
 def main(args):
-    model_name = args.model_name
-    num_gpus = args.num_gpus
-
     # Model
-    if args.device == "cuda":
-        kwargs = {"torch_dtype": torch.float16}
-        if num_gpus == "auto":
-            kwargs["device_map"] = "auto"
-        else:
-            num_gpus = int(num_gpus)
-            if num_gpus != 1:
-                kwargs.update({
-                    "device_map": "auto",
-                    "max_memory": {i: "13GiB" for i in range(num_gpus)},
-                })
-    elif args.device == "cpu":
-        kwargs = {}
+    disable_torch_init()
+
+    model_name = get_model_name_from_path(args.model_path)
+    tokenizer, model, image_processor, context_len = load_pretrained_model(args.model_path, args.model_base, model_name)
+
+    if "v1" in model_name.lower():
+        conv_mode = "llava_v1"
+    elif "mpt" in model_name.lower():
+        conv_mode = "mpt"
     else:
-        raise ValueError(f"Invalid device: {args.device}")
+        conv_mode = "llava_v0"
 
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForCausalLM.from_pretrained(model_name,
-        low_cpu_mem_usage=True, **kwargs)
+    if args.conv_mode is not None and conv_mode != args.conv_mode:
+        print('[WARNING] the auto inferred conversation mode is {}, while `--conv-mode` is {}, using {}'.format(conv_mode, args.conv_mode, args.conv_mode))
+    else:
+        args.conv_mode = conv_mode
 
-    if args.device == "cuda" and num_gpus == 1:
-        model.cuda()
+    conv = conv_templates[args.conv_mode].copy()
+    if "mpt" in model_name.lower():
+        roles = ('user', 'assistant')
+    else:
+        roles = conv.roles
 
-    # Chat
-    conv = conv_templates[args.conv_template].copy()
+    image = load_image(args.image_file)
+    image_tensor = image_processor.preprocess(image, return_tensors='pt')['pixel_values'].half().cuda()
+
     while True:
         try:
-            inp = input(f"{conv.roles[0]}: ")
+            inp = input(f"{roles[0]}: ")
         except EOFError:
             inp = ""
         if not inp:
             print("exit...")
             break
 
-        conv.append_message(conv.roles[0], inp)
+        print(f"{roles[1]}: ", end="")
+
+        if image is not None:
+            # first message
+            if model.config.mm_use_im_start_end:
+                inp = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN + '\n' + inp
+            else:
+                inp = DEFAULT_IMAGE_TOKEN + '\n' + inp
+            conv.append_message(conv.roles[0], inp)
+            image = None
+        else:
+            # later messages
+            conv.append_message(conv.roles[0], inp)
         conv.append_message(conv.roles[1], None)
         prompt = conv.get_prompt()
 
-        params = {
-            "model": model_name,
-            "prompt": prompt,
-            "temperature": args.temperature,
-            "max_new_tokens": args.max_new_tokens,
-            "stop": conv.sep if conv.sep_style == SeparatorStyle.SINGLE else conv.sep2,
-        }
+        input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).cuda()
+        stop_str = conv.sep if conv.sep_style != SeparatorStyle.TWO else conv.sep2
+        keywords = [stop_str]
+        stopping_criteria = KeywordsStoppingCriteria(keywords, tokenizer, input_ids)
+        streamer = TextStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
 
-        print(f"{conv.roles[1]}: ", end="", flush=True)
-        pre = 0
-        for outputs in generate_stream(tokenizer, model, params, args.device):
-            outputs = outputs[len(prompt) + 1:].strip()
-            outputs = outputs.split(" ")
-            now = len(outputs)
-            if now - 1 > pre:
-                print(" ".join(outputs[pre:now-1]), end=" ", flush=True)
-                pre = now - 1
-        print(" ".join(outputs[pre:]), flush=True)
+        with torch.inference_mode():
+            output_ids = model.generate(
+                input_ids,
+                images=image_tensor,
+                do_sample=True,
+                temperature=0.2,
+                max_new_tokens=1024,
+                streamer=streamer,
+                use_cache=True,
+                stopping_criteria=[stopping_criteria])
 
-        conv.messages[-1][-1] = " ".join(outputs)
+        outputs = tokenizer.decode(output_ids[0, input_ids.shape[1]:]).strip()
+        conv.messages[-1][-1] = outputs
 
         if args.debug:
             print("\n", {"prompt": prompt, "outputs": outputs}, "\n")
@@ -142,11 +103,13 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model-name", type=str, default="facebook/opt-350m")
-    parser.add_argument("--num-gpus", type=str, default="1")
+    parser.add_argument("--model-path", type=str, default="facebook/opt-350m")
+    parser.add_argument("--model-base", type=str, default=None)
+    parser.add_argument("--image-file", type=str, required=True)
+    parser.add_argument("--num-gpus", type=int, default=1)
     parser.add_argument("--device", type=str, choices=["cuda", "cpu"], default="cuda")
-    parser.add_argument("--conv-template", type=str, default="v1")
-    parser.add_argument("--temperature", type=float, default=0.7)
+    parser.add_argument("--conv-mode", type=str, default=None)
+    parser.add_argument("--temperature", type=float, default=0.2)
     parser.add_argument("--max-new-tokens", type=int, default=512)
     parser.add_argument("--debug", action="store_true")
     args = parser.parse_args()

@@ -13,16 +13,20 @@ Please execute each of the command below one by one (after the previous one has 
 python -m llava.serve.controller --host 0.0.0.0 --port 10000
 ```
 
+#### Launch a gradio web server.
+```Shell
+python -m llava.serve.gradio_web_server --controller http://localhost:10000 --model-list-mode reload
+```
+You just launched the Gradio web interface. Now, you can open the web interface with the URL printed on the screen. You may notice that there is no model in the model list. Do not worry, as we have not launched any model worker yet. It will be automatically updated when you launch a model worker.
+
 #### Launch a model worker
 ```Shell
 python -m llava.serve.model_worker --host 0.0.0.0 --controller http://localhost:10000 --port 40000 --worker http://localhost:40000 --model-path liuhaotian/llava-vicuna-7b-v1.1-lcs_558k-instruct_80k_3e-lora-preview-alpha --model-base /path/to/vicuna-v1.1
 ```
-Wait until the process finishes loading the model and you see "Uvicorn running on ...".
+Wait until the process finishes loading the model and you see "Uvicorn running on ...".  Now, refresh your Gradio web UI, and you will see the model you just launched in the model list.
 
-#### Launch a gradio web server.
-```Shell
-python -m llava.serve.gradio_web_server --controller http://localhost:10000
-```
+You can launch as many workers as you want, and compare between different model checkpoints in the same Gradio interface. Please keep the `--controller` the same, and modify the `--port` and `--worker` to a different port number for each worker.
+
 
 ## Training
 
