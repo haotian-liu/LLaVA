@@ -21,10 +21,9 @@ Please checkout [`pretrain.sh`](https://github.com/haotian-liu/LLaVA/blob/main/s
 
 ### Results
 
-- Llama 2 is better at following the instructions of role playing
-- Llama 2 fails in following the instructions of transaltion
+- Llama 2 is better at following the instructions of role playing; Llama 2 fails in following the instructions of translation
+- The quantitative evaluation on [LLaVA-Bench](https://github.com/haotian-liu/LLaVA/blob/main/docs/LLaVA_Bench.md) demonstrates on-par performance between Llama 2 and Llama 1 in LLaVA's multimodal chat ability.
 
 
-<p align="center">
-    <img src="../images/llava_example_cmp.png" width="100%">
-</p>
+<img src="../images/llava_example_cmp.png" width="100%">
+
