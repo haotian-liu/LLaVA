@@ -1,10 +1,10 @@
-# LLaVA-Bench
+# LLaVA-Bench [[Download](https://huggingface.co/datasets/liuhaotian/llava-bench-in-the-wild)]
 
 **-Introduction-**  Large commercial multimodal chatbots have been released in this week, including 
 - [Multimodal Bing-Chat by Microsoft](https://blogs.bing.com/search/july-2023/Bing-Chat-Enterprise-announced,-multimodal-Visual-Search-rolling-out-to-Bing-Chat) (July 18, 2023) 
 - [Multimodal Bard by Google](https://bard.google.com/). 
 
-These chatbots are presumably supported by proprietary large mulitmodal models (LMM). Compared with the open-source LMM such as LLaVA, proprietary LMM represent the scaling success upperbound of the current SoTA techniques. They are shared the goal of developing multimodal chatbots that follow human intents to complete various daily-life visual tasks in the wild. While it remains less unexplored how to evaluate multimodal chat ability, it provides useful feedback to study open-source LMMs against the commercial multimodal chatbots. In addition to the *LLaVA-Bench (COCO)* dataset we used to develop the early versions of LLaVA, we are releasing  *LLaVA-Bench (In-the-Wild)* to the community for the public use.
+These chatbots are presumably supported by proprietary large mulitmodal models (LMM). Compared with the open-source LMM such as LLaVA, proprietary LMM represent the scaling success upperbound of the current SoTA techniques. They are shared the goal of developing multimodal chatbots that follow human intents to complete various daily-life visual tasks in the wild. While it remains less unexplored how to evaluate multimodal chat ability, it provides useful feedback to study open-source LMMs against the commercial multimodal chatbots. In addition to the *LLaVA-Bench (COCO)* dataset we used to develop the early versions of LLaVA, we are releasing  [*LLaVA-Bench (In-the-Wild)*](https://huggingface.co/datasets/liuhaotian/llava-bench-in-the-wild) to the community for the public use.
 
 ## LLaVA-Bench (In-the-Wild *[Ongoing work]*)
 
