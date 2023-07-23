@@ -73,20 +73,7 @@ pip install -e .
 ```
 
 ## LLaVA Weights
-We release [LLaVA](https://llava-vl.github.io/) weights as delta weights to comply with the LLaMA model license.
-You can add our delta to the original LLaMA weights to obtain the LLaVA weights.
-
-Instructions:
-
-1. Get the original LLaMA weights in the huggingface format by following the instructions [here](https://huggingface.co/docs/transformers/main/model_doc/llama).
-2. Use the following scripts to get LLaVA weights by applying our delta ([13b-v0](https://huggingface.co/liuhaotian/LLaVA-13b-delta-v0), [7b-v0](https://huggingface.co/liuhaotian/LLaVA-7b-delta-v0), [lightning-7B-v1-1](https://huggingface.co/liuhaotian/LLaVA-Lightning-7B-delta-v1-1)). It will automatically download delta weights from our Hugging Face account.
-
-```bash
-python3 -m llava.model.apply_delta \
-    --base /path/to/llama-7b \
-    --target /output/path/to/LLaVA-7B-v0 \
-    --delta liuhaotian/LLaVA-7b-delta-v0
-```
+Please check out our [Model Zoo](https://github.com/haotian-liu/LLaVA/blob/main/docs/MODEL_ZOO.md) for all public LLaVA checkpoints, and the instructions of how to use the weights.
 
 ## Demo
 
