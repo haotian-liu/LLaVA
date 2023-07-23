@@ -2,16 +2,13 @@
 
 # Uncomment and set the following variables correspondingly to run this script:
 
-########### Llama2 Configuration ###########
-# MODEL_VERSION=llama-2-7b-chat
-# PROMPT_VERSION=llama_2
-#############################################
-
-########### Vicuna Configuration ###########
 # MODEL_VERSION=vicuna-v1-3-7b
-# PROMPT_VERSION=v0_plain
-#############################################
+# MODEL_VERSION=llama-2-7b-chat
 
+########### DO NOT CHANGE ###########
+########### USE THIS FOR BOTH ###########
+PROMPT_VERSION=v0_plain
+########### DO NOT CHANGE ###########
 
 deepspeed llava/train/train_mem.py \
     --deepspeed /path/to/deepspeed.json \
