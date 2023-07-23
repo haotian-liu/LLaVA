@@ -16,7 +16,7 @@ The model weights below are *merged* weights. You do not need to apply delta. Th
 
 ## Legacy Models (merged weights)
 
-The model weights below are *merged* weights. You do not need to apply delta. The usage of LLaVA checkpoints should comply with the base LLM's model license: [LLaMA](https://github.com/facebookresearch/llama/blob/main/MODEL_CARD.md).
+The model weights below are *merged* weights. You do not need to apply delta. The usage of LLaVA checkpoints should comply with the base LLM's model license.
 
 | Base LLM | Vision Encoder | Pretrain Data | Pretraining schedule | Finetuning Data | Finetuning schedule | Download |
 |----------|----------------|---------------|----------------------|-----------------|--------------------|------------------|
