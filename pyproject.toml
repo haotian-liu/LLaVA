@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "llava"
-version = "1.0.0"
+version = "1.0.1"
 description = "Towards GPT-4 like large language and visual assistant."
 readme = "README.md"
 requires-python = ">=3.8"
@@ -18,10 +18,10 @@ dependencies = [
     "torch", "torchvision", "uvicorn", "wandb",
     "shortuuid", "httpx==0.24.0",
     "deepspeed==0.9.5",
-    "peft==0.3.0",
-    "transformers==4.30.2",
-    "accelerate==0.20.3",
-    "bitsandbytes==0.40.1.post1",
+    "peft==0.4.0",
+    "transformers==4.31.0",
+    "accelerate==0.21.0",
+    "bitsandbytes==0.41.0",
     "scikit-learn==1.2.2",
     "sentencepiece==0.1.99",
     "einops==0.6.1", "einops-exts==0.0.4", "timm==0.6.13"
