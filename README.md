@@ -130,7 +130,7 @@ A starting script for inference with LLaVA without the need of Gradio interface.
 
 ```Shell
 python -m llava.eval.run_llava \
-    --model-name /path/to/LLaVA-13B-v0 \
+    --model-path /path/to/LLaVA-13B-v0 \
     --image-file "https://llava-vl.github.io/static/images/view.jpg" \
     --query "What are the things I should be cautious about when I visit here?"
 ```
@@ -491,7 +491,7 @@ Our GPT-assisted evaluation pipeline for multimodal modeling is provided for a c
 
 ```Shell
 python model_vqa.py \
-    --model-name ./checkpoints/LLaVA-13B-v0 \
+    --model-path ./checkpoints/LLaVA-13B-v0 \
     --question-file \
     playground/data/coco2014_val_qa_eval/qa90_questions.jsonl \
     --image-folder \
@@ -552,7 +552,7 @@ You may evaluate this with multiple GPUs, and concatenate the generated jsonl fi
 
 ```Shell
 python -m llava.eval.model_vqa_science \
-    --model-name /path/to/LLaVA-13b-v0-science_qa \
+    --model-path /path/to/LLaVA-13b-v0-science_qa \
     --question-file /path/to/ScienceQA/data/scienceqa/llava_test.json \
     --image-folder /path/to/ScienceQA/data/scienceqa/images/test \
     --answers-file vqa/results/ScienceQA/test_llava-13b.jsonl \
