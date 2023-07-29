@@ -7,7 +7,7 @@
 
 ########### DO NOT CHANGE ###########
 ########### USE THIS FOR BOTH ###########
-PROMPT_VERSION=v0_plain
+PROMPT_VERSION=plain
 ########### DO NOT CHANGE ###########
 
 deepspeed llava/train/train_mem.py \
