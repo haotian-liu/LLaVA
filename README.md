@@ -110,10 +110,10 @@ python -m llava.serve.model_worker --host 0.0.0.0 --controller http://localhost:
 
 #### Launch a model worker (Multiple GPUs, when GPU VRAM <= 24GB)
 
-If your the VRAM of your GPU is less than 24GB (e.g., RTX 3090, RTX 4090, etc.), you may try running it with multiple GPUs.
+If your the VRAM of your GPU is less than 24GB (e.g., RTX 3090, RTX 4090, etc.), you may try running it with multiple GPUs. Our latest code base will automatically try to use multiple GPUs if you have more than one GPU. You can specify which GPUs to use with `CUDA_VISIBLE_DEVICES`. Below is an example of running with the first two GPUs.
 
 ```Shell
-python -m llava.serve.model_worker --host 0.0.0.0 --controller http://localhost:10000 --port 40000 --worker http://localhost:40000 --model-path ./checkpoints/LLaVA-13B-v0 --num-gpus 2
+CUDA_VISIBLE_DEVICES=0,1 python -m llava.serve.model_worker --host 0.0.0.0 --controller http://localhost:10000 --port 40000 --worker http://localhost:40000 --model-path ./checkpoints/LLaVA-13B-v0
 ```
 
 #### Launch a model worker (4-bit, 8-bit inference, quantized)
@@ -357,13 +357,13 @@ For instruction tuning, we create a subset of LLaVA-Instruct-150K. It consists o
 
 #### Hyperparameters
 
-1. Pretraining
+1. Pretraining ([script](https://github.com/haotian-liu/LLaVA/blob/main/scripts/pretrain.sh))
 
 | Hyperparameter | Global Batch Size | Learning rate | Epochs | Max length | Weight decay |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | LLaVA-Lightning-7B | 128 | 2e-3 | 1 | 2048 | 0 |
 
-2. Visual Instruction Tuning
+2. Visual Instruction Tuning ([script](https://github.com/haotian-liu/LLaVA/blob/main/scripts/finetune.sh))
 
 | Hyperparameter | Global Batch Size | Learning rate | Epochs | Max length | Weight decay |
 | --- | ---: | ---: | ---: | ---: | ---: |
