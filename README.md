@@ -126,7 +126,7 @@ python -m llava.serve.model_worker --host 0.0.0.0 --controller http://localhost:
 
 ### CLI Inference
 
-Chat about images using LLaVA without the need of Gradio interface. It also supports multiple GPUs, 4-bit and 8-bit quantized inference. Below is to run inference on a single image using 4 bit quantization. For our LLaVA-Lightning-MPT-7B, it uses less than 8GB VRAM on a single GPU.
+Chat about images using LLaVA without the need of Gradio interface. It also supports multiple GPUs, 4-bit and 8-bit quantized inference. With 4-bit quantization, for our LLaVA-Lightning-MPT-7B, it uses less than 8GB VRAM on a single GPU.
 
 ```Shell
 python -m llava.serve.cli \
