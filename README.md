@@ -126,26 +126,16 @@ python -m llava.serve.model_worker --host 0.0.0.0 --controller http://localhost:
 
 ### CLI Inference
 
-A starting script for inference with LLaVA without the need of Gradio interface. The current implementation only supports for a single-turn Q-A session, and the interactive CLI is WIP.  This also serves as an example for users to build customized inference scripts.
+Chat about images using LLaVA without the need of Gradio interface. It also supports multiple GPUs, 4-bit and 8-bit quantized inference. Below is to run inference on a single image using 4 bit quantization. For our LLaVA-Lightning-MPT-7B, it uses less than 8GB VRAM on a single GPU.
 
 ```Shell
-python -m llava.eval.run_llava \
-    --model-path /path/to/LLaVA-13B-v0 \
+python -m llava.serve.cli \
+    --model-path liuhaotian/LLaVA-Lightning-MPT-7B-preview \
     --image-file "https://llava-vl.github.io/static/images/view.jpg" \
-    --query "What are the things I should be cautious about when I visit here?"
+    --load-4bit
 ```
 
-Example output (varies in different runs):
-
-> When visiting this picturesque location with a serene lake and a wooden pier extending over the water, one should be cautious about various safety aspects. Some important considerations include:
-> 
-> 1. Ensuring that the pier is structurally sound andstable, as old or weakened pier structures might not support the weight of visitors.
-> 2. Being aware of the water depth around the pier and lake, as sudden drop-offs or strong currents may pose a risk to swimmers, boaters, or those who venture too close to the edge.
-> 3. Staying vigilant about the presence of wildlife in the area, such as slippery, stealthy fish or other animals that might cause harm or inconvenience.
-> 4. Maintaining a safe distance from the water's edge, particularly for children, elderly individuals, or those who are not strong swimmers.
-> 5. Following any posted signs or guidelines related to safety and the use of the pier and surrounding areas.
-> 
-> By considering these safety precautions, visitors can enjoy the natural beauty of the location while minimizing risks and ensuring a safe and pleasant experience.
+<img src="images/demo_cli.gif" width="70%">
 
 ## Train
 
@@ -180,38 +170,7 @@ Please download the subset of the CC3M dataset we use in the paper [here](https:
 
 Pretrain takes around 4 hours for LLaVA-13B on 8x A100 (80G). It takes around 2 hours for 7B checkpoints.
 
-```Shell
-torchrun --nnodes=1 --nproc_per_node=8 --master_port=25001 \
-    llava/train/train_mem.py \
-    --model_name_or_path ./checkpoints/vicuna-13b \
-    --version [v0 or v1] \
-    --data_path /path/to/cc3m_595k.json \
-    --image_folder /path/to/cc3m_595k \
-    --vision_tower openai/clip-vit-large-patch14 \
-    --tune_mm_mlp_adapter True \
-    --mm_vision_select_layer -2 \
-    --mm_use_im_start_end \
-    --bf16 True \
-    --output_dir ./checkpoints/llava-13b-pretrain \
-    --num_train_epochs 1 \
-    --per_device_train_batch_size 16 \
-    --per_device_eval_batch_size 4 \
-    --gradient_accumulation_steps 1 \
-    --evaluation_strategy "no" \
-    --save_strategy "steps" \
-    --save_steps 2400 \
-    --save_total_limit 1 \
-    --learning_rate 2e-3 \
-    --weight_decay 0. \
-    --warmup_ratio 0.03 \
-    --lr_scheduler_type "cosine" \
-    --logging_steps 1 \
-    --tf32 True \
-    --model_max_length 2048 \
-    --gradient_checkpointing True \
-    --lazy_preprocess True \
-    --report_to wandb
-```
+We recommend training with DeepSpeed as it can save a lot of GPU RAM. We provide training script with DeepSpeed [here](https://github.com/haotian-liu/LLaVA/blob/main/scripts/pretrain.sh).
 
 You may run this with a single A100 GPU with the following code.  Please note that the `per_device_train_batch_size` * `gradient_accumulation_steps` should be equal to 128 to keep the global batch size the same.
 
@@ -223,49 +182,14 @@ python llava/train/train_mem.py \
     --model_name_or_path ./checkpoints/vicuna-13b \
     --version [v0 or v1] \
     --data_path /path/to/cc3m_595k.json \
-    --image_folder /path/to/cc3m_595k \
+    --image_folder /path/to/cc3m_595k_images \
     --vision_tower openai/clip-vit-large-patch14 \
     --tune_mm_mlp_adapter True \
     --mm_vision_select_layer -2 \
-    --mm_use_im_start_end \
+    --mm_use_im_start_end False \
+    --mm_use_im_patch_token False \
     --bf16 True \
     --output_dir ./checkpoints/llava-13b-pretrain \
-    --num_train_epochs 1 \
-    --per_device_train_batch_size 16 \
-    --per_device_eval_batch_size 4 \
-    --gradient_accumulation_steps 8 \
-    --evaluation_strategy "no" \
-    --save_strategy "steps" \
-    --save_steps 2400 \
-    --save_total_limit 1 \
-    --learning_rate 2e-3 \
-    --weight_decay 0. \
-    --warmup_ratio 0.03 \
-    --lr_scheduler_type "cosine" \
-    --logging_steps 1 \
-    --tf32 True \
-    --model_max_length 2048 \
-    --gradient_checkpointing True \
-    --lazy_preprocess True \
-    --report_to wandb
-```
-</details>
-
-<details>
-<summary>Pretrain: LLaVA-7B, 1x A100 (80G/40G).  Time: ~19 hours.</summary>
-
-```Shell
-python llava/train/train_mem.py \
-    --model_name_or_path ./checkpoints/vicuna-7b \
-    --version [v0 or v1] \
-    --data_path /path/to/cc3m_595k.json \
-    --image_folder /path/to/cc3m_595k \
-    --vision_tower openai/clip-vit-large-patch14 \
-    --tune_mm_mlp_adapter True \
-    --mm_vision_select_layer -2 \
-    --mm_use_im_start_end \
-    --bf16 True \
-    --output_dir ./checkpoints/llava-7b-pretrain \
     --num_train_epochs 1 \
     --per_device_train_batch_size 16 \
     --per_device_eval_batch_size 4 \
@@ -294,62 +218,19 @@ python llava/train/train_mem.py \
 
 Please download the annotation of our instruction tuning data [llava_instruct_158k.json](https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K/blob/main/llava_instruct_150k.json), and download the COCO train2017 images [here](https://cocodataset.org/#download).
 
-2. Extract projector features from the pretrained model from the feature alignment stage.
+2. Start training!
 
-```Shell
-python scripts/extract_mm_projector.py \
-  --model_name_or_path ./checkpoints/llava-13b-pretrain \
-  --output ./checkpoints/mm_projector/llava-13b-pretrain.bin
-```
+You may download our pretrained projectors in [Model Zoo](https://github.com/haotian-liu/LLaVA/blob/main/docs/MODEL_ZOO.md). It is not recommended to use legacy projectors, as they may be trained with a different version of the codebase, and if any option is off, the model will not function/train as we expected.
 
-3. Start training!
+When we initially released our paper, we used a full 3-epoch schedule on the LLaVA-Instruct-158K dataset. The scripts are provided [here](https://github.com/haotian-liu/LLaVA/blob/main/scripts/finetune_full_schedule.sh).
 
-You may download our pretrained `llava-13b-pretrain.bin` [here](https://huggingface.co/liuhaotian/LLaVA-Pretrained-Projectors/blob/main/LLaVA-13b-pretrain-projector-v0-CC3M-595K-original_caption.bin).
-
-```Shell
-torchrun --nnodes=1 --nproc_per_node=8 --master_port=25001 \
-    llava/train/train_mem.py \
-    --model_name_or_path /path/to/vicuna-13b \
-    --version [v0 or v1] \
-    --data_path ./playground/data/llava_instruct_158k.json \
-    --image_folder /path/to/coco/train2017 \
-    --vision_tower openai/clip-vit-large-patch14 \
-    --pretrain_mm_mlp_adapter ./checkpoints/mm_projector/llava-13b-pretrain.bin \
-    --mm_vision_select_layer -2 \
-    --mm_use_im_start_end True \
-    --bf16 True \
-    --output_dir ./checkpoints/llava-13b-finetune \
-    --num_train_epochs 3 \
-    --per_device_train_batch_size 4 \
-    --per_device_eval_batch_size 4 \
-    --gradient_accumulation_steps 1 \
-    --evaluation_strategy "no" \
-    --save_strategy "steps" \
-    --save_steps 50000 \
-    --save_total_limit 1 \
-    --learning_rate 2e-5 \
-    --weight_decay 0. \
-    --warmup_ratio 0.03 \
-    --lr_scheduler_type "cosine" \
-    --logging_steps 1 \
-    --tf32 True \
-    --fsdp "full_shard auto_wrap" \
-    --fsdp_transformer_layer_cls_to_wrap 'LlamaDecoderLayer' \
-    --model_max_length 2048 \
-    --gradient_checkpointing True \
-    --dataloader_num_workers 4 \
-    --lazy_preprocess True \
-    --report_to wandb
-```
-</details>
+In our later exploration, we introduced LLaVA-Lightning, as we find that a much faster 1-epoch schedule on LLaVA-Instruct-80K can achieve fast convergence and good performance. With LLaVA Lightning, we are able to train, validate, and release LLaVA-LLaMA-2 checkpoints preview on the same day as LLaMA-2 release. If you are interested to learn more about LLaVA Lightning, please continue to the following section.
 
 ### Lightning
 
-*NOTE: When comparing to LLaVA-Lightning checkpoints in the paper, please use `LLaVA (Lightning)` instead of `LLaVA` as they use different set of training data and schedule.*
-
 LLaVA-Lightning can be trained on 8x A100 GPUs in just 3 hours, including both pretraining and finetuning. When using spot instances, it costs just ~$40.
 
-For LLaVA Lightning, we create two distilled subset to ensure both a broad concept coverage, and the efficiency in training. Furthermore, we only perform instruction tuning for 1 epoch, in contrast to 3 epochs in the paper.
+For LLaVA Lightning, we create two distilled subset to ensure both a broad concept coverage, and the efficiency in training. Furthermore, we only perform instruction tuning for 1 epoch, in contrast to 3 epochs in the paper. We find such schedule is effctive and can achieve fast convergence and good performance.
 
 For pretraining, we create a concept-balanced subset of LAION-CC-SBU. It consists of 558K images.  Download data [here](https://huggingface.co/datasets/liuhaotian/LLaVA-Pretrain/tree/main).
 
@@ -361,24 +242,18 @@ For instruction tuning, we create a subset of LLaVA-Instruct-150K. It consists o
 
 | Hyperparameter | Global Batch Size | Learning rate | Epochs | Max length | Weight decay |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| LLaVA-Lightning-7B | 128 | 2e-3 | 1 | 2048 | 0 |
+| LLaVA-Lightning | 128 | 2e-3 | 1 | 2048 | 0 |
 
 2. Visual Instruction Tuning ([script](https://github.com/haotian-liu/LLaVA/blob/main/scripts/finetune.sh))
 
 | Hyperparameter | Global Batch Size | Learning rate | Epochs | Max length | Weight decay |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| LLaVA-Lightning-7B | 128 | 2e-5 | 1 | 2048 | 0 |
+| LLaVA-Lightning | 128 | 2e-5 | 1 | 2048 | 0 |
 
 #### LLaVA-MPT-7b
-Thanks to LLaVA-Lightning, we are able to train a checkpoint based on MPT-7b-Chat on 8x A100 GPUs in just 3 hours, including both pretraining and finetuning.
-
-*NOTE: When comparing to LLaVA-MPT-7B checkpoints in the paper, please use `LLaVA-MPT-7B (Lightning)` instead of `LLaVA` as they use different set of base LLM, training data and schedule.*
+Thanks to LLaVA-Lightning, we are able to train a checkpoint based on MPT-7B-Chat on 8x A100 GPUs in just 3 hours, including both pretraining and finetuning.
 
 **NOTE**: This is a research preview of the LLaVA-Lightning based on MPT-7B-chat checkpoint. The usage of the model should comply with MPT-7B-chat license and agreements.
-
-**NOTE**: Unlike other LLaVA models, this model should be used directly without delta weights conversion!
-
-**NOTE**: You need to upgrade to our latest code base to use LLaVA-MPT-7b!
 
 1. Usage
 
@@ -392,94 +267,7 @@ python -m llava.serve.gradio_web_server --controller http://localhost:10000
 
 2. Training
 
-We use the same set of training dataset, and the hyperparameters as other Lightning checkpoints.
-
-### ScienceQA
-**NOTE**: Due to that ScienceQA experiments were done earlier, the current checkpoints are trained *without* `<im_start>` and `<im_end>` tokens. Here we provide our training scripts for the current checkpoints.
-
-<details>
-<summary>1. Pretraining</summary>
-
-```Shell
-torchrun --nnodes=1 --nproc_per_node=8 --master_port=25001 \
-    llava/train/train_mem.py \
-    --model_name_or_path ./checkpoints/llama-vicuna-13b \
-    --data_path /path/to/cc3m_595k.json \
-    --image_folder /path/to/cc3m_595k \
-    --vision_tower openai/clip-vit-large-patch14 \
-    --tune_mm_mlp_adapter True \
-    --mm_vision_select_layer -2 \
-    --bf16 True \
-    --output_dir ./checkpoints/llava-13b-pretrain-no_im_start_end_token \
-    --num_train_epochs 1 \
-    --per_device_train_batch_size 16 \
-    --per_device_eval_batch_size 4 \
-    --gradient_accumulation_steps 1 \
-    --evaluation_strategy "no" \
-    --save_strategy "steps" \
-    --save_steps 2400 \
-    --save_total_limit 1 \
-    --learning_rate 2e-3 \
-    --weight_decay 0. \
-    --warmup_ratio 0.03 \
-    --lr_scheduler_type "cosine" \
-    --logging_steps 1 \
-    --tf32 True \
-    --model_max_length 2048 \
-    --gradient_checkpointing True \
-    --lazy_preprocess True \
-    --report_to wandb
-```
-</details>
-
-<details>
-<summary>2. Extract projector features</summary>
-
-```Shell
-python scripts/extract_mm_projector.py \
-  --model_name_or_path ./checkpoints/llava-13b-pretrain-no_im_start_end_token \
-  --output ./checkpoints/mm_projector/llava-13b-pretrain-no_im_start_end_token.bin
-```
-</details>
-
-<details>
-<summary>3. Finetuning</summary>
-
-You may download our pretrained `llava-13b-pretrain-no_im_start_end_token.bin` [here](https://huggingface.co/liuhaotian/LLaVA-13b-pretrain-projector-v0/blob/main/LLaVA-13b-pretrain-projector-v0-CC3M-595K-original_caption-no_im_token.bin).
-
-```Shell
-torchrun --nnodes=1 --nproc_per_node=8 --master_port=25001 \
-    llava/train/train_mem.py \
-    --model_name_or_path /path/to/llama-vicuna-13b \
-    --data_path /path/to/scienceqa/llava_train_QCM-LEPA.json \
-    --image_folder /path/to/scienceqa/images/train \
-    --vision_tower openai/clip-vit-large-patch14 \
-    --pretrain_mm_mlp_adapter ./checkpoints/mm_projector/llava-13b-pretrain-no_im_start_end_token.bin \
-    --mm_vision_select_layer -2 \
-    --bf16 True \
-    --output_dir ./checkpoints/llava-13b-pretrain-no_im_start_end_token-finetune_scienceqa \
-    --num_train_epochs 12 \
-    --per_device_train_batch_size 4 \
-    --per_device_eval_batch_size 4 \
-    --gradient_accumulation_steps 1 \
-    --evaluation_strategy "no" \
-    --save_strategy "steps" \
-    --save_steps 5000 \
-    --save_total_limit 3 \
-    --learning_rate 2e-5 \
-    --weight_decay 0. \
-    --warmup_ratio 0.03 \
-    --lr_scheduler_type "cosine" \
-    --logging_steps 1 \
-    --tf32 True \
-    --fsdp "full_shard auto_wrap" \
-    --fsdp_transformer_layer_cls_to_wrap 'LlamaDecoderLayer' \
-    --model_max_length 2048 \
-    --gradient_checkpointing True \
-    --lazy_preprocess True \
-    --report_to wandb
-```
-</details>
+We use the same set of training dataset, and the hyperparameters as other *Lightning* checkpoints.
 
 ## Evaluation
 
@@ -519,58 +307,9 @@ OPENAI_API_KEY="sk-***********************************" python llava/eval/eval_g
 python summarize_gpt_review.py
 ```
 
-### ScienceQA
+## ScienceQA
 
-#### Prepare Data
-1. Please see ScienceQA [repo](https://github.com/lupantech/ScienceQA) for setting up the dataset.
-2. Generate ScienceQA dataset for LLaVA conversation-style format.
-
-```Shell
-python scripts/convert_sqa_to_llava \
-    convert_to_llava \
-    --base-dir /path/to/ScienceQA/data/scienceqa \
-    --split {train,val,minival,test,minitest}
-```
-
-#### Evaluation
-
-1. Download our pretrained LLaVA-13B (delta) weights for ScienceQA dataset [here](https://huggingface.co/liuhaotian/LLaVA-13b-delta-v0-science_qa).  Convert the delta weights to actual weights.
-
-```Shell
-python -m llava.model.apply_delta \
-    --base /path/to/llama-13b \
-    --target /path/to/LLaVA-13b-v0-science_qa \
-    --delta liuhaotian/LLaVA-13b-delta-v0-science_qa
-```
-
-2. [Option 1] Multiple-GPU inference
-You may evaluate this with multiple GPUs, and concatenate the generated jsonl files.  Please refer to our script for [batch evaluation](scripts/sqa_eval_batch.sh) and [results gathering](scripts/sqa_eval_gather.sh).
-
-3. [Option 2] Single-GPU inference
-
-(a) Generate LLaVA responses on ScienceQA dataset
-
-```Shell
-python -m llava.eval.model_vqa_science \
-    --model-path /path/to/LLaVA-13b-v0-science_qa \
-    --question-file /path/to/ScienceQA/data/scienceqa/llava_test.json \
-    --image-folder /path/to/ScienceQA/data/scienceqa/images/test \
-    --answers-file vqa/results/ScienceQA/test_llava-13b.jsonl \
-    --answer-prompter \
-    --conv-mode llava_v0
-```
-
-(b) Evaluate the generated responses
-
-```Shell
-python eval_science_qa.py \
-    --base-dir /path/to/ScienceQA/data/scienceqa \
-    --result-file vqa/results/ScienceQA/test_llava-13b.jsonl \
-    --output-file vqa/results/ScienceQA/test_llava-13b_output.json \
-    --output-result vqa/results/ScienceQA/test_llava-13b_result.json \
-```
-
-For reference, we attach our prediction file `test_llava-13b_result.json` [here](llava/eval/table/results/test_sqa_llava_13b_v0.json) for comparison when reproducing our results, as well as for further analysis in detail.
+Please check out the documentation [here](https://github.com/haotian-liu/LLaVA/blob/main/docs/ScienceQA.md).
 
 ## Citation
 
