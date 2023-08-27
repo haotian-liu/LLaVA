@@ -23,7 +23,6 @@ You can download our pretrained projector weights from our [Model Zoo](), or tra
 See [`finetune_sqa.sh`](https://github.com/haotian-liu/LLaVA/blob/main/scripts/finetune_sqa.sh).
 
 #### Evaluation
-```
 
 1. Multiple-GPU inference
 You may evaluate this with multiple GPUs, and concatenate the generated jsonl files.  Please refer to our script for [batch evaluation](https://github.com/haotian-liu/LLaVA/blob/main/scripts/sqa_eval_batch.sh) and [results gathering](https://github.com/haotian-liu/LLaVA/blob/main/scripts/sqa_eval_gather.sh).
