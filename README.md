@@ -230,7 +230,7 @@ In our later exploration, we introduced LLaVA-Lightning, as we find that a much 
 
 LLaVA-Lightning can be trained on 8x A100 GPUs in just 3 hours, including both pretraining and finetuning. When using spot instances, it costs just ~$40.
 
-For LLaVA Lightning, we create two distilled subset to ensure both a broad concept coverage, and the efficiency in training. Furthermore, we only perform instruction tuning for 1 epoch, in contrast to 3 epochs in the paper. We find such schedule is effctive and can achieve fast convergence and good performance.
+For LLaVA Lightning, we create two distilled subset to ensure both a broad concept coverage, and the efficiency in training. Furthermore, we only perform instruction tuning for 1 epoch, in contrast to 3 epochs in the paper. We find such schedule is effective and can achieve fast convergence and good performance.
 
 For pretraining, we create a concept-balanced subset of LAION-CC-SBU. It consists of 558K images.  Download data [here](https://huggingface.co/datasets/liuhaotian/LLaVA-Pretrain/tree/main).
 
