@@ -1,32 +1,19 @@
 #!/bin/bash
 
-# Uncomment and set the following variables correspondingly to run this script:
-
-################## VICUNA ##################
-# PROMPT_VERSION=v1
-# MODEL_VERSION="vicuna-v1-3-7b"
-################## VICUNA ##################
-
-################## LLaMA-2 ##################
-# PROMPT_VERSION="llava_llama_2"
-# MODEL_VERSION="llama-2-7b-chat"
-################## LLaMA-2 ##################
-
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
-    --lora_enable True \
-    --model_name_or_path ./checkpoints/$MODEL_VERSION \
+    --model_name_or_path lmsys/vicuna-13b-v1.3 \
     --version $PROMPT_VERSION \
-    --data_path ./playground/data/llava_instruct_80k.json \
-    --image_folder /path/to/coco/train2017 \
+    --data_path /Data/ScienceQA/data/scienceqa/llava_train_QCM-LEA.json \
+    --image_folder /Data/ScienceQA/data/scienceqa/images/train \
     --vision_tower openai/clip-vit-large-patch14 \
-    --pretrain_mm_mlp_adapter ./checkpoints/llava-$MODEL_VERSION-pretrain/mm_projector.bin \
+    --pretrain_mm_mlp_adapter ./checkpoints/huggingface/liuhaotian/llava-pretrain-vicuna-13b-v1.3/mm_projector.bin \
     --mm_vision_select_layer -2 \
     --mm_use_im_start_end False \
     --mm_use_im_patch_token False \
     --bf16 True \
-    --output_dir ./checkpoints/llava-$MODEL_VERSION-finetune_lora \
-    --num_train_epochs 1 \
+    --output_dir ./checkpoints/llava-vicuna-13b-v1.3-pretrain_lcs558k_plain-ScienceQA_QCM_LEA-12e \
+    --num_train_epochs 12 \
     --per_device_train_batch_size 16 \
     --per_device_eval_batch_size 4 \
     --gradient_accumulation_steps 1 \
@@ -42,6 +29,6 @@ deepspeed llava/train/train_mem.py \
     --tf32 True \
     --model_max_length 2048 \
     --gradient_checkpointing True \
-    --lazy_preprocess True \
     --dataloader_num_workers 4 \
+    --lazy_preprocess True \
     --report_to wandb

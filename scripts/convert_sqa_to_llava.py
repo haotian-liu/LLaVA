@@ -5,7 +5,7 @@ import re
 from convert_sqa_to_llava_base_prompt import build_prompt_chatbot
 
 
-def convert_to_llava(base_dir, split, prompt_format="QCM-LEPA"):
+def convert_to_llava(base_dir, split, prompt_format="QCM-LEA"):
     split_indices = json.load(open(os.path.join(base_dir, "pid_splits.json")))[split]
     problems = json.load(open(os.path.join(base_dir, "problems.json")))
 
