@@ -50,4 +50,4 @@ python eval_science_qa.py \
     --output-result vqa/results/ScienceQA/test_llava-13b_result.json \
 ```
 
-For reference, we attach our prediction file [`test_sqa_llava_13b_v0.json`](https://github.com/haotian-liu/LLaVA/blob/main/llava/eval/table/results/test_sqa_llava_13b_v0.json) for comparison when reproducing our results, as well as for further analysis in detail.
+For reference, we attach our prediction file [`test_sqa_llava_lcs_558k_sqa_12e_vicuna_v1_3_13b.json`](https://github.com/haotian-liu/LLaVA/blob/main/llava/eval/table/results/test_sqa_llava_lcs_558k_sqa_12e_vicuna_v1_3_13b.json) and [`test_sqa_llava_13b_v0.json`](https://github.com/haotian-liu/LLaVA/blob/main/llava/eval/table/results/test_sqa_llava_13b_v0.json) for comparison when reproducing our results, as well as for further analysis in detail.
