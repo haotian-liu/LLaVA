@@ -40,6 +40,13 @@ When using these projector weights to instruction tune your LMM, please make sur
 | Vicuna-7B-v1.3 | CLIP-L | LCS-558K | 1e | [projector](https://huggingface.co/liuhaotian/llava-pretrain-vicuna-7b-v1.3) |
 
 
+## Science QA Checkpoints
+
+| Base LLM | Vision Encoder | Pretrain Data | Pretraining schedule | Finetuning Data | Finetuning schedule | Download |
+|----------|----------------|---------------|----------------------|-----------------|--------------------|---------------------|
+| Vicuna-13B-v1.3 | CLIP-L | LCS-558K | 1e | ScienceQA | full_ft-12e | [ckpt](https://huggingface.co/liuhaotian/llava-lcs558k-scienceqa-vicuna-13b-v1.3) |
+
+
 ## Legacy Models (merged weights)
 
 The model weights below are *merged* weights. You do not need to apply delta. The usage of LLaVA checkpoints should comply with the base LLM's model license.

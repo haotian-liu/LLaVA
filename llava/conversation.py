@@ -314,10 +314,8 @@ conv_llava_v0 = Conversation(
            "The assistant gives helpful, detailed, and polite answers to the human's questions.",
     roles=("Human", "Assistant"),
     messages=(
-        ("Human", "Hi!"),
-        ("Assistant", "Hi there! How can I help you today?")
     ),
-    offset=2,
+    offset=0,
     sep_style=SeparatorStyle.SINGLE,
     sep="###",
 )
