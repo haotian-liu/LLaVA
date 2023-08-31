@@ -210,7 +210,11 @@ python llava/train/train_mem.py \
     --report_to wandb
 ```
 </details>
+<details>
+<summary>Pretrain: LLaVA-7B, 8x V100 (32G).  Time: ~20 hours.</summary>
 
+ We provide training script with DeepSpeed [here](https://github.com/haotian-liu/LLaVA/blob/main/scripts/pretrain_xformers.sh).
+</details>
 
 ### Visual Instruction Tuning
 
