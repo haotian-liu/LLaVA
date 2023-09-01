@@ -35,6 +35,7 @@
 
 ## Contents
 - [Install](#install)
+- [Quick Start With HuggingFace](#quick-start-with-huggingface)
 - [LLaVA Weights](#llava-weights)
 - [Demo](#Demo)
 - [Model Zoo](https://github.com/haotian-liu/LLaVA/blob/main/docs/MODEL_ZOO.md)
@@ -71,6 +72,26 @@ git pull
 pip uninstall transformers
 pip install -e .
 ```
+
+## Quick Start With HuggingFace
+You can make a quick start with our model on HugginFace.
+Look the detail in "llava/model/builder.py" and "load_pretrained_model" function.
+Here is a example code:
+```Python
+from llava.model.builder import load_pretrained_model
+from llava.mm_utils import get_model_name_from_path
+
+model_path = "liuhaotian/LLaVA-Lightning-MPT-7B-preview"
+model_name = get_model_name_from_path(model_path)
+model_base = None
+
+model = load_pretrained_model(
+    model_path=model_path,
+    model_base=model_base,
+    model_name=model_name
+)
+```
+You can also use this code on Colab directly after downloading this repository.
 
 ## LLaVA Weights
 Please check out our [Model Zoo](https://github.com/haotian-liu/LLaVA/blob/main/docs/MODEL_ZOO.md) for all public LLaVA checkpoints, and the instructions of how to use the weights.
