@@ -1,3 +1,0 @@
-*.json filter=lfs diff=lfs merge=lfs -text
-test_sqa_llava_lcs_558k_sqa_12e_vicuna_v1_3_13b.json filter=lfs diff=lfs merge=lfs -text
-test_sqa_llava_13b_v0.json filter=lfs diff=lfs merge=lfs -text
