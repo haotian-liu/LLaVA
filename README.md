@@ -210,10 +210,13 @@ python llava/train/train_mem.py \
     --report_to wandb
 ```
 </details>
+
 <details>
 <summary>Pretrain: LLaVA-7B, 8x V100 (32G).  Time: ~20 hours.</summary>
 
  We provide training script with DeepSpeed [here](https://github.com/haotian-liu/LLaVA/blob/main/scripts/pretrain_xformers.sh).
+Tips:
+- If you are using V100 which is not supported by FlashAttention, you can use the [memory-efficient attention](https://arxiv.org/abs/2112.05682) implemented in [xFormers](https://github.com/facebookresearch/xformers). Install xformers and replace `llava/train/train_mem.py` above with [llava/train/train_xformers.py](llava/train/train_xformers.py).
 </details>
 
 ### Visual Instruction Tuning
