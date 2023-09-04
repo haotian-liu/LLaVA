@@ -1,6 +1,6 @@
 # Customize Components in LLaVA
 
-This is a initial guide in how to replace the LLMs, visual encoders, etc. with your choice of components.
+This is an initial guide on how to replace the LLMs, visual encoders, etc. with your choice of components.
 
 ## LLM
 
