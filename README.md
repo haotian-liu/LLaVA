@@ -85,13 +85,36 @@ model_path = "liuhaotian/LLaVA-Lightning-MPT-7B-preview"
 model_name = get_model_name_from_path(model_path)
 model_base = None
 
-model = load_pretrained_model(
+tokenizer, model, image_processor, context_len = load_pretrained_model(
     model_path=model_path,
     model_base=model_base,
     model_name=model_name
 )
 ```
-You can also use this code on Colab directly after downloading this repository.
+
+You can also use our "eval_model" function in "llava > eval > run_llava.py" to get the output easily. By doing so, you can use this code on Colab directly after downloading this repository.
+
+``` python
+# import the file
+
+model_path = "liuhaotian/LLaVA-Lightning-MPT-7B-preview"
+model_name = get_model_name_from_path(model_path)
+model_base = None
+prompt = "Give me a short description of this image."
+imageFile = "https://llava-vl.github.io/static/images/view.jpg"
+
+args = type('Args', (), {
+    "model_path": model_path,
+    "model_base": model_base,
+    "model_name": model_name,
+    "query": prompt,
+    "conv_mode": None,
+    "image_file": imageFile
+})()
+
+output = eval_model(args)
+print(output)
+``` 
 
 ## LLaVA Weights
 Please check out our [Model Zoo](https://github.com/haotian-liu/LLaVA/blob/main/docs/MODEL_ZOO.md) for all public LLaVA checkpoints, and the instructions of how to use the weights.
