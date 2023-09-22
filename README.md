@@ -14,6 +14,7 @@
 
 
 ## Release
+- [9/22] [LLaVA](https://arxiv.org/abs/2304.08485) is accpeted by NeurIPS 2023 as oral presentation, and [LLaVA-Med](https://arxiv.org/abs/2306.00890) is accpeted by NeurIPS 2023 Datasets and Benchmarks Track as spotlight presentation.
 - [9/20] We summarize our emprical study of training 33B and 65B LLaVA mdoels in a [note](https://arxiv.org/abs/2309.09958). Further, if you interested in the comprehensive review, evolution and trend of multimodal foundation models, pleaase check out our recent survey paper [``Multimodal Foundation Models: From Specialists to General-Purpose Assistants''.](https://arxiv.org/abs/2309.10020)
 <p align="center">
   <img src="https://github.com/Computer-Vision-in-the-Wild/CVinW_Readings/blob/main/images/mfm_evolution.jpeg?raw=true" width=50%/>
