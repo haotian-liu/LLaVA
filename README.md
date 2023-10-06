@@ -116,6 +116,8 @@ You can launch as many workers as you want, and compare between different model 
 python -m llava.serve.model_worker --host 0.0.0.0 --controller http://localhost:10000 --port <different from 40000, say 40001> --worker http://localhost:<change accordingly, i.e. 40001> --model-path <ckpt2>
 ```
 
+I you are using an Apple device with an M1 or M2 chip, you can specify the mps device by using the --device flag: `--device mps`.
+
 #### Launch a model worker (Multiple GPUs, when GPU VRAM <= 24GB)
 
 If the VRAM of your GPU is less than 24GB (e.g., RTX 3090, RTX 4090, etc.), you may try running it with multiple GPUs. Our latest code base will automatically try to use multiple GPUs if you have more than one GPU. You can specify which GPUs to use with `CUDA_VISIBLE_DEVICES`. Below is an example of running with the first two GPUs.
