@@ -11,8 +11,33 @@ def load_image_from_base64(image):
     return Image.open(BytesIO(base64.b64decode(image)))
 
 
+def expand2square(pil_img, background_color):
+    width, height = pil_img.size
+    if width == height:
+        return pil_img
+    elif width > height:
+        result = Image.new(pil_img.mode, (width, width), background_color)
+        result.paste(pil_img, (0, (width - height) // 2))
+        return result
+    else:
+        result = Image.new(pil_img.mode, (height, height), background_color)
+        result.paste(pil_img, ((height - width) // 2, 0))
+        return result
+
+
 def process_images(images, image_processor, model_cfg):
-    return image_processor(images, return_tensors='pt')['pixel_values']
+    image_aspect_ratio = getattr(model_cfg, "image_aspect_ratio", None)
+    new_images = []
+    if image_aspect_ratio == 'pad':
+        for image in images:
+            image = expand2square(image, tuple(int(x*255) for x in image_processor.image_mean))
+            image = image_processor.preprocess(image, return_tensors='pt')['pixel_values'][0]
+            new_images.append(image)
+    else:
+        return image_processor(images, return_tensors='pt')['pixel_values']
+    if all(x.shape == new_images[0].shape for x in new_images):
+        new_images = torch.stack(new_images, dim=0)
+    return new_images
 
 
 def tokenizer_image_token(prompt, tokenizer, image_token_index=IMAGE_TOKEN_INDEX, return_tensors=None):

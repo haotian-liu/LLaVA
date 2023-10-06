@@ -19,6 +19,7 @@ import torch
 import torch.nn as nn
 
 from .multimodal_encoder.builder import build_vision_tower
+from .multimodal_projector.builder import build_vision_projector
 
 from llava.constants import IGNORE_INDEX, IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_PATCH_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
 
@@ -30,7 +31,7 @@ class LlavaMetaModel:
 
         if hasattr(config, "mm_vision_tower"):
             self.vision_tower = build_vision_tower(config, delay_load=True)
-            self.mm_projector = nn.Linear(config.mm_hidden_size, config.hidden_size)
+            self.mm_projector = build_vision_projector(config)
 
     def get_vision_tower(self):
         vision_tower = getattr(self, 'vision_tower', None)
@@ -54,12 +55,12 @@ class LlavaMetaModel:
             self.vision_tower = vision_tower
 
         self.config.use_mm_proj = True
+        self.config.mm_projector_type = getattr(model_args, 'mm_projector_type', 'linear')
         self.config.mm_hidden_size = vision_tower.hidden_size
         self.config.mm_vision_select_layer = mm_vision_select_layer
         self.config.mm_vision_select_feature = mm_vision_select_feature
 
-        if not hasattr(self, 'mm_projector'):
-            self.mm_projector = nn.Linear(self.config.mm_hidden_size, self.config.hidden_size)
+        self.mm_projector = build_vision_projector(self.config)
 
         if pretrain_mm_mlp_adapter is not None:
             mm_projector_weights = torch.load(pretrain_mm_mlp_adapter, map_location='cpu')
@@ -107,8 +108,12 @@ class LlavaMetaForCausalLM(ABC):
         for batch_idx, cur_input_ids in enumerate(input_ids):
             if (cur_input_ids == IMAGE_TOKEN_INDEX).sum() == 0:
                 # multimodal LLM, but the current sample is not multimodal
-                cur_input_embeds = self.get_model().embed_tokens(cur_input_ids)
-                cur_input_embeds = cur_input_embeds + (0. * self.get_model().mm_projector(vision_tower.dummy_feature)).sum()
+                # FIXME: this is a hacky fix, for deepspeed zero3 to work
+                half_len = cur_input_ids.shape[0] // 2
+                cur_image_features = image_features[cur_image_idx]
+                cur_input_embeds_1 = self.get_model().embed_tokens(cur_input_ids[:half_len])
+                cur_input_embeds_2 = self.get_model().embed_tokens(cur_input_ids[half_len:])
+                cur_input_embeds = torch.cat([cur_input_embeds_1, cur_image_features[0:0], cur_input_embeds_2], dim=0)
                 new_input_embeds.append(cur_input_embeds)
                 if labels is not None:
                     new_labels.append(labels[batch_idx])
