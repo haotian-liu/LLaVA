@@ -280,7 +280,7 @@ def http_bot(state, model_selector, temperature, top_p, max_new_tokens, request:
 
 title_markdown = ("""
 # 🌋 LLaVA: Large Language and Vision Assistant
-[[Project Page]](https://llava-vl.github.io) [[Paper]](https://arxiv.org/abs/2304.08485) [[Code]](https://github.com/haotian-liu/LLaVA) [[Model]](https://huggingface.co/liuhaotian/LLaVA-13b-delta-v0)
+[[Project Page]](https://llava-vl.github.io) [[Paper]](https://arxiv.org/abs/2304.08485) [[Code]](https://github.com/haotian-liu/LLaVA) [[Model]](https://github.com/haotian-liu/LLaVA/blob/main/docs/MODEL_ZOO.md)
 """)
 
 tos_markdown = ("""
