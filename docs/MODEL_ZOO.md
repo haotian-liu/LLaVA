@@ -48,7 +48,7 @@ When using these projector weights to instruction tune your LMM, please make sur
 ```
 
 | Base LLM | Vision Encoder | Projection | Pretrain Data | Pretraining schedule | Download |
-|----------|----------------|---------------|----------------------|----------|
+|----------|----------------|---------------|----------------------|----------|----------|
 | Vicuna-13B-v1.5 | CLIP-L-336px | MLP-2x | LCS-558K | 1e | [projector](https://huggingface.co/liuhaotian/llava-v1.5-mlp2x-336px-pretrain-vicuna-13b-v1.5) |
 | Vicuna-7B-v1.5 | CLIP-L-336px | MLP-2x | LCS-558K | 1e | [projector](https://huggingface.co/liuhaotian/llava-v1.5-mlp2x-336px-pretrain-vicuna-7b-v1.5) |
 | LLaMA-2-13B-Chat | CLIP-L-336px | Linear | LCS-558K | 1e | [projector](https://huggingface.co/liuhaotian/llava-336px-pretrain-llama-2-13b-chat) |
