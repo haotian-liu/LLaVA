@@ -9,6 +9,7 @@ from llava.mm_utils import tokenizer_image_token, get_model_name_from_path, Keyw
 
 from PIL import Image
 
+import intel_extension_for_pytorch as ipex
 import requests
 from PIL import Image
 from io import BytesIO
@@ -28,7 +29,11 @@ def eval_model(args):
     disable_torch_init()
 
     model_name = get_model_name_from_path(args.model_path)
-    tokenizer, model, image_processor, context_len = load_pretrained_model(args.model_path, args.model_base, model_name)
+    tokenizer, model, image_processor, context_len = load_pretrained_model(args.model_path, args.model_base, model_name, False, False, args.device)
+
+    #### IPEX optimize ####
+    model.eval()
+    model = ipex.optimize(model, dtype=torch.bfloat16)
 
     qs = args.query
     if model.config.mm_use_im_start_end:
@@ -56,9 +61,9 @@ def eval_model(args):
     prompt = conv.get_prompt()
 
     image = load_image(args.image_file)
-    image_tensor = image_processor.preprocess(image, return_tensors='pt')['pixel_values'].half().cuda()
+    image_tensor = image_processor.preprocess(image, return_tensors='pt')['pixel_values'].to(device=args.device, dtype=torch.bfloat16)
 
-    input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).cuda()
+    input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).to(args.device)
 
     stop_str = conv.sep if conv.sep_style != SeparatorStyle.TWO else conv.sep2
     keywords = [stop_str]
@@ -92,6 +97,7 @@ if __name__ == "__main__":
     parser.add_argument("--image-file", type=str, required=True)
     parser.add_argument("--query", type=str, required=True)
     parser.add_argument("--conv-mode", type=str, default=None)
+    parser.add_argument("--device", type=str, default="xpu", help="xpu or cpu")
     args = parser.parse_args()
 
     eval_model(args)

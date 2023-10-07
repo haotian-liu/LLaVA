@@ -15,6 +15,8 @@ import torch
 import uvicorn
 from functools import partial
 
+import intel_extension_for_pytorch as ipex
+
 from llava.constants import WORKER_HEART_BEAT_INTERVAL
 from llava.utils import (build_logger, server_error_msg,
     pretty_print_semaphore)
@@ -33,6 +35,7 @@ global_counter = 0
 
 model_semaphore = None
 
+g_run_device = None
 
 def heart_beat_worker(controller):
 
@@ -60,11 +63,18 @@ class ModelWorker:
         else:
             self.model_name = model_name
 
-        self.device = device
+        global g_run_device
+
+        g_run_device = device
+
         logger.info(f"Loading the model {self.model_name} on worker {worker_id} ...")
         self.tokenizer, self.model, self.image_processor, self.context_len = load_pretrained_model(
-            model_path, model_base, self.model_name, load_8bit, load_4bit, device=self.device)
+            model_path, model_base, self.model_name, load_8bit, load_4bit, device)
         self.is_multimodal = 'llava' in self.model_name.lower()
+
+        #### IPEX optimize ####
+        self.model.eval()
+        self.model = ipex.optimize(self.model, dtype=torch.bfloat16)
 
         if not no_register:
             self.register_to_controller()
@@ -121,6 +131,7 @@ class ModelWorker:
 
     @torch.inference_mode()
     def generate_stream(self, params):
+        global g_run_device
         tokenizer, model, image_processor = self.tokenizer, self.model, self.image_processor
 
         prompt = params["prompt"]
@@ -136,9 +147,9 @@ class ModelWorker:
                 images = process_images(images, image_processor, model.config)
 
                 if type(images) is list:
-                    images = [image.to(self.model.device, dtype=torch.float16) for image in images]
+                    images = [image.to(self.model.device, dtype=torch.bfloat16) for image in images]
                 else:
-                    images = images.to(self.model.device, dtype=torch.float16)
+                    images = images.to(self.model.device, dtype=torch.bfloat16)
 
                 replace_token = DEFAULT_IMAGE_TOKEN
                 if getattr(self.model.config, 'mm_use_im_start_end', False):
@@ -160,7 +171,7 @@ class ModelWorker:
         stop_str = params.get("stop", None)
         do_sample = True if temperature > 0.001 else False
 
-        input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).to(self.device)
+        input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).to(g_run_device)
         keywords = [stop_str]
         stopping_criteria = KeywordsStoppingCriteria(keywords, tokenizer, input_ids)
         streamer = TextIteratorStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True, timeout=15)
@@ -259,13 +270,13 @@ if __name__ == "__main__":
     parser.add_argument("--model-path", type=str, default="facebook/opt-350m")
     parser.add_argument("--model-base", type=str, default=None)
     parser.add_argument("--model-name", type=str)
-    parser.add_argument("--device", type=str, default="cuda")
     parser.add_argument("--multi-modal", action="store_true", help="Multimodal mode is automatically detected with model name, please make sure `llava` is included in the model path.")
     parser.add_argument("--limit-model-concurrency", type=int, default=5)
     parser.add_argument("--stream-interval", type=int, default=1)
     parser.add_argument("--no-register", action="store_true")
     parser.add_argument("--load-8bit", action="store_true")
     parser.add_argument("--load-4bit", action="store_true")
+    parser.add_argument("--device", type=str, default="xpu", help="xpu or cpu")
     args = parser.parse_args()
     logger.info(f"args: {args}")
 
