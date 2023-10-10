@@ -73,8 +73,9 @@ class Predictor(BasePredictor):
         self,
         image: Path = Input(description="Input image"),
         prompt: str = Input(description="Prompt to use for text generation"),
-        temperature: float = Input(description="Temperature for text generation", default=0.2, ge=0.0),
-        max_tokens: int = Input(description="Maximum number of tokens to generate", default=1024, ge=0),
+        top_p: float = Input(description="When decoding text, samples from the top p percentage of most likely tokens; lower to ignore less likely tokens", ge=0.0, le=1.0, default=1.0),
+        temperature: float = Input(description="Adjusts randomness of outputs, greater than 1 is random and 0 is deterministic", default=0.2, ge=0.0),
+        max_tokens: int = Input(description="Maximum number of tokens to generate. A word is generally 2-3 tokens", default=1024, ge=0),
     ) -> str:
         """Run a single prediction on the model"""
     
@@ -104,6 +105,7 @@ class Predictor(BasePredictor):
                 images=image_tensor,
                 do_sample=True,
                 temperature=temperature,
+                top_p=top_p,
                 max_new_tokens=max_tokens,
                 use_cache=True,
                 stopping_criteria=[stopping_criteria])
