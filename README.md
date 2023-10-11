@@ -233,7 +233,7 @@ Training script with DeepSpeed ZeRO-3: [`finetune.sh`](https://github.com/haotia
 New options to note:
 
 - `--mm_projector_type mlp2x_gelu`: the two-layer MLP vision-language connector.
-- `--image_aspect_ratio pad`: it slightly reduces hallucination.
+- `--image_aspect_ratio pad`: this pads the non-square images to square, instead of cropping them; it slightly reduces hallucination.
 - `--group_by_modality_length True`: this should only be used when your instruction tuning dataset contains both language (e.g. ShareGPT) and multimodal (e.g. LLaVA-Instruct). It makes the training sampler only sample a single modality (either image or language) during training, which we observe to speed up training by ~25%, and does not affect the final outcome.
 
 ## Evaluation
