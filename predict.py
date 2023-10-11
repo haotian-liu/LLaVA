@@ -5,14 +5,17 @@ from llava.conversation import conv_templates, SeparatorStyle
 from llava.model.builder import load_pretrained_model
 from llava.utils import disable_torch_init
 from llava.mm_utils import tokenizer_image_token, KeywordsStoppingCriteria
+from transformers.generation.streamers import TextIteratorStreamer
 
 from PIL import Image
 
 import requests
 from io import BytesIO
 
-from cog import BasePredictor, Input, Path
-import time, subprocess
+from cog import BasePredictor, Input, Path, ConcatenateIterator
+import time
+import subprocess
+from threading import Thread
 
 import os
 os.environ["HUGGINGFACE_HUB_CACHE"] = os.getcwd() + "/weights"
@@ -88,7 +91,7 @@ class Predictor(BasePredictor):
         top_p: float = Input(description="When decoding text, samples from the top p percentage of most likely tokens; lower to ignore less likely tokens", ge=0.0, le=1.0, default=1.0),
         temperature: float = Input(description="Adjusts randomness of outputs, greater than 1 is random and 0 is deterministic", default=0.2, ge=0.0),
         max_tokens: int = Input(description="Maximum number of tokens to generate. A word is generally 2-3 tokens", default=1024, ge=0),
-    ) -> str:
+    ) -> ConcatenateIterator[str]:
         """Run a single prediction on the model"""
     
         conv_mode = "llava_v1"
@@ -110,24 +113,26 @@ class Predictor(BasePredictor):
         stop_str = conv.sep if conv.sep_style != SeparatorStyle.TWO else conv.sep2
         keywords = [stop_str]
         stopping_criteria = KeywordsStoppingCriteria(keywords, self.tokenizer, input_ids)
+        streamer = TextIteratorStreamer(self.tokenizer, skip_prompt=True, timeout=20.0)
     
         with torch.inference_mode():
-            output_ids = self.model.generate(
-                input_ids,
+            thread = Thread(target=self.model.generate, kwargs=dict(
+                inputs=input_ids,
                 images=image_tensor,
                 do_sample=True,
                 temperature=temperature,
                 top_p=top_p,
                 max_new_tokens=max_tokens,
+                streamer=streamer,
                 use_cache=True,
-                stopping_criteria=[stopping_criteria])
-    
-        outputs = self.tokenizer.decode(output_ids[0, input_ids.shape[1]:], skip_special_tokens=True).strip()
-        conv.messages[-1][-1] = outputs
-
-        if outputs.endswith(stop_str):
-            outputs = outputs[:-len(stop_str)].strip()
-        return outputs
+                stopping_criteria=[stopping_criteria]))
+            thread.start()
+            for new_text in streamer:
+                if new_text.endswith(stop_str):
+                    new_text = new_text[:-len(stop_str)].strip()
+                if len(new_text):
+                    yield new_text
+            thread.join()
     
 
 def load_image(image_file):
