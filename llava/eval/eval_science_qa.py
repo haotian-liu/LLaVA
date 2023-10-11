@@ -32,6 +32,7 @@ def get_pred_idx(prediction, choices, options):
     if prediction in options[:len(choices)]:
         return options.index(prediction)
     else:
+        return -1
         return random.choice(range(len(choices)))
 
 
@@ -55,16 +56,23 @@ if __name__ == "__main__":
 
     for prob_id, prob in split_problems.items():
         if prob_id not in predictions:
-            continue
-        pred = predictions[prob_id]
-        pred_text = pred['text']
-
-        pattern = re.compile(r'The answer is ([A-Z]).')
-        res = pattern.findall(pred_text)
-        if len(res) == 1:
-            answer = res[0]  # 'A', 'B', ...
+            pred = {'text': 'FAILED', 'prompt': 'Unknown'}
+            pred_text = 'FAILED'
         else:
-            answer = "FAILED"
+            pred = predictions[prob_id]
+            pred_text = pred['text']
+
+        if pred_text in args.options:
+            answer = pred_text
+        elif len(pred_text) >= 3 and pred_text[0] in args.options and pred_text[1:3] == ". ":
+            answer = pred_text[0]
+        else:
+            pattern = re.compile(r'The answer is ([A-Z]).')
+            res = pattern.findall(pred_text)
+            if len(res) == 1:
+                answer = res[0]  # 'A', 'B', ...
+            else:
+                answer = "FAILED"
 
         pred_idx = get_pred_idx(answer, prob['choices'], args.options)
 
@@ -87,7 +95,14 @@ if __name__ == "__main__":
 
     correct = len(results['correct'])
     total = len(results['correct']) + len(results['incorrect'])
-    print(f'Total: {total}, Correct: {correct}, Accuracy: {correct / total * 100:.2f}%')
+
+    ###### IMG ######
+    multimodal_correct = len([x for x in results['correct'] if x['is_multimodal']])
+    multimodal_incorrect = len([x for x in results['incorrect'] if x['is_multimodal']])
+    multimodal_total = multimodal_correct + multimodal_incorrect
+    ###### IMG ######
+
+    print(f'Total: {total}, Correct: {correct}, Accuracy: {correct / total * 100:.2f}%, IMG-Accuracy: {multimodal_correct / multimodal_total * 100:.2f}%')
 
     sqa_results['acc'] = correct / total * 100
     sqa_results['correct'] = correct
