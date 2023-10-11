@@ -192,7 +192,8 @@ Pretrain takes around 5.5 hours for LLaVA-v1.5-13B on 8x A100 (80G), due to the 
 
 Training script with DeepSpeed ZeRO-2: [`pretrain.sh`](https://github.com/haotian-liu/LLaVA/blob/main/scripts/v1_5/pretrain.sh).
 
-`--mm_projector_type mlp2x_gelu` is the only new option for pretraining LLaVA-v1.5, which indicates the two-layer MLP vision-language connector.
+- `--mm_projector_type mlp2x_gelu`: the two-layer MLP vision-language connector.
+- `--vision_tower openai/clip-vit-large-patch14-336`: CLIP ViT-L/14 336px.
 
 ### Visual Instruction Tuning
 
@@ -233,6 +234,7 @@ Training script with DeepSpeed ZeRO-3: [`finetune.sh`](https://github.com/haotia
 New options to note:
 
 - `--mm_projector_type mlp2x_gelu`: the two-layer MLP vision-language connector.
+- `--vision_tower openai/clip-vit-large-patch14-336`: CLIP ViT-L/14 336px.
 - `--image_aspect_ratio pad`: this pads the non-square images to square, instead of cropping them; it slightly reduces hallucination.
 - `--group_by_modality_length True`: this should only be used when your instruction tuning dataset contains both language (e.g. ShareGPT) and multimodal (e.g. LLaVA-Instruct). It makes the training sampler only sample a single modality (either image or language) during training, which we observe to speed up training by ~25%, and does not affect the final outcome.
 
