@@ -1,21 +1,22 @@
 #!/bin/bash
 
-# IMPORTANT: this is the training script for the original LLaVA, NOT FOR LLaVA V1.5!
-
 deepspeed llava/train/train_mem.py \
-    --deepspeed ./scripts/zero2.json \
-    --model_name_or_path lmsys/vicuna-13b-v1.3 \
-    --version $PROMPT_VERSION \
-    --data_path /Data/ScienceQA/data/scienceqa/llava_train_QCM-LEA.json \
-    --image_folder /Data/ScienceQA/data/scienceqa/images/train \
-    --vision_tower openai/clip-vit-large-patch14 \
-    --pretrain_mm_mlp_adapter ./checkpoints/huggingface/liuhaotian/llava-pretrain-vicuna-13b-v1.3/mm_projector.bin \
+    --deepspeed ./scripts/zero3.json \
+    --model_name_or_path lmsys/vicuna-13b-v1.5 \
+    --version v1 \
+    --data_path ./playground/data/llava_v1_5_mix665k.json \
+    --image_folder ./playground/data \
+    --vision_tower openai/clip-vit-large-patch14-336 \
+    --pretrain_mm_mlp_adapter ./checkpoints/llava-v1.5-13b-pretrain/mm_projector.bin \
+    --mm_projector_type mlp2x_gelu \
     --mm_vision_select_layer -2 \
     --mm_use_im_start_end False \
     --mm_use_im_patch_token False \
+    --image_aspect_ratio pad \
+    --group_by_modality_length True \
     --bf16 True \
-    --output_dir ./checkpoints/llava-vicuna-13b-v1.3-pretrain_lcs558k_plain-ScienceQA_QCM_LEA-12e \
-    --num_train_epochs 12 \
+    --output_dir ./checkpoints/llava-v1.5-13b \
+    --num_train_epochs 1 \
     --per_device_train_batch_size 16 \
     --per_device_eval_batch_size 4 \
     --gradient_accumulation_steps 1 \
