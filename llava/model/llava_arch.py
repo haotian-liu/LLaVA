@@ -26,12 +26,14 @@ from llava.constants import IGNORE_INDEX, IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_PATCH
 
 class LlavaMetaModel:
 
-    def __init__(self, config):
+    def __init__(self, config, proj_config = None):
         super(LlavaMetaModel, self).__init__(config)
-
+        
         if hasattr(config, "mm_vision_tower"):
-            self.vision_tower = build_vision_tower(config, delay_load=True)
-            self.mm_projector = build_vision_projector(config)
+            # Set proj_config as config is not provided
+            self.proj_config = proj_config if proj_config is not None else config
+            self.vision_tower = build_vision_tower(proj_config, delay_load=True)
+            self.mm_projector = build_vision_projector(proj_config)
 
     def get_vision_tower(self):
         vision_tower = getattr(self, 'vision_tower', None)
@@ -76,13 +78,23 @@ class LlavaMetaForCausalLM(ABC):
     def get_model(self):
         pass
 
+    @abstractmethod
+    def get_proj_config(self):
+        pass
+
     def get_vision_tower(self):
         return self.get_model().get_vision_tower()
 
     def encode_images(self, images):
         image_features = self.get_model().get_vision_tower()(images)
         image_features = self.get_model().mm_projector(image_features)
-        return image_features
+
+        # pad output dimension of vision encoder to match input dimension of lm
+        projection_hidden_dim = getattr(self.get_proj_config(), "hidden_size", 0)
+        lm_hidden_dim = getattr(self.config, "hidden_size", projection_hidden_dim)
+        paddings = max(0, lm_hidden_dim - projection_hidden_dim)
+        
+        return nn.functional.pad(image_features, (0, paddings), 'circular')
 
     def prepare_inputs_labels_for_multimodal(
         self, input_ids, attention_mask, past_key_values, labels, images

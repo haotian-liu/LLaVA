@@ -22,8 +22,9 @@ import torch
 from llava.model import *
 from llava.constants import DEFAULT_IMAGE_PATCH_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
 
+from .multimodal_projector.builder import build_vision_projector
 
-def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, load_4bit=False, device_map="auto", device="cuda"):
+def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, load_4bit=False, concat_projection = False, device_map="auto", device="cuda"):
     kwargs = {"device_map": device_map}
 
     if load_8bit:
@@ -86,6 +87,15 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
                 tokenizer = AutoTokenizer.from_pretrained(model_base, use_fast=True)
                 cfg_pretrained = AutoConfig.from_pretrained(model_path, trust_remote_code=True)
                 model = LlavaMPTForCausalLM.from_pretrained(model_base, low_cpu_mem_usage=True, config=cfg_pretrained, **kwargs)
+            elif concat_projection:
+                tokenizer = AutoTokenizer.from_pretrained(model_base, use_fast=False)
+                # Use which config for which?
+                proj_config = AutoConfig.from_pretrained(model_path)
+                lm_config = AutoConfig.from_pretrained(model_base)
+                model = LlavaLlamaForCausalLM.from_pretrained(model_base, low_cpu_mem_usage=True, config=lm_config, proj_config=proj_config, **kwargs)
+                # Reload the mm_projector to overwrite the part loaded from base model if provided
+                model.model.mm_projector = build_vision_projector(model.proj_config)
+                model.model.mm_projector.to(device=device, dtype=torch.float16)
             else:
                 tokenizer = AutoTokenizer.from_pretrained(model_base, use_fast=False)
                 cfg_pretrained = AutoConfig.from_pretrained(model_path)

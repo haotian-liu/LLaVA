@@ -27,3 +27,11 @@ ckpts*
 
 .ipynb_checkpoints
 *.ipynb
+
+# DevScripts&Man
+ourLLaMAModelPath.txt
+run.sh
+nvv.sh
+
+# Dataset
+HF*

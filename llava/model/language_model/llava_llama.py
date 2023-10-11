@@ -34,24 +34,27 @@ class LlavaConfig(LlamaConfig):
 class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
     config_class = LlavaConfig
 
-    def __init__(self, config: LlamaConfig):
-        super(LlavaLlamaModel, self).__init__(config)
+    def __init__(self, config: LlamaConfig, proj_config = None):
+        super(LlavaLlamaModel, self).__init__(config, proj_config)
 
 
 class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
     config_class = LlavaConfig
 
-    def __init__(self, config):
+    def __init__(self, config, proj_config = None):
         super(LlamaForCausalLM, self).__init__(config)
-        self.model = LlavaLlamaModel(config)
-
+        self.proj_config = proj_config
+        self.model = LlavaLlamaModel(config, proj_config=proj_config)
         self.lm_head = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
 
         # Initialize weights and apply final processing
         self.post_init()
-
+   
     def get_model(self):
         return self.model
+
+    def get_proj_config(self):
+        return self.proj_config
 
     def forward(
         self,
