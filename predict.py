@@ -48,16 +48,28 @@ weights = [
     }
 ]
 
-def download_weights(baseurl, basedest, files):
+def download_json(url: str, dest: Path):
+    res = requests.get(url, allow_redirects=True)
+    if res.status_code == 200 and res.content:
+        with dest.open("wb") as f:
+            f.write(res.content)
+    else:
+        print(f"Failed to download {url}. Status code: {res.status_code}")
+
+def download_weights(baseurl: str, basedest: str, files: list[str]):
+    basedest = Path(basedest)
     start = time.time()
     print("downloading to: ", basedest)
-    os.makedirs(basedest, exist_ok=True)
+    basedest.mkdir(parents=True, exist_ok=True)
     for f in files:
-        dest = os.path.join(basedest, f)
+        dest = basedest / f
         url = os.path.join(REPLICATE_WEIGHTS_URL, baseurl, f)
-        if not os.path.exists(dest):
+        if not dest.exists():
             print("downloading url: ", url)
-            subprocess.check_call(["pget", url, dest], close_fds=False)
+            if dest.suffix == ".json":
+                download_json(url, dest)
+            else:
+                subprocess.check_call(["pget", url, str(dest)], close_fds=False)
     print("downloading took: ", time.time() - start)
 
 class Predictor(BasePredictor):
