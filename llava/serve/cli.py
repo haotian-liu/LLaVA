@@ -5,7 +5,7 @@ from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_S
 from llava.conversation import conv_templates, SeparatorStyle
 from llava.model.builder import load_pretrained_model
 from llava.utils import disable_torch_init
-from llava.mm_utils import tokenizer_image_token, get_model_name_from_path, KeywordsStoppingCriteria, process_images
+from llava.mm_utils import tokenizer_image_token, get_model_name_from_path, KeywordsStoppingCriteria
 
 from PIL import Image
 
@@ -52,12 +52,6 @@ def main(args):
         roles = conv.roles
 
     image = load_image(args.image_file)
-    
-    images = process_images([image], image_processor, model.config)
-    if type(images) is list:
-        images = [image.to(model.device, dtype=torch.float16) for image in images]
-    else:
-        images = images.to(model.device, dtype=torch.float16)
 
     while True:
         try:
@@ -93,7 +87,7 @@ def main(args):
         with torch.inference_mode():
             output_ids = model.generate(
                 input_ids,
-                images=images,
+                images=image_tensor,
                 do_sample=True,
                 temperature=args.temperature,
                 max_new_tokens=args.max_new_tokens,
