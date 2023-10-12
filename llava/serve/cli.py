@@ -5,7 +5,7 @@ from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_S
 from llava.conversation import conv_templates, SeparatorStyle
 from llava.model.builder import load_pretrained_model
 from llava.utils import disable_torch_init
-from llava.mm_utils import tokenizer_image_token, get_model_name_from_path, KeywordsStoppingCriteria
+from llava.mm_utils import tokenizer_image_token, get_model_name_from_path, KeywordsStoppingCriteria, process_images
 
 from PIL import Image
 
@@ -29,7 +29,7 @@ def main(args):
     disable_torch_init()
 
     model_name = get_model_name_from_path(args.model_path)
-    tokenizer, model, image_processor, context_len = load_pretrained_model(args.model_path, args.model_base, model_name, args.load_8bit, args.load_4bit)
+    tokenizer, model, image_processor, context_len = load_pretrained_model(args.model_path, args.model_base, model_name, args.load_8bit, args.load_4bit,device=args.device)
 
     if 'llama-2' in model_name.lower():
         conv_mode = "llava_llama_2"
@@ -52,7 +52,12 @@ def main(args):
         roles = conv.roles
 
     image = load_image(args.image_file)
-    image_tensor = image_processor.preprocess(image, return_tensors='pt')['pixel_values'].half().cuda()
+    
+    images = process_images([image], image_processor, model.config)
+    if type(images) is list:
+        images = [image.to(model.device, dtype=torch.float16) for image in images]
+    else:
+        images = images.to(model.device, dtype=torch.float16)
 
     while True:
         try:
@@ -88,10 +93,10 @@ def main(args):
         with torch.inference_mode():
             output_ids = model.generate(
                 input_ids,
-                images=image_tensor,
+                images=images,
                 do_sample=True,
-                temperature=0.2,
-                max_new_tokens=1024,
+                temperature=args.temperature,
+                max_new_tokens=args.max_new_tokens,
                 streamer=streamer,
                 use_cache=True,
                 stopping_criteria=[stopping_criteria])
@@ -108,7 +113,7 @@ if __name__ == "__main__":
     parser.add_argument("--model-path", type=str, default="facebook/opt-350m")
     parser.add_argument("--model-base", type=str, default=None)
     parser.add_argument("--image-file", type=str, required=True)
-    parser.add_argument("--num-gpus", type=int, default=1)
+    parser.add_argument("--device", type=str, default="cuda")
     parser.add_argument("--conv-mode", type=str, default=None)
     parser.add_argument("--temperature", type=float, default=0.2)
     parser.add_argument("--max-new-tokens", type=int, default=512)
