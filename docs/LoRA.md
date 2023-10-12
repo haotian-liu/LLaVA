@@ -6,7 +6,7 @@ You need latest code base for LoRA support (instructions [here](https://github.c
 
 ## Demo (Web UI)
 
-Please execute each of the command below one by one (after the previous one has finished).  The commands are the same as launching other demos except for an additional `--model-base` flag to specify the base model to use. Please make sure the base model corresponds to the LoRA checkpoint that you are using.  For this technical preview, you need Vicuna v1.1 (7B) checkpoint (if you do not have that already, follow the instructions [here](https://github.com/lm-sys/FastChat#vicuna-weights)).
+Please execute each of the commands below one by one (after the previous one has finished).  The commands are the same as launching other demos except for an additional `--model-base` flag to specify the base model to use. Please make sure the base model corresponds to the LoRA checkpoint that you are using.  For this technical preview, you need Vicuna v1.1 (7B) checkpoint (if you do not have that already, follow the instructions [here](https://github.com/lm-sys/FastChat#vicuna-weights)).
 
 #### Launch a controller
 ```Shell

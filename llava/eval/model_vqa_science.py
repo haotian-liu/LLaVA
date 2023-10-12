@@ -57,6 +57,10 @@ def eval_model(args):
         else:
             images = None
 
+        if args.single_pred_prompt:
+            qs = qs + '\n' + "Answer with the option's letter from the given choices directly."
+            cur_prompt = cur_prompt + '\n' + "Answer with the option's letter from the given choices directly."
+
         conv = conv_templates[args.conv_mode].copy()
         conv.append_message(conv.roles[0], qs)
         conv.append_message(conv.roles[1], None)
@@ -72,8 +76,8 @@ def eval_model(args):
             output_ids = model.generate(
                 input_ids,
                 images=images,
-                do_sample=True,
-                temperature=0.2,
+                do_sample=True if args.temperature > 0 else False,
+                temperature=args.temperature,
                 max_new_tokens=1024,
                 use_cache=True,
                 stopping_criteria=stopping_criteria,
@@ -98,8 +102,8 @@ def eval_model(args):
                 output_ids = model.generate(
                     input_ids,
                     images=images,
-                    do_sample=True,
-                    temperature=0.2,
+                    do_sample=True if args.temperature > 0 else False,
+                    temperature=args.temperature,
                     max_new_tokens=64,
                     use_cache=True,
                     stopping_criteria=[stopping_criteria])
@@ -135,7 +139,9 @@ if __name__ == "__main__":
     parser.add_argument("--conv-mode", type=str, default="llava_v0")
     parser.add_argument("--num-chunks", type=int, default=1)
     parser.add_argument("--chunk-idx", type=int, default=0)
+    parser.add_argument("--temperature", type=float, default=0.2)
     parser.add_argument("--answer-prompter", action="store_true")
+    parser.add_argument("--single-pred-prompt", action="store_true")
     args = parser.parse_args()
 
     eval_model(args)

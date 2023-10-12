@@ -34,7 +34,7 @@ The model weights below are *merged* weights. You do not need to apply delta. Th
 
 ## Projector weights
 
-The model weights below are projector weights we have pretrained. You can use these projector weights for visual instruction tuning. We'll add more projector weights into model zoo very soon.
+These are projector weights we have pretrained. You can use these projector weights for visual instruction tuning. They are just pretrained on image-text pairs, and are **NOT** instruction tuned, which means they do **NOT** follow instructions as good as our official models, and can output repetitive, lengthy, and garbled outputs. If you want to have nice conversations with LLaVA, use the checkpoints above (LLaVA v1.5).
 
 **NOTE**: These projector weights are only compatible with the `llava>=1.0.0`, please check out the latest code base if your local code version is below `v1.0.0`.
 
