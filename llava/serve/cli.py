@@ -16,7 +16,7 @@ from transformers import TextStreamer
 
 
 def load_image(image_file):
-    if image_file.startswith('http') or image_file.startswith('https'):
+    if image_file.startswith('http://') or image_file.startswith('https://'):
         response = requests.get(image_file)
         image = Image.open(BytesIO(response.content)).convert('RGB')
     else:
