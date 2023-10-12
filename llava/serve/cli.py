@@ -52,6 +52,7 @@ def main(args):
         roles = conv.roles
 
     image = load_image(args.image_file)
+    image_tensor = image_processor.preprocess(image, return_tensors='pt')['pixel_values'].half().cuda()
 
     while True:
         try:
