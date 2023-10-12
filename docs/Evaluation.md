@@ -72,7 +72,7 @@ CUDA_VISIBLE_DEVICES=0 bash scripts/v1_5/eval/sqa.sh
 
 ### TextVQA
 
-1. Download [`TextVQA_0.5.1_val.json](https://dl.fbaipublicfiles.com/textvqa/data/TextVQA_0.5.1_val.json) and [images](https://dl.fbaipublicfiles.com/textvqa/images/train_val_images.zip) and extract to `./playground/data/eval/textvqa`.
+1. Download [`TextVQA_0.5.1_val.json`](https://dl.fbaipublicfiles.com/textvqa/data/TextVQA_0.5.1_val.json) and [images](https://dl.fbaipublicfiles.com/textvqa/images/train_val_images.zip) and extract to `./playground/data/eval/textvqa`.
 2. Single-GPU inference and evaluate.
 ```Shell
 CUDA_VISIBLE_DEVICES=0 bash scripts/v1_5/eval/textvqa.sh
