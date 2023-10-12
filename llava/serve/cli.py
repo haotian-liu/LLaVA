@@ -5,7 +5,7 @@ from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_S
 from llava.conversation import conv_templates, SeparatorStyle
 from llava.model.builder import load_pretrained_model
 from llava.utils import disable_torch_init
-from llava.mm_utils import tokenizer_image_token, get_model_name_from_path, KeywordsStoppingCriteria
+from llava.mm_utils import process_images, tokenizer_image_token, get_model_name_from_path, KeywordsStoppingCriteria
 
 from PIL import Image
 
@@ -52,7 +52,12 @@ def main(args):
         roles = conv.roles
 
     image = load_image(args.image_file)
-    image_tensor = image_processor.preprocess(image, return_tensors='pt')['pixel_values'].half().cuda()
+    # Similar operation in model_worker.py
+    image_tensor = process_images([image], image_processor, args)
+    if type(image_tensor) is list:
+        image_tensor = [image.to(model.device, dtype=torch.float16) for image in image_tensor]
+    else:
+        image_tensor = image_tensor.to(model.device, dtype=torch.float16)
 
     while True:
         try:
@@ -115,5 +120,6 @@ if __name__ == "__main__":
     parser.add_argument("--load-8bit", action="store_true")
     parser.add_argument("--load-4bit", action="store_true")
     parser.add_argument("--debug", action="store_true")
+    parser.add_argument("--image-aspect-ratio", type=str, default='pad')
     args = parser.parse_args()
     main(args)
