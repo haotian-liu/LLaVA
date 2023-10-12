@@ -4,7 +4,7 @@
 
 :llama: **-Introduction-** [Llama 2 is an open-source LLM released by Meta AI](https://about.fb.com/news/2023/07/llama-2/) today (July 18, 2023). Compared with its early version [Llama 1](https://ai.meta.com/blog/large-language-model-llama-meta-ai/), Llama 2 is more favored in ***stronger language performance***, ***longer context window***, and importantly ***commercially usable***! While Llama 2 is changing the LLM market landscape in the language space, its multimodal ability remains unknown. We quickly develop the LLaVA variant based on the latest Llama 2 checkpoints, and release it to the community for the public use.
 
-You need to apply for and download the lastest Llama 2 checkpoints to start your own training (apply [here](https://ai.meta.com/resources/models-and-libraries/llama-downloads/))
+You need to apply for and download the latest Llama 2 checkpoints to start your own training (apply [here](https://ai.meta.com/resources/models-and-libraries/llama-downloads/))
 
 
 ## Training
