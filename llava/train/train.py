@@ -368,8 +368,8 @@ def preprocess_llama_2(
         rounds = conversation.split(conv.sep2)
         cur_len = 1
         target[:cur_len] = IGNORE_INDEX
-        for i, rou in enumerate(rounds):
-            if rou == "":
+        for i, round in enumerate(rounds):
+            if round == "":
                 break
 
             parts = rou.split(sep)
