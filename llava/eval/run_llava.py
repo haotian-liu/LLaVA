@@ -43,13 +43,10 @@ def load_image(image_file):
 
 
 def load_images(image_files):
-    if type(image_files) is list:
-        out = []
-        for image_file in image_files:
-            image = load_image(image_file)
-            out.append(image)
-    else:
-        out = load_image(image_files)
+    out = []
+    for image_file in image_files:
+        image = load_image(image_file)
+        out.append(image)
     return out
 
 
@@ -99,9 +96,9 @@ def eval_model(args):
     prompt = conv.get_prompt()
 
     image_files = image_parser(args)
-    image = load_images(image_files)
-    image_tensor = (
-        image_processor.preprocess(image, return_tensors="pt")["pixel_values"]
+    images = load_images(image_files)
+    images_tensor = (
+        image_processor.preprocess(images, return_tensors="pt")["pixel_values"]
         .half()
         .cuda()
     )
@@ -119,7 +116,7 @@ def eval_model(args):
     with torch.inference_mode():
         output_ids = model.generate(
             input_ids,
-            images=image_tensor,
+            images=images_tensor,
             do_sample=True,
             temperature=0.2,
             max_new_tokens=1024,
@@ -150,7 +147,7 @@ if __name__ == "__main__":
     parser.add_argument("--image-file", type=str, required=True)
     parser.add_argument("--query", type=str, required=True)
     parser.add_argument("--conv-mode", type=str, default=None)
-    parser.add_argument("--sep", type=str, default="__sepsep__")
+    parser.add_argument("--sep", type=str, default=",")
     args = parser.parse_args()
 
     eval_model(args)
