@@ -26,10 +26,7 @@ import re
 
 
 def image_parser(args):
-    if args.sep in args.image_file:
-        out = args.image_file.split(args.sep)
-    else:
-        out = args.image_file
+    out = args.image_file.split(args.sep)
     return out
 
 
