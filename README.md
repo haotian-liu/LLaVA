@@ -162,6 +162,17 @@ python -m llava.serve.cli \
 
 <img src="images/demo_cli.gif" width="70%">
 
+### Flask API Inference
+
+Chat about images using LLaVA using a Flask REST API. It also supports multiple GPUs, 4-bit and 8-bit quantized inference. With 4-bit quantization, for our LLaVA-1.5-7B, it uses less than 8GB VRAM on a single GPU.
+
+```Shell
+pip install flask
+python -m llava.serve.api
+```
+
+See the [test_api.py](llava/serve/test_api.py) script for example implementation.
+
 ## Train
 
 *Below is the latest training configuration for LLaVA v1.5. For legacy models, please refer to README of [this](https://github.com/haotian-liu/LLaVA/tree/v1.0.1) version for now. We'll add them in a separate doc later.*
