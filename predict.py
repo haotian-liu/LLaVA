@@ -127,11 +127,23 @@ class Predictor(BasePredictor):
                 use_cache=True,
                 stopping_criteria=[stopping_criteria]))
             thread.start()
+            # workaround: second-to-last token is always " "
+            # but we want to keep it if it's not the second-to-last token
+            prepend_space = False
             for new_text in streamer:
+                if new_text == " ":
+                    prepend_space = True
+                    continue
                 if new_text.endswith(stop_str):
                     new_text = new_text[:-len(stop_str)].strip()
+                    prepend_space = False
+                elif prepend_space:
+                    new_text = " " + new_text
+                    prepend_space = False
                 if len(new_text):
                     yield new_text
+            if prepend_space:
+                yield " "
             thread.join()
     
 
