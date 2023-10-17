@@ -107,7 +107,7 @@ CUDA_VISIBLE_DEVICES=0 bash scripts/v1_5/eval/mmbench.sh
 
 ### MMBench-CN
 
-1. Download [`mmbench_dev_cn_20231003.tsv`](https://download.openmmlab.com/mmclassification/datasets/mmbench/mmbench_dev_en_20231003.tsv) and put under `./playground/data/eval/mmbench`.
+1. Download [`mmbench_dev_cn_20231003.tsv`](https://download.openmmlab.com/mmclassification/datasets/mmbench/mmbench_dev_cn_20231003.tsv) and put under `./playground/data/eval/mmbench`.
 2. Single-GPU inference.
 ```Shell
 CUDA_VISIBLE_DEVICES=0 bash scripts/v1_5/eval/mmbench_cn.sh
