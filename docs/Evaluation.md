@@ -43,7 +43,7 @@ Before preparing task-specific data, **you MUST first download [eval.zip](https:
 ```Shell
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 bash scripts/v1_5/eval/vqav2.sh
 ```
-3. Submit the results to the evaluation server: `./playground/data/eval/vqav2/answers_upload`.
+3. Submit the results to the [evaluation server](https://eval.ai/web/challenges/challenge-page/830/my-submission): `./playground/data/eval/vqav2/answers_upload`.
 
 ### GQA
 
@@ -60,7 +60,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 bash scripts/v1_5/eval/gqa.sh
 ```Shell
 CUDA_VISIBLE_DEVICES=0 bash scripts/v1_5/eval/vizwiz.sh
 ```
-3. Submit the results to the evaluation server: `./playground/data/eval/vizwiz/answers_upload`.
+3. Submit the results to the [evaluation server](https://eval.ai/web/challenges/challenge-page/1911/my-submission): `./playground/data/eval/vizwiz/answers_upload`.
 
 ### ScienceQA
 
@@ -103,7 +103,7 @@ CUDA_VISIBLE_DEVICES=0 bash scripts/v1_5/eval/mme.sh
 ```Shell
 CUDA_VISIBLE_DEVICES=0 bash scripts/v1_5/eval/mmbench.sh
 ```
-3. Submit the results to the evaluation server: `./playground/data/eval/mmbench/answers_upload/mmbench_dev_20230712`.
+3. Submit the results to the [evaluation server](https://opencompass.org.cn/leaderboard-multimodal): `./playground/data/eval/mmbench/answers_upload/mmbench_dev_20230712`.
 
 ### MMBench-CN
 
