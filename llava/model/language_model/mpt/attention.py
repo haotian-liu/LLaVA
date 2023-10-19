@@ -42,7 +42,7 @@ def scaled_multihead_dot_product_attention(query, key, value, n_heads, past_key_
     min_val = torch.finfo(q.dtype).min
     if key_padding_mask is not None:
         if attn_bias is not None:
-            warnings.warn('Propogating key_padding_mask to the attention module ' + 'and applying it within the attention module can cause ' + 'unneccessary computation/memory usage. Consider integrating ' + 'into attn_bias once and passing that to each attention ' + 'module instead.')
+            warnings.warn('Propagating key_padding_mask to the attention module ' + 'and applying it within the attention module can cause ' + 'unnecessary computation/memory usage. Consider integrating ' + 'into attn_bias once and passing that to each attention ' + 'module instead.')
         attn_weight = attn_weight.masked_fill(~key_padding_mask.view((b, 1, 1, s_k)), min_val)
     if is_causal and (not q.size(2) == 1):
         s = max(s_q, s_k)
