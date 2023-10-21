@@ -72,7 +72,7 @@ pip install -e .
 
 3. Install additional packages for training cases
 ```
-pip install ninja
+pip install ninja deepspeed==0.9.5
 pip install flash-attn --no-build-isolation
 ```
 
