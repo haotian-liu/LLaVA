@@ -13,20 +13,17 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License",
 ]
 dependencies = [
-    "einops", "fastapi", "gradio==3.35.2", "markdown2[all]", "numpy",
-    "requests", "sentencepiece", "tokenizers>=0.12.1",
-    "torch==2.0.1", "torchvision==0.15.2", "uvicorn", "wandb",
-    "shortuuid", "httpx==0.24.0",
-    "deepspeed==0.9.5",
-    "peft==0.4.0",
-    "transformers==4.31.0",
-    "accelerate==0.21.0",
-    "bitsandbytes==0.41.0",
-    "scikit-learn==1.2.2",
-    "sentencepiece==0.1.99",
+    "torch==2.0.1", "torchvision==0.15.2",
+    "transformers==4.31.0", "tokenizers>=0.12.1", "sentencepiece==0.1.99", "shortuuid",
+    "accelerate==0.21.0", "peft==0.4.0", "bitsandbytes==0.41.0",
+    "pydantic<2,>=1", "markdown2[all]", "numpy", "scikit-learn==1.2.2",
+    "gradio==3.35.2", "gradio_client==0.2.9",
+    "requests", "httpx==0.24.0", "uvicorn", "fastapi",
     "einops==0.6.1", "einops-exts==0.0.4", "timm==0.6.13",
-    "gradio_client==0.2.9"
 ]
+
+[project.optional-dependencies]
+train = ["deepspeed==0.9.5", "ninja", "wandb"]
 
 [project.urls]
 "Homepage" = "https://llava-vl.github.io"

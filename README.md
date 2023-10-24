@@ -56,6 +56,8 @@
 
 ## Install
 
+If you are using Windows, do *NOT* proceed, see instructions [here](https://github.com/haotian-liu/LLaVA/blob/main/docs/Windows.md).
+
 1. Clone this repository and navigate to LLaVA folder
 ```bash
 git clone https://github.com/haotian-liu/LLaVA.git
@@ -72,7 +74,7 @@ pip install -e .
 
 3. Install additional packages for training cases
 ```
-pip install ninja
+pip install -e ".[train]"
 pip install flash-attn --no-build-isolation
 ```
 
@@ -80,7 +82,6 @@ pip install flash-attn --no-build-isolation
 
 ```Shell
 git pull
-pip uninstall transformers
 pip install -e .
 ```
 
