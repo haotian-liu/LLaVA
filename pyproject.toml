@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "llava"
-version = "1.1.2"
+version = "1.1.3"
 description = "Towards GPT-4 like large language and visual assistant."
 readme = "README.md"
 requires-python = ">=3.8"
