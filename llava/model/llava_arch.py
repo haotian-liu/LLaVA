@@ -69,6 +69,10 @@ class LlavaMetaModel:
 
         if getattr(self, 'mm_projector', None) is None:
             self.mm_projector = build_vision_projector(self.config)
+        else:
+            # In case it is frozen by LoRA
+            for p in self.mm_projector.parameters():
+                p.requires_grad = True
 
         if pretrain_mm_mlp_adapter is not None:
             mm_projector_weights = torch.load(pretrain_mm_mlp_adapter, map_location='cpu')
