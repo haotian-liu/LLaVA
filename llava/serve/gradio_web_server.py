@@ -362,30 +362,80 @@ def build_demo(embed_mode):
 
         # Register listeners
         btn_list = [upvote_btn, downvote_btn, flag_btn, regenerate_btn, clear_btn]
-        upvote_btn.click(upvote_last_response,
-            [state, model_selector], [textbox, upvote_btn, downvote_btn, flag_btn])
-        downvote_btn.click(downvote_last_response,
-            [state, model_selector], [textbox, upvote_btn, downvote_btn, flag_btn])
-        flag_btn.click(flag_last_response,
-            [state, model_selector], [textbox, upvote_btn, downvote_btn, flag_btn])
-        regenerate_btn.click(regenerate, [state, image_process_mode],
-            [state, chatbot, textbox, imagebox] + btn_list).then(
-            http_bot, [state, model_selector, temperature, top_p, max_output_tokens],
-            [state, chatbot] + btn_list)
-        clear_btn.click(clear_history, None, [state, chatbot, textbox, imagebox] + btn_list)
+        upvote_btn.click(
+            upvote_last_response,
+            [state, model_selector],
+            [textbox, upvote_btn, downvote_btn, flag_btn],
+            queue=False
+        )
+        downvote_btn.click(
+            downvote_last_response,
+            [state, model_selector],
+            [textbox, upvote_btn, downvote_btn, flag_btn],
+            queue=False
+        )
+        flag_btn.click(
+            flag_last_response,
+            [state, model_selector],
+            [textbox, upvote_btn, downvote_btn, flag_btn],
+            queue=False
+        )
 
-        textbox.submit(add_text, [state, textbox, imagebox, image_process_mode], [state, chatbot, textbox, imagebox] + btn_list
-            ).then(http_bot, [state, model_selector, temperature, top_p, max_output_tokens],
-                   [state, chatbot] + btn_list)
-        submit_btn.click(add_text, [state, textbox, imagebox, image_process_mode], [state, chatbot, textbox, imagebox] + btn_list
-            ).then(http_bot, [state, model_selector, temperature, top_p, max_output_tokens],
-                   [state, chatbot] + btn_list)
+        regenerate_btn.click(
+            regenerate,
+            [state, image_process_mode],
+            [state, chatbot, textbox, imagebox] + btn_list,
+            queue=False
+        ).then(
+            http_bot,
+            [state, model_selector, temperature, top_p, max_output_tokens],
+            [state, chatbot] + btn_list
+        )
+
+        clear_btn.click(
+            clear_history,
+            None,
+            [state, chatbot, textbox, imagebox] + btn_list,
+            queue=False
+        )
+
+        textbox.submit(
+            add_text,
+            [state, textbox, imagebox, image_process_mode],
+            [state, chatbot, textbox, imagebox] + btn_list,
+            queue=False
+        ).then(
+            http_bot,
+            [state, model_selector, temperature, top_p, max_output_tokens],
+            [state, chatbot] + btn_list
+        )
+
+        submit_btn.click(
+            add_text,
+            [state, textbox, imagebox, image_process_mode],
+            [state, chatbot, textbox, imagebox] + btn_list,
+            queue=False
+        ).then(
+            http_bot,
+            [state, model_selector, temperature, top_p, max_output_tokens],
+            [state, chatbot] + btn_list
+        )
 
         if args.model_list_mode == "once":
-            demo.load(load_demo, [url_params], [state, model_selector],
-                _js=get_window_url_params)
+            demo.load(
+                load_demo,
+                [url_params],
+                [state, model_selector],
+                _js=get_window_url_params,
+                queue=False
+            )
         elif args.model_list_mode == "reload":
-            demo.load(load_demo_refresh_model_list, None, [state, model_selector])
+            demo.load(
+                load_demo_refresh_model_list,
+                None,
+                [state, model_selector],
+                queue=False
+            )
         else:
             raise ValueError(f"Unknown model list mode: {args.model_list_mode}")
 

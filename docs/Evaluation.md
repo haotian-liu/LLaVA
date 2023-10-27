@@ -34,7 +34,7 @@ No postprocessing is needed.
 
 ## Scripts
 
-Before preparing task-specific data, download [eval.zip](https://drive.google.com/file/d/1atZSBBrAX54yYpxtVVW33zFvcnaHeFPy/view?usp=sharing). It contains custom annotations, scripts, and the prediction files with LLaVA v1.5. Extract to `./playground/data/eval`. This also provides a general structure for all datasets.
+Before preparing task-specific data, **you MUST first download [eval.zip](https://drive.google.com/file/d/1atZSBBrAX54yYpxtVVW33zFvcnaHeFPy/view?usp=sharing)**. It contains custom annotations, scripts, and the prediction files with LLaVA v1.5. Extract to `./playground/data/eval`. This also provides a general structure for all datasets.
 
 ### VQAv2
 
@@ -43,7 +43,7 @@ Before preparing task-specific data, download [eval.zip](https://drive.google.co
 ```Shell
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 bash scripts/v1_5/eval/vqav2.sh
 ```
-3. Submit the results to the evaluation server: `./playground/data/eval/vqav2/answers_upload`.
+3. Submit the results to the [evaluation server](https://eval.ai/web/challenges/challenge-page/830/my-submission): `./playground/data/eval/vqav2/answers_upload`.
 
 ### GQA
 
@@ -60,7 +60,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 bash scripts/v1_5/eval/gqa.sh
 ```Shell
 CUDA_VISIBLE_DEVICES=0 bash scripts/v1_5/eval/vizwiz.sh
 ```
-3. Submit the results to the evaluation server: `./playground/data/eval/vizwiz/answers_upload`.
+3. Submit the results to the [evaluation server](https://eval.ai/web/challenges/challenge-page/1911/my-submission): `./playground/data/eval/vizwiz/answers_upload`.
 
 ### ScienceQA
 
@@ -103,7 +103,7 @@ CUDA_VISIBLE_DEVICES=0 bash scripts/v1_5/eval/mme.sh
 ```Shell
 CUDA_VISIBLE_DEVICES=0 bash scripts/v1_5/eval/mmbench.sh
 ```
-3. Submit the results to the evaluation server: `./playground/data/eval/mmbench/answers_upload/mmbench_dev_20230712`.
+3. Submit the results to the [evaluation server](https://opencompass.org.cn/leaderboard-multimodal): `./playground/data/eval/mmbench/answers_upload/mmbench_dev_20230712`.
 
 ### MMBench-CN
 
