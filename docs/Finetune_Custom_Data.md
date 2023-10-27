@@ -30,6 +30,8 @@ A sample JSON for finetuning LLaVA for generating tag-style captions for Stable 
 
 If you have a limited task-specific data, we recommend finetuning from LLaVA checkpoints with LoRA following this [script](https://github.com/haotian-liu/LLaVA/blob/main/scripts/v1_5/finetune_task_lora.sh).
 
+If the amount of the task-specific data is sufficient, you can also finetune from LLaVA checkpoints with full-model finetuning following this [script](https://github.com/haotian-liu/LLaVA/blob/main/scripts/v1_5/finetune_task.sh).
+
 You may need to adjust the hyperparameters to fit each specific dataset and your hardware constraint.
 
 
