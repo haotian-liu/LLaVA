@@ -1,0 +1,22 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: llava.serve.cli",
+            "type": "python",
+            "request": "launch",
+            "module": "llava.serve.cli",
+            "justMyCode": true,
+            "args": [
+                "--model-path",
+                "/workspaces/LLaVA/llava-v1.5-7b",
+                "--image-file",
+                "https://llava-vl.github.io/static/images/view.jpg",
+                "--load-4bit"
+            ]
+        }
+    ]
+}
