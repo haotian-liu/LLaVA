@@ -98,6 +98,33 @@ To run our demo, you need to prepare LLaVA checkpoints locally.  Please follow t
 
 To launch a Gradio demo locally, please run the following commands one by one. If you plan to launch multiple model workers to compare between different checkpoints, you only need to launch the controller and the web server *ONCE*.
 
+```mermaid
+flowchart BT
+    %% Declare Nodes
+    gws("Gradio (UI Server)")
+    c("Controller (API Server):<br/>PORT: 10000")
+    mw7b("Model Worker:<br/>llava-v1.5-7b<br/>PORT: 40000")
+    mw13b("Model Worker:<br/>llava-v1.5-13b<br/>PORT: 40001")
+
+    %% Declare Styles
+    classDef data fill:#3af,stroke:#48a,stroke-width:2px,color:#444
+    classDef success fill:#8f8,stroke:#0a0,stroke-width:2px,color:#444
+    classDef failure fill:#f88,stroke:#f00,stroke-width:2px,color:#444
+
+    %% Assign Styles
+    class id,od data;
+    class cimg,cs_s,scsim_s success;
+    class ncimg,cs_f,scsim_f failure;
+
+    subgraph Demo Connections
+        direction BT
+        c<-->gws
+        
+        mw7b<-->c
+        mw13b<-->c
+    end
+```
+
 #### Launch a controller
 ```Shell
 python -m llava.serve.controller --host 0.0.0.0 --port 10000
