@@ -338,7 +338,6 @@ def preprocess_llama_2(
         if roles[source[0]["from"]] != conv.roles[0]:
             # Skip the first one if it is not from human
             source = source[1:]
-
         conv.messages = []
         for j, sentence in enumerate(source):
             role = roles[sentence["from"]]
@@ -399,7 +398,6 @@ def preprocess_llama_2(
                     f"WARNING: tokenization mismatch: {cur_len} vs. {total_len}."
                     f" (ignored)"
                 )
-
     return dict(
         input_ids=input_ids,
         labels=targets,
@@ -481,7 +479,6 @@ def preprocess_v1(
                     f"WARNING: tokenization mismatch: {cur_len} vs. {total_len}."
                     f" (ignored)"
                 )
-
     return dict(
         input_ids=input_ids,
         labels=targets,
@@ -760,9 +757,15 @@ def train():
     parser = transformers.HfArgumentParser(
         (ModelArguments, DataArguments, TrainingArguments))
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
+
+    rank0_print(f"[INFO] model_args: {model_args}")
+    rank0_print(f"[INFO] data_args: {data_args}")
+    rank0_print(f"[INFO] train_args: {training_args}")
+
     local_rank = training_args.local_rank
     compute_dtype = (torch.float16 if training_args.fp16 else (torch.bfloat16 if training_args.bf16 else torch.float32))
 
+    # bitsandbytes 量化
     bnb_model_from_pretrained_args = {}
     if training_args.bits in [4, 8]:
         from transformers import BitsAndBytesConfig
@@ -781,6 +784,7 @@ def train():
             )
         ))
 
+    # Vision Tower
     if model_args.vision_tower is not None:
         if 'mpt' in model_args.model_name_or_path:
             config = transformers.AutoConfig.from_pretrained(model_args.model_name_or_path, trust_remote_code=True)
@@ -804,7 +808,7 @@ def train():
             **bnb_model_from_pretrained_args
         )
     model.config.use_cache = False
-
+    
     if model_args.freeze_backbone:
         model.model.requires_grad_(False)
 
@@ -821,6 +825,7 @@ def train():
                 output.requires_grad_(True)
             model.get_input_embeddings().register_forward_hook(make_inputs_require_grad)
 
+    #LoRA模块
     if training_args.lora_enable:
         from peft import LoraConfig, get_peft_model
         lora_config = LoraConfig(
@@ -839,6 +844,7 @@ def train():
         rank0_print("Adding LoRA adapters...")
         model = get_peft_model(model, lora_config)
 
+    #Tokenizer 管理
     if 'mpt' in model_args.model_name_or_path:
         tokenizer = transformers.AutoTokenizer.from_pretrained(
             model_args.model_name_or_path,
@@ -855,6 +861,7 @@ def train():
             use_fast=False,
         )
 
+    #区分不同对话template
     if model_args.version == "v0":
         if tokenizer.pad_token is None:
             smart_tokenizer_and_embedding_resize(
@@ -870,7 +877,6 @@ def train():
             conversation_lib.default_conversation = conversation_lib.conv_templates[model_args.version]
         else:
             conversation_lib.default_conversation = conversation_lib.conv_templates["vicuna_v1"]
-
     if model_args.vision_tower is not None:
         model.get_model().initialize_vision_modules(
             model_args=model_args,

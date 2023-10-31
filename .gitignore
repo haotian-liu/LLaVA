@@ -27,3 +27,6 @@ ckpts*
 
 .ipynb_checkpoints
 *.ipynb
+
+*.bin
+*out*
