@@ -761,9 +761,15 @@ def train():
         (ModelArguments, DataArguments, TrainingArguments))
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
     if training_args.lora_enable and training_args.freeze_backbone:
-        raise Warning("LoRA is enabled but the backbone is wanted to be frozen. This is\
+        print("Warning: LoRA is enabled but the backbone is wanted to be frozen. This is\
                        not recommended as LoRA will fine-tune the backbone. If you want\
                        to freeze the backbone, please disable LoRA.")
+    if training_args.lora_enable and (not training_args.freeze_backbone):
+        print("Warning: LoRA is enabled and the backbone weights are not frozen. This\
+                        will lead to both the LoRA and the backbone weights being\
+                        fine-tuned. If you want to fine-tune only the LoRA weights,\
+                        please enable the `freeze_backbone` flag. If you want to do full\
+                        fine-tuning, please disable LoRA.")
     
     local_rank = training_args.local_rank
     compute_dtype = (torch.float16 if training_args.fp16 else (torch.bfloat16 if training_args.bf16 else torch.float32))
