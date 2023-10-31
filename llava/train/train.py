@@ -760,6 +760,11 @@ def train():
     parser = transformers.HfArgumentParser(
         (ModelArguments, DataArguments, TrainingArguments))
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
+    if training_args.lora_enable and training_args.freeze_backbone:
+        raise Warning("LoRA is enabled but the backbone is wanted to be frozen. This is\
+                       not recommended as LoRA will fine-tune the backbone. If you want\
+                       to freeze the backbone, please disable LoRA.")
+    
     local_rank = training_args.local_rank
     compute_dtype = (torch.float16 if training_args.fp16 else (torch.bfloat16 if training_args.bf16 else torch.float32))
 
