@@ -271,7 +271,7 @@ def http_bot(state, model_selector, temperature, top_p, max_new_tokens, request:
             "type": "chat",
             "model": model_name,
             "start": round(start_tstamp, 4),
-            "finish": round(start_tstamp, 4),
+            "finish": round(finish_tstamp, 4),
             "state": state.dict(),
             "images": all_image_hash,
             "ip": request.client.host,
