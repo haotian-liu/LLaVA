@@ -230,6 +230,14 @@ Training script with DeepSpeed ZeRO-2: [`pretrain.sh`](https://github.com/haotia
 - `--mm_projector_type mlp2x_gelu`: the two-layer MLP vision-language connector.
 - `--vision_tower openai/clip-vit-large-patch14-336`: CLIP ViT-L/14 336px.
 
+<details>
+<summary>Pretrain takes around 20 hours for LLaVA-7B on 8x V100 (32G)</summary>
+
+ We provide training script with DeepSpeed [here](https://github.com/haotian-liu/LLaVA/blob/main/scripts/pretrain_xformers.sh).
+Tips:
+- If you are using V100 which is not supported by FlashAttention, you can use the [memory-efficient attention](https://arxiv.org/abs/2112.05682) implemented in [xFormers](https://github.com/facebookresearch/xformers). Install xformers and replace `llava/train/train_mem.py` above with [llava/train/train_xformers.py](llava/train/train_xformers.py).
+</details>
+
 ### Visual Instruction Tuning
 
 1. Prepare data
