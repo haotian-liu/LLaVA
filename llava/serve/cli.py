@@ -13,6 +13,7 @@ import requests
 from PIL import Image
 from io import BytesIO
 from transformers import TextStreamer
+import intel_extension_for_pytorch as ipex
 
 
 def load_image(image_file):
@@ -29,7 +30,11 @@ def main(args):
     disable_torch_init()
 
     model_name = get_model_name_from_path(args.model_path)
-    tokenizer, model, image_processor, context_len = load_pretrained_model(args.model_path, args.model_base, model_name, args.load_8bit, args.load_4bit)
+    tokenizer, model, image_processor, context_len = load_pretrained_model(args.model_path, args.model_base, model_name, args.load_8bit, args.load_4bit, args.device)
+
+    #### IPEX optimize ####
+    model.eval()
+    model = ipex.optimize(model, dtype=torch.bfloat16)
 
     if 'llama-2' in model_name.lower():
         conv_mode = "llava_llama_2"
@@ -52,7 +57,7 @@ def main(args):
         roles = conv.roles
 
     image = load_image(args.image_file)
-    image_tensor = image_processor.preprocess(image, return_tensors='pt')['pixel_values'].half().cuda()
+    image_tensor = image_processor.preprocess(image, return_tensors='pt')['pixel_values'].half().to(device=args.device, dtype=torch.bfloat16)
 
     while True:
         try:
@@ -79,7 +84,7 @@ def main(args):
         conv.append_message(conv.roles[1], None)
         prompt = conv.get_prompt()
 
-        input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).cuda()
+        input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).to(args.device)
         stop_str = conv.sep if conv.sep_style != SeparatorStyle.TWO else conv.sep2
         keywords = [stop_str]
         stopping_criteria = KeywordsStoppingCriteria(keywords, tokenizer, input_ids)
@@ -114,6 +119,7 @@ if __name__ == "__main__":
     parser.add_argument("--max-new-tokens", type=int, default=512)
     parser.add_argument("--load-8bit", action="store_true")
     parser.add_argument("--load-4bit", action="store_true")
+    parser.add_argument("--device", type=str, default="xpu", help="xpu or cpu")
     parser.add_argument("--debug", action="store_true")
     args = parser.parse_args()
     main(args)
