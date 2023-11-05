@@ -12,6 +12,7 @@ from llava.conversation import conv_templates, SeparatorStyle
 from llava.model.builder import load_pretrained_model
 from llava.utils import disable_torch_init
 from llava.mm_utils import (
+    process_images,
     tokenizer_image_token,
     get_model_name_from_path,
     KeywordsStoppingCriteria,
@@ -94,11 +95,11 @@ def eval_model(args):
 
     image_files = image_parser(args)
     images = load_images(image_files)
-    images_tensor = (
-        image_processor.preprocess(images, return_tensors="pt")["pixel_values"]
-        .half()
-        .cuda()
-    )
+    images_tensor = process_images(
+        images,
+        image_processor,
+        model.config
+    ).to(model.device, dtype=torch.float16)
 
     input_ids = (
         tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors="pt")
