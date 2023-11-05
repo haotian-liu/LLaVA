@@ -114,9 +114,11 @@ def eval_model(args):
         output_ids = model.generate(
             input_ids,
             images=images_tensor,
-            do_sample=True,
-            temperature=0.2,
-            max_new_tokens=1024,
+            do_sample=True if args.temperature > 0 else False,
+            temperature=args.temperature,
+            top_p=args.top_p,
+            num_beams=args.num_beams,
+            max_new_tokens=args.max_new_tokens,
             use_cache=True,
             stopping_criteria=[stopping_criteria],
         )
@@ -145,6 +147,10 @@ if __name__ == "__main__":
     parser.add_argument("--query", type=str, required=True)
     parser.add_argument("--conv-mode", type=str, default=None)
     parser.add_argument("--sep", type=str, default=",")
+    parser.add_argument("--temperature", type=float, default=0.2)
+    parser.add_argument("--top_p", type=float, default=None)
+    parser.add_argument("--num_beams", type=int, default=1)
+    parser.add_argument("--max_new_tokens", type=int, default=512)
     args = parser.parse_args()
 
     eval_model(args)
