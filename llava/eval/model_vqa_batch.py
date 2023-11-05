@@ -59,7 +59,7 @@ class CustomDataset(Dataset):
 
         input_ids = tokenizer_image_token(prompt, self.tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt')
 
-        return input_ids, image_tensor
+        return index, input_ids, image_tensor
 
     def __len__(self):
         return len(self.questions)
@@ -82,13 +82,13 @@ class DataCollatorForVisualTextGeneration(object):
 
     def __call__(self,
                  batch: List[Tuple[torch.Tensor, torch.Tensor]]) -> Tuple[torch.Tensor, torch.Tensor]:
-        input_ids, images = zip(*batch)
+        indices, input_ids, images = zip(*batch)
         input_ids = self.pad_sequence(
             input_ids,
             batch_first=True,
             padding_value=self.tokenizer.pad_token_id)
         images = torch.stack(images, dim=0)
-        return input_ids, images
+        return indices, input_ids, images
 
 # DataLoader
 def create_data_loader(questions, image_folder, tokenizer, image_processor, model_config, batch_size=1, num_workers=4):
@@ -128,15 +128,10 @@ def eval_model(args):
         num_workers=args.num_workers,
     )
 
-    for (input_ids, image_tensor), line in tqdm(zip(data_loader, questions), total=len(data_loader)):
-        idx = line["question_id"]
-        cur_prompt = line["text"]
-
-        input_ids = input_ids.to(device='cuda', non_blocking=True)
-
+    for indices, input_ids, image_tensor in tqdm(data_loader):
         with torch.inference_mode():
             output_ids = model.generate(
-                input_ids,
+                input_ids.to(device='cuda', non_blocking=True),
                 images=image_tensor.to(dtype=torch.float16, device='cuda', non_blocking=True),
                 do_sample=True if args.temperature > 0 else False,
                 temperature=args.temperature,
@@ -145,17 +140,20 @@ def eval_model(args):
                 max_new_tokens=args.max_new_tokens,
                 use_cache=True)
 
-        input_token_len = input_ids.shape[1]
-        outputs = tokenizer.batch_decode(output_ids[:, input_token_len:], skip_special_tokens=True)[0]
-        outputs = outputs.strip()
+        outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)
 
-        ans_id = shortuuid.uuid()
-        ans_file.write(json.dumps({"question_id": idx,
-                                   "prompt": cur_prompt,
-                                   "text": outputs,
-                                   "answer_id": ans_id,
-                                   "model_id": model_name,
-                                   "metadata": {}}) + "\n")
+        for index, output in zip(indices, outputs):
+            line = questions[index]
+            idx = line["question_id"]
+            cur_prompt = line["text"]
+            ans_id = shortuuid.uuid()
+            ans_file.write(json.dumps({"question_id": idx,
+                                    "prompt": cur_prompt,
+                                    "text": output.strip(),
+                                    "answer_id": ans_id,
+                                    "model_id": model_name,
+                                    "metadata": {}}) + "\n")
+        ans_file.flush()
     ans_file.close()
 
 if __name__ == "__main__":
