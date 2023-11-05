@@ -96,15 +96,14 @@ pip install -e .
 ```Python
 from llava.model.builder import load_pretrained_model
 from llava.mm_utils import get_model_name_from_path
+from llava.eval.run_llava import eval_model
 
 model_path = "liuhaotian/llava-v1.5-7b"
-model_name = get_model_name_from_path(model_path)
-model_base = None
 
 tokenizer, model, image_processor, context_len = load_pretrained_model(
     model_path=model_path,
-    model_base=model_base,
-    model_name=model_name
+    model_base=None,
+    model_name=get_model_name_from_path(model_path)
 )
 ```
 
@@ -113,25 +112,21 @@ Check out the details wth the `load_pretrained_model` function in `llava/model/b
 You can also use the `eval_model` function in `llava/eval/run_llava.py` to get the output easily. By doing so, you can use this code on Colab directly after downloading this repository.
 
 ``` python
-# import the file
-
 model_path = "liuhaotian/llava-v1.5-7b"
-model_name = get_model_name_from_path(model_path)
-model_base = None
-prompt = "Give me a short description of this image."
-imageFile = "https://llava-vl.github.io/static/images/view.jpg"
+prompt = "What are the things I should be cautious about when I visit here?"
+image_file = "https://llava-vl.github.io/static/images/view.jpg"
 
 args = type('Args', (), {
     "model_path": model_path,
-    "model_base": model_base,
-    "model_name": model_name,
+    "model_base": None,
+    "model_name": get_model_name_from_path(model_path),
     "query": prompt,
     "conv_mode": None,
-    "image_file": imageFile
+    "image_file": image_file,
+    "sep": ",",
 })()
 
-output = eval_model(args)
-print(output)
+eval_model(args)
 ```
 </details>
 
