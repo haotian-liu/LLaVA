@@ -15,7 +15,7 @@ The model weights below are *merged* weights. You do not need to apply delta. Th
 | LLaVA-1.5 | 7B | lora-1e | [liuhaotian/llava-v1.5-7b-lora](https://huggingface.co/liuhaotian/llava-v1.5-7b-lora) | 79.1 | 63.0 | 47.8 | 68.4 | 58.2 | 86.4 | 1476.9 | 66.1 | 58.9 | 60.1 | 67.9 | 30.2 |
 | LLaVA-1.5 | 13B | lora-1e | [liuhaotian/llava-v1.5-13b-lora](https://huggingface.co/liuhaotian/llava-v1.5-13b-lora) | 80.0 | 63.3 | 58.9 | 71.2 | 60.2 | 86.7 | 1541.7 | 68.5 | 61.5 | 61.3 | 69.5 | 38.3 |
 
-Training logs: [wandb](https://api.wandb.ai/links/lht/6orh56wc).
+Base model: Vicuna v1.5. Training logs: [wandb](https://api.wandb.ai/links/lht/6orh56wc).
 
 <p align="center">
   <img src="../images/llava_v1_5_radar.jpg" width="500px"> <br>
@@ -36,13 +36,13 @@ Training logs: [wandb](https://api.wandb.ai/links/lht/6orh56wc).
 
 ## Projector weights
 
-These are projector weights we have pretrained. You can use these projector weights for visual instruction tuning. They are just pretrained on image-text pairs, and are **NOT** instruction tuned, which means they do **NOT** follow instructions as good as our official models, and can output repetitive, lengthy, and garbled outputs. If you want to have nice conversations with LLaVA, use the checkpoints above (LLaVA v1.5).
+These are projector weights we have pretrained. You can use these projector weights for visual instruction tuning. They are just pretrained on image-text pairs and are NOT instruction-tuned, which means they do NOT follow instructions as well as our official models and can output repetitive, lengthy, and garbled outputs. If you want to have nice conversations with LLaVA, use the checkpoints above (LLaVA v1.5).
 
-**NOTE**: These projector weights are only compatible with the `llava>=1.0.0`, please check out the latest code base if your local code version is below `v1.0.0`.
+NOTE: These projector weights are only compatible with `llava>=1.0.0`. Please check out the latest codebase if your local code version is below v1.0.0.
 
-**NOTE**: When you use our pretrained projector for visual instruction tuning, it is very important to **use the same base LLM and vision encoder** as the one we used for pretraining the projector. Otherwise, the performance will be very bad.
+NOTE: When you use our pretrained projector for visual instruction tuning, it is very important to use the same base LLM and vision encoder as the one we used for pretraining the projector. Otherwise, the performance will be very poor.
 
-When using these projector weights to instruction tune your LMM, please make sure that these options are correctly set as follows,
+When using these projector weights to instruction-tune your LMM, please make sure that these options are correctly set as follows,
 
 ```Shell
 --mm_use_im_start_end False

@@ -92,7 +92,6 @@ def eval_model(args):
         idx = line["question_id"]
         cur_prompt = line["text"]
 
-        stop_str = conv_templates[args.conv_mode].sep if conv_templates[args.conv_mode].sep_style != SeparatorStyle.TWO else conv_templates[args.conv_mode].sep2
         input_ids = input_ids.to(device='cuda', non_blocking=True)
 
         with torch.inference_mode():
@@ -103,7 +102,7 @@ def eval_model(args):
                 temperature=args.temperature,
                 top_p=args.top_p,
                 num_beams=args.num_beams,
-                max_new_tokens=128,
+                max_new_tokens=args.max_new_tokens,
                 use_cache=True)
 
         input_token_len = input_ids.shape[1]
@@ -111,9 +110,6 @@ def eval_model(args):
         if n_diff_input_output > 0:
             print(f'[Warning] {n_diff_input_output} output_ids are not the same as the input_ids')
         outputs = tokenizer.batch_decode(output_ids[:, input_token_len:], skip_special_tokens=True)[0]
-        outputs = outputs.strip()
-        if outputs.endswith(stop_str):
-            outputs = outputs[:-len(stop_str)]
         outputs = outputs.strip()
 
         ans_id = shortuuid.uuid()
@@ -139,6 +135,7 @@ if __name__ == "__main__":
     parser.add_argument("--temperature", type=float, default=0.2)
     parser.add_argument("--top_p", type=float, default=None)
     parser.add_argument("--num_beams", type=int, default=1)
+    parser.add_argument("--max_new_tokens", type=int, default=128)
     args = parser.parse_args()
 
     eval_model(args)

@@ -53,7 +53,7 @@ def main(args):
 
     image = load_image(args.image_file)
     # Similar operation in model_worker.py
-    image_tensor = process_images([image], image_processor, args)
+    image_tensor = process_images([image], image_processor, model.config)
     if type(image_tensor) is list:
         image_tensor = [image.to(model.device, dtype=torch.float16) for image in image_tensor]
     else:
@@ -84,7 +84,7 @@ def main(args):
         conv.append_message(conv.roles[1], None)
         prompt = conv.get_prompt()
 
-        input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).cuda()
+        input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).to(model.device)
         stop_str = conv.sep if conv.sep_style != SeparatorStyle.TWO else conv.sep2
         keywords = [stop_str]
         stopping_criteria = KeywordsStoppingCriteria(keywords, tokenizer, input_ids)
@@ -94,7 +94,7 @@ def main(args):
             output_ids = model.generate(
                 input_ids,
                 images=image_tensor,
-                do_sample=True,
+                do_sample=True if args.temperature > 0 else False,
                 temperature=args.temperature,
                 max_new_tokens=args.max_new_tokens,
                 streamer=streamer,
@@ -120,6 +120,5 @@ if __name__ == "__main__":
     parser.add_argument("--load-8bit", action="store_true")
     parser.add_argument("--load-4bit", action="store_true")
     parser.add_argument("--debug", action="store_true")
-    parser.add_argument("--image-aspect-ratio", type=str, default='pad')
     args = parser.parse_args()
     main(args)

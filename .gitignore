@@ -30,3 +30,9 @@ ckpts*
 
 # VScode
 !.vscode/*
+
+# DevContainer
+!.devcontainer/*
+
+# Demo
+serve_images/
