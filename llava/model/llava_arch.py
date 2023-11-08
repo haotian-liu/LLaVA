@@ -116,9 +116,9 @@ class LlavaMetaForCausalLM(ABC):
             image_features = self.encode_images(concat_images)
             split_sizes = [image.shape[0] for image in images]
             image_features = torch.split(image_features, split_sizes, dim=0)
-            image_features = [x.flatten(0, 1).to(concat_images.device) for x in image_features]
+            image_features = [x.flatten(0, 1).to(self.device) for x in image_features]
         else:
-            image_features = self.encode_images(images)
+            image_features = self.encode_images(images).to(self.device)
 
         # TODO: image start / end is not implemented here to support pretraining.
         if getattr(self.config, 'tune_mm_mlp_adapter', False) and getattr(self.config, 'mm_use_im_start_end', False):
