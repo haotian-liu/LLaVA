@@ -1,7 +1,7 @@
 # Intel Platforms 
 
 Support [Intel GPU Max Series](https://www.intel.com/content/www/us/en/products/details/discrete-gpus/data-center-gpu/max-series.html)    
-Support [Intel CPU Sapphire Rapides](https://ark.intel.com/content/www/us/en/ark/products/codename/126212/products-formerly-sapphire-rapids.html)    
+Support [Intel CPU Sapphire Rapids](https://ark.intel.com/content/www/us/en/ark/products/codename/126212/products-formerly-sapphire-rapids.html)    
 Based on [Intel Extention for Pytorch](https://intel.github.io/intel-extension-for-pytorch)    
 Verified Model: https://huggingface.co/liuhaotian/llava-llama-2-13b-chat-lightning-gptq     
 
