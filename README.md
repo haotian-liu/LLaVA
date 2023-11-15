@@ -75,7 +75,7 @@ cd LLaVA
 conda create -n llava python=3.10 -y
 conda activate llava
 pip install --upgrade pip  # enable PEP 660 support
-pip install -e .
+pip install -e .[gradio] # Install with optional gradio dependencies
 ```
 
 3. Install additional packages for training cases
@@ -172,11 +172,19 @@ flowchart BT
 ```
 
 #### Launch a controller
+
 ```Shell
 python -m llava.serve.controller --host 0.0.0.0 --port 10000
 ```
 
 #### Launch a gradio web server.
+
+First make sure you have installed the package with gradio as mentioned above:
+```Shell
+pip install -e .[gradio]
+```
+
+Launch the server:
 ```Shell
 python -m llava.serve.gradio_web_server --controller http://localhost:10000 --model-list-mode reload
 ```
