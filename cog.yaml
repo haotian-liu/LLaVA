@@ -30,8 +30,13 @@ build:
     - "wandb==0.15.12"
     - "wavedrom==2.0.3.post3"
     - "Pygments==2.16.1"
+ 
   run:
     - curl -o /usr/local/bin/pget -L "https://github.com/replicate/pget/releases/download/v0.0.3/pget" && chmod +x /usr/local/bin/pget
+    - pip install flash_attn==2.3.3 --no-build-isolation
 
 # predict.py defines how predictions are run on your model
 predict: "predict.py:Predictor"
+
+# train.py defines how finetuning works for this model
+train: "train.py:train"
