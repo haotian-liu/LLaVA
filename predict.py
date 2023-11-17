@@ -1,3 +1,14 @@
+from typing import Optional
+import time
+import subprocess
+from threading import Thread
+from io import BytesIO
+import shutil
+import tarfile
+import os
+
+from PIL import Image
+import requests
 import torch
 
 from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN
@@ -7,23 +18,15 @@ from llava.utils import disable_torch_init
 from llava.mm_utils import tokenizer_image_token, KeywordsStoppingCriteria
 from transformers.generation.streamers import TextIteratorStreamer
 
-from PIL import Image
-
-import requests
-from io import BytesIO
-
 from cog import BasePredictor, Input, Path, ConcatenateIterator
-import time
-import subprocess
-from threading import Thread
+from train import is_url
 
-import os
 os.environ["HUGGINGFACE_HUB_CACHE"] = os.getcwd() + "/weights"
 
 # url for the weights mirror
 REPLICATE_WEIGHTS_URL = "https://weights.replicate.delivery/default"
 # files to download from the weights mirrors
-weights = [
+DEFAULT_WEIGHTS = [
     {
         "dest": "liuhaotian/llava-v1.5-13b",
         # git commit hash from huggingface
@@ -76,13 +79,39 @@ def download_weights(baseurl: str, basedest: str, files: list[str]):
     print("downloading took: ", time.time() - start)
 
 class Predictor(BasePredictor):
-    def setup(self) -> None:
-        """Load the model into memory to make running multiple predictions efficient"""
-        for weight in weights:
+    def setup(self, weights: Optional[Path] = None) -> None:
+        """Load the model into memory to make running multiple predictions efficient. 
+        
+        The parameter `weights` can be set with environment variable COG_WEIGHTS or with cog predict -e [your weights here]
+        """
+        # download base models
+        for weight in DEFAULT_WEIGHTS:
             download_weights(weight["src"], weight["dest"], weight["files"])
         disable_torch_init()
-    
-        self.tokenizer, self.model, self.image_processor, self.context_len = load_pretrained_model("liuhaotian/llava-v1.5-13b", model_name="llava-v1.5-13b", model_base=None, load_8bit=False, load_4bit=False)
+
+        # custom weights
+        if weights is not None and str(weights) != "weights":
+            print(f"Loading custom LLaVA lora model: {weights}...")
+            
+            # remove folder if it already exists
+            custom_weights_dir = "/src/custom_weights"
+            if os.path.exists(custom_weights_dir):
+                shutil.rmtree(custom_weights_dir)
+            
+            # download custom weights from URL
+            weights_url = str(weights)
+            download_location = Path(custom_weights_dir) / "custom_weights.tar"
+            os.system(f"pget {weights_url} {download_location}")
+
+            # extract tar file
+            custom_weights_file = tarfile.open(download_location)
+            custom_weights_file.extractall(path=custom_weights_dir)
+
+            self.tokenizer, self.model, self.image_processor, self.context_len = load_pretrained_model(custom_weights_dir, model_name="llava-v1.5-13b-custom-lora", model_base="liuhaotian/llava-v1.5-13b", load_8bit=False, load_4bit=False)
+
+        else:
+            print(f"Loading base LLaVA model...")
+            self.tokenizer, self.model, self.image_processor, self.context_len = load_pretrained_model("liuhaotian/llava-v1.5-13b", model_name="llava-v1.5-13b", model_base=None, load_8bit=False, load_4bit=False)
 
     def predict(
         self,

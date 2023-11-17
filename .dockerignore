@@ -19,3 +19,10 @@ __pycache__
 # Exclude some weights
 /openai
 /liuhaotian
+/custom_weights
+/checkpoints
+*.tar
+*.zip
+
+# local data for testing
+/training_data
