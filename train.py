@@ -77,7 +77,7 @@ class TrainingOutput(BaseModel):
     output_weights: Path
 
 # todo: download_weights
-def train(train_data: str = Input(description="https url or path name of a file containing training data. Training data should have a json file data.json and an images/ folder. data.json should link the images from images/ to conversations.")) -> TrainingOutput:
+def train(train_data: str = Input(description="https url or path name of a zipfile containing training data. Training data should have a json file data.json and an images/ folder. data.json should link the images from images/ to conversations.")) -> TrainingOutput:
     # Path to the weights file
     weights_file = Path("my_weights.tar")
 
@@ -91,7 +91,7 @@ def train(train_data: str = Input(description="https url or path name of a file 
 
         # Download train_data if it is a URL
         if is_url(train_data):
-            local_train_data_path = tmp_dir / "train_data_archive"
+            local_train_data_path = tmp_dir / "train_data_archive.zip"
             download_file(train_data, local_train_data_path)
         else:
             local_train_data_path = Path(train_data)
