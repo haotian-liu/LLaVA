@@ -11,7 +11,9 @@ from urllib.parse import urlparse
 def run_training(image_folder: Path, data_path: Path, output_dir: Path):
     # Command and arguments as a list
     command = [
-        'deepspeed',
+        'python',
+        '-m',
+        'deepspeed.launcher.runner',
         'llava/train/train_mem.py',
         '--model_name_or_path', 'liuhaotian/llava-v1.5-13b',
         '--data_path', data_path,
@@ -74,10 +76,12 @@ def is_url(path: str) -> bool:
         return False
 
 class TrainingOutput(BaseModel):
-    output_weights: Path
+    # this must be a key named `weights`, otherwise image creation will silently fail
+    # source: https://github.com/replicate/api/blob/6b73b27e0da6afbea0531bb4162e9b4f5a74d744/pkg/server/internal.go#L282 
+    weights: Path
 
 # todo: download_weights
-def train(train_data: str = Input(description="https url or path name of a file containing training data. Training data should have a json file data.json and an images/ folder. data.json should link the images from images/ to conversations.")) -> TrainingOutput:
+def train(train_data: str = Input(description="https url or path name of a zipfile containing training data. Training data should have a json file data.json and an images/ folder. data.json should link the images from images/ to conversations.")) -> TrainingOutput:
     # Path to the weights file
     weights_file = Path("my_weights.tar")
 
@@ -91,7 +95,7 @@ def train(train_data: str = Input(description="https url or path name of a file 
 
         # Download train_data if it is a URL
         if is_url(train_data):
-            local_train_data_path = tmp_dir / "train_data_archive"
+            local_train_data_path = tmp_dir / "train_data_archive.zip"
             download_file(train_data, local_train_data_path)
         else:
             local_train_data_path = Path(train_data)
@@ -116,7 +120,7 @@ def train(train_data: str = Input(description="https url or path name of a file 
             tar.add(output_dir, arcname="")
 
     # Return the path to the weights file
-    return TrainingOutput(output_weights=weights_file)
+    return TrainingOutput(weights=weights_file)
 
 # todo: deal with recursive lora
 
