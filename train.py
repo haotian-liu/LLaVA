@@ -11,7 +11,9 @@ from urllib.parse import urlparse
 def run_training(image_folder: Path, data_path: Path, output_dir: Path):
     # Command and arguments as a list
     command = [
-        'deepspeed',
+        'python',
+        '-m',
+        'deepspeed.launcher.runner',
         'llava/train/train_mem.py',
         '--model_name_or_path', 'liuhaotian/llava-v1.5-13b',
         '--data_path', data_path,
