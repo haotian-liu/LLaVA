@@ -76,7 +76,9 @@ def is_url(path: str) -> bool:
         return False
 
 class TrainingOutput(BaseModel):
-    output_weights: Path
+    # this must be a key named `weights`, otherwise image creation will silently fail
+    # source: https://github.com/replicate/api/blob/6b73b27e0da6afbea0531bb4162e9b4f5a74d744/pkg/server/internal.go#L282 
+    weights: Path
 
 # todo: download_weights
 def train(train_data: str = Input(description="https url or path name of a zipfile containing training data. Training data should have a json file data.json and an images/ folder. data.json should link the images from images/ to conversations.")) -> TrainingOutput:
@@ -118,7 +120,7 @@ def train(train_data: str = Input(description="https url or path name of a zipfi
             tar.add(output_dir, arcname="")
 
     # Return the path to the weights file
-    return TrainingOutput(output_weights=weights_file)
+    return TrainingOutput(weights=weights_file)
 
 # todo: deal with recursive lora
 
