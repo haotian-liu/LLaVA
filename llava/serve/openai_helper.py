@@ -32,7 +32,7 @@ class ImageURL(BaseModel):
 
 class ImageURLMessage(BaseModel):
     type: Literal["image_url"]
-    image_url: ImageURL
+    image_url: Union[ImageURL, str]
 
 
 class AssistantMessage(BaseModel):
