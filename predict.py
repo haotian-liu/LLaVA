@@ -21,10 +21,12 @@ from transformers.generation.streamers import TextIteratorStreamer
 from cog import BasePredictor, Input, Path, ConcatenateIterator
 from train import is_url
 
-os.environ["HUGGINGFACE_HUB_CACHE"] = os.getcwd() + "/weights"
+# we don't use the huggingface hub cache, but we need to set this to a local folder
+os.environ["HUGGINGFACE_HUB_CACHE"] = os.getcwd() + "/models"
 
 # url for the weights mirror
 REPLICATE_WEIGHTS_URL = "https://weights.replicate.delivery/default"
+
 # files to download from the weights mirrors
 DEFAULT_WEIGHTS = [
     {
