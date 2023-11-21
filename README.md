@@ -237,6 +237,90 @@ python -m llava.serve.cli \
 
 <img src="images/demo_cli.gif" width="70%">
 
+## OpenAI OpenAI-Compatible APIs
+# OpenAI-Compatible RESTful APIs
+
+FastChat provides OpenAI-compatible APIs for its supported models, so you can use FastChat as a local drop-in replacement for OpenAI APIs.
+The FastChat server is compatible with both [openai-python](https://github.com/openai/openai-python) library and cURL commands.
+
+The following OpenAI APIs are supported:
+- Chat Completions. (Reference: https://platform.openai.com/docs/api-reference/chat)
+- Completions. (Reference: https://platform.openai.com/docs/api-reference/completions)
+- Embeddings. (Reference: https://platform.openai.com/docs/api-reference/embeddings)
+
+## RESTful API Server
+
+Launch the RESTful API server
+
+```bash
+python3 -m fastchat.serve.openai_api_server --host localhost --port 8000
+```
+
+### OpenAI Official SDK
+The goal of `openai_api_server.py` is to implement a fully OpenAI-compatible API server, so the models can be used directly with [openai-python](https://github.com/openai/openai-python) library.
+
+First, install openai-python:
+```bash
+pip install --upgrade openai
+```
+
+Then, interact with model vicuna:
+```python
+from openai import OpenAI
+
+api_key = ""
+base_url = "http://localhost:8000/api/v1"
+
+
+client = OpenAI(
+    api_key=api_key,
+    base_url=base_url
+)
+
+
+response = client.chat.completions.create(
+  model="llava-v1.5-7b",
+  messages=[
+    {
+      "role": "user",
+      "content": [
+        {"type": "text", "text": "What’s in this image?"},
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Gfp-wisconsin-madison-the-nature-boardwalk.jpg/2560px-Gfp-wisconsin-madison-the-nature-boardwalk.jpg",
+          },
+        },
+      ],
+    }
+  ],
+  max_tokens=300,
+  stream=False
+)
+
+print(response.choices[0])
+```
+
+Streaming is also supported. See [test_openai_api.py](../tests/test_openai_api.py).  If your api server is behind a proxy you'll need to turn off buffering, you can do so in Nginx by setting `proxy_buffering off;` in the location block for the proxy.
+
+### cURL
+cURL is another good tool for observing the output of the api.
+
+List Models:
+```bash
+curl http://localhost:8000/v1/models
+```
+
+Chat Completions:
+```bash
+curl http://localhost:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "vicuna-7b-v1.5",
+    "messages": [{"role": "user", "content": "Hello! What is your name?"}]
+  }'
+```
+
 ## Train
 
 *Below is the latest training configuration for LLaVA v1.5. For legacy models, please refer to README of [this](https://github.com/haotian-liu/LLaVA/tree/v1.0.1) version for now. We'll add them in a separate doc later.*
