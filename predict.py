@@ -21,10 +21,12 @@ from transformers.generation.streamers import TextIteratorStreamer
 from cog import BasePredictor, Input, Path, ConcatenateIterator
 from train import is_url
 
-os.environ["HUGGINGFACE_HUB_CACHE"] = os.getcwd() + "/weights"
+# we don't use the huggingface hub cache, but we need to set this to a local folder
+os.environ["HUGGINGFACE_HUB_CACHE"] = os.getcwd() + "/models"
 
 # url for the weights mirror
 REPLICATE_WEIGHTS_URL = "https://weights.replicate.delivery/default"
+
 # files to download from the weights mirrors
 DEFAULT_WEIGHTS = [
     {
@@ -63,6 +65,9 @@ def download_json(url: str, dest: Path):
         print(f"Failed to download {url}. Status code: {res.status_code}")
 
 def download_weights(baseurl: str, basedest: str, files: list[str]):
+    """Download model weights from Replicate and save to file.
+    Weights and download locations are specified in DEFAULT_WEIGHTS
+    """
     basedest = Path(basedest)
     start = time.time()
     print("downloading to: ", basedest)
@@ -94,14 +99,15 @@ class Predictor(BasePredictor):
             print(f"Loading custom LLaVA lora model: {weights}...")
             
             # remove folder if it already exists
-            custom_weights_dir = "/src/custom_weights"
-            if os.path.exists(custom_weights_dir):
+            custom_weights_dir = Path("/src/custom_weights")
+            if custom_weights_dir.exists():
                 shutil.rmtree(custom_weights_dir)
             
             # download custom weights from URL
+            custom_weights_dir.mkdir(parents=True, exist_ok=True)
             weights_url = str(weights)
-            download_location = Path(custom_weights_dir) / "custom_weights.tar"
-            os.system(f"pget {weights_url} {download_location}")
+            download_location = custom_weights_dir / "custom_weights.tar"
+            subprocess.check_call(["pget", str(weights_url), str(download_location)], close_fds=False)
 
             # extract tar file
             custom_weights_file = tarfile.open(download_location)
