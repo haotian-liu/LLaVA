@@ -16,10 +16,11 @@ import logging
 import os
 import hashlib
 from typing import Generator, Optional, Union, Dict, List, Any
-
+from io import BytesIO
+import base64
 import aiohttp
 import fastapi
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, JSONResponse
@@ -36,6 +37,7 @@ from llava.serve.openai_helper import (
     get_template,
     safe_append,
     load_image_from_url,
+    horizontal_concat_images
 )
 
 from fastchat.constants import (
@@ -256,6 +258,7 @@ def get_gen_params(
     temperature: float,
     top_p: float,
     top_k: Optional[int] = None,
+    concat= True,
     presence_penalty: Optional[float] = None,
     frequency_penalty: Optional[float] = None,
     max_tokens: Optional[int] = None,
@@ -272,12 +275,12 @@ def get_gen_params(
         "image_url": None,
     }
 
+    images = []
+
     if isinstance(messages, str):
         prompt = messages
     else:
         for message in messages:
-            # message = GPTVMessage(**message)
-
             if message.role == "system":
                 pass
             elif message.role == "user":
@@ -289,7 +292,14 @@ def get_gen_params(
                     else:
                         content = element.image_url
 
-                        message_to_add["image_url"] = load_image_from_url(content.url)
+                        if isinstance(content, str):
+                            url = content
+                        else:
+                            url = content.url
+
+                        logger.info(url)
+                        message_to_add["image_url"] = load_image_from_url(url)
+                        images.append(message_to_add["image_url"])
 
                 if message_to_add["image_url"]:
                     message_item = (
@@ -306,16 +316,33 @@ def get_gen_params(
 
         # Add a blank message for the assistant.
         conv.append_message(conv.roles[1], None)
+        concat_image = horizontal_concat_images(images)
+
+        for i, message in enumerate(conv.messages[conv.offset:]):
+            if isinstance(message, tuple):
+                conv.messages[i] = (message[0], concat_image, 'Default')
+                break
+        
         prompt = conv.get_prompt()
+
+    logger.info(prompt)
+
 
     all_images = conv.get_images(return_pil=True)
     all_image_hash = [hashlib.md5(image.tobytes()).hexdigest() for image in all_images]
 
-    # logger.info(
-    #     hashlib.md5(all_images[0].tobytes()).hexdigest()
-    # )
 
-    # logger.info(all_image_hash)
+    if concat:
+        buffered = BytesIO()
+        concat_image.save(buffered, format="PNG")
+        img_b64_str = base64.b64encode(buffered.getvalue()).decode()
+        images = [img_b64_str]
+
+        if len(images) > 1:
+            prompt = prompt.replace("<image>", f"Here is {len(images)} images arrange in horizontal: <image>")
+    else:
+        images = conv.get_images()
+
 
     gen_params = {
         "model": model_name,
@@ -326,7 +353,7 @@ def get_gen_params(
         "stop": conv.sep
         if conv.sep_style in [SeparatorStyle.SINGLE, SeparatorStyle.MPT]
         else conv.sep2,
-        "images": conv.get_images(),
+        "images": images,
     }
 
     return gen_params
@@ -627,6 +654,12 @@ def create_openai_api_server():
         "--api-keys",
         type=lambda s: s.split(","),
         help="Optional list of comma separated API keys",
+    )
+    parser.add_argument(
+        "--concat",
+        type=bool,
+        default=True,
+        help="Concat multiple images",
     )
     parser.add_argument(
         "--ssl",

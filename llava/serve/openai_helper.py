@@ -1,7 +1,9 @@
 from typing import List, Optional, Literal, Union
 from pydantic import BaseModel
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 import requests
+
+from io import BytesIO
 
 from llava.utils import (
     build_logger,
@@ -88,9 +90,15 @@ def get_template(model_name):
 
 
 def load_image_from_url(image_url):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
+    }
     if image_url.startswith("http"):
-        img = Image.open(requests.get(image_url, stream=True).raw)
-        img.save("debug.jpg")
+        response = requests.get(image_url, headers=headers)
+        response.raise_for_status()
+
+        # Open the image using PIL
+        img = Image.open(BytesIO(response.content))
     elif image_url.startwith("data:image"):
         img = load_image_from_base64(image_url)
 
@@ -114,3 +122,38 @@ def safe_append(history, text, image, image_process_mode="Default"):
     history.skip_next = False
 
     return history
+
+def horizontal_concat_images(image_list):
+    # Select the last three images from the list
+    last_three_images = image_list[-3:]
+
+    # Get the dimensions of the images
+    widths, heights = zip(*(img.size for img in last_three_images))
+
+    # Calculate the total width for the concatenated image
+    total_width = sum(widths)
+
+    # Create a new blank image with the required width and height
+    concat_image = Image.new('RGB', (total_width, heights[0]))
+
+    
+
+    # Paste the images horizontally onto the concatenated image
+    x_offset = 0
+    for i, img in enumerate(last_three_images):
+
+        # Create a draw object to write text on the concatenated image
+        draw = ImageDraw.Draw(img)
+        # Write the big text image inside the current image
+        text = f"Image {i+1}"  # Text to be written
+        
+        text_position = (10, 10)  # Center the text
+        font = ImageFont.load_default(size=40)
+        draw.text(text_position, text, fill=(255, 0, 0), font=font)  # Write the text in black color
+
+        concat_image.paste(img, (x_offset, 0))
+
+        x_offset += img.width
+
+
+    return concat_image
