@@ -238,7 +238,6 @@ python -m llava.serve.cli \
 <img src="images/demo_cli.gif" width="70%">
 
 ## OpenAI OpenAI-Compatible APIs
-# OpenAI-Compatible RESTful APIs
 
 FastChat provides OpenAI-compatible APIs for its supported models, so you can use FastChat as a local drop-in replacement for OpenAI APIs.
 The FastChat server is compatible with both [openai-python](https://github.com/openai/openai-python) library and cURL commands.
@@ -300,8 +299,6 @@ response = client.chat.completions.create(
 
 print(response.choices[0])
 ```
-
-Streaming is also supported. See [test_openai_api.py](../tests/test_openai_api.py).  If your api server is behind a proxy you'll need to turn off buffering, you can do so in Nginx by setting `proxy_buffering off;` in the location block for the proxy.
 
 ### cURL
 cURL is another good tool for observing the output of the api.
