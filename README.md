@@ -127,6 +127,10 @@ args = type('Args', (), {
     "conv_mode": None,
     "image_file": image_file,
     "sep": ",",
+    "temperature": 0,
+    "top_p": None,
+    "num_beams": 1,
+    "max_new_tokens": 512
 })()
 
 eval_model(args)
