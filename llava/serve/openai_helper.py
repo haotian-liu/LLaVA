@@ -1,4 +1,5 @@
-from typing import List, Optional, Literal, Union
+from typing import List, Optional, Literal, Union, Dict, Any
+from enum import Enum
 from pydantic import BaseModel
 from PIL import Image, ImageDraw, ImageFont
 import requests
@@ -44,6 +45,12 @@ class GPTVMessage(BaseModel):
     content: Union[List[Union[TextMessage, ImageURLMessage]], str]
 
 
+class ConcatOptions(Enum):
+    Horizontal = "horizontal"
+    Vertical = "vertical"
+    No = "no"
+
+
 class GPTVChatCompletionRequest(BaseModel):
     model: str
     messages: Union[str, List[GPTVMessage]]
@@ -57,6 +64,7 @@ class GPTVChatCompletionRequest(BaseModel):
     presence_penalty: Optional[float] = 0.0
     frequency_penalty: Optional[float] = 0.0
     user: Optional[str] = None
+    concat: Optional[ConcatOptions] = ConcatOptions.No
 
 
 def get_template(model_name):
@@ -99,8 +107,8 @@ def load_image_from_url(image_url):
 
         # Open the image using PIL
         img = Image.open(BytesIO(response.content))
-    elif image_url.startwith("data:image"):
-        img = load_image_from_base64(image_url)
+    elif image_url.startswith("data:image"):
+        img = load_image_from_base64(image_url.split(',')[1])
 
     return img
 
@@ -123,37 +131,36 @@ def safe_append(history, text, image, image_process_mode="Default"):
 
     return history
 
-def horizontal_concat_images(image_list):
-    # Select the last three images from the list
-    last_three_images = image_list[-3:]
-
+def concat_images(image_list, dimension=ConcatOptions.Horizontal):
     # Get the dimensions of the images
-    widths, heights = zip(*(img.size for img in last_three_images))
+    widths, heights = zip(*(img.size for img in image_list))
 
-    # Calculate the total width for the concatenated image
+    # Calculate the total width and height for the concatenated image
     total_width = sum(widths)
+    total_height = sum(heights)
 
     # Create a new blank image with the required width and height
-    concat_image = Image.new('RGB', (total_width, heights[0]))
+    concat_image = Image.new('RGB', (total_width, total_height))
 
-    
-
-    # Paste the images horizontally onto the concatenated image
+    # Paste the images onto the concatenated image
     x_offset = 0
-    for i, img in enumerate(last_three_images):
+    y_offset = 0
+    for i, img in enumerate(image_list):
 
         # Create a draw object to write text on the concatenated image
         draw = ImageDraw.Draw(img)
         # Write the big text image inside the current image
-        text = f"Image {i+1}"  # Text to be written
+        text = f"{i+1}"  # Text to be written
         
         text_position = (10, 10)  # Center the text
-        font = ImageFont.load_default(size=40)
+        font = ImageFont.load_default(size=20)
         draw.text(text_position, text, fill=(255, 0, 0), font=font)  # Write the text in black color
 
-        concat_image.paste(img, (x_offset, 0))
-
-        x_offset += img.width
-
+        if dimension == ConcatOptions.Horizontal:
+            concat_image.paste(img, (x_offset, 0))
+            x_offset += img.width
+        elif dimension == ConcatOptions.Vertical:
+            concat_image.paste(img, (0, y_offset))
+            y_offset += img.height
 
     return concat_image
