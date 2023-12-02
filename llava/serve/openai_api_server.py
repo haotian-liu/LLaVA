@@ -334,6 +334,9 @@ def process_messages(conv, messages, concat):
                         )
                         text_message = ""
 
+
+                if text_message != "":
+                    conv_messages.append(text_message)
                 for conv_message in conv_messages:
                     if len(conv.messages) % 2 != 0:
                         conv.append_message(conv.roles[0], None)
