@@ -132,7 +132,15 @@ def safe_append(history, text, image, image_process_mode="Default"):
     return history
 
 def concat_images(image_list, dimension=ConcatOptions.Horizontal):
-    # Get the dimensions of the images
+
+    widths, heights = zip(*(img.size for img in image_list))
+
+    max_height = max(heights)
+    max_width = max(widths)
+
+    image_list = [img.resize((max_width, max_height)) for img in image_list]
+
+    # Get the dimensions of the new images
     widths, heights = zip(*(img.size for img in image_list))
 
     # Calculate the total width and height for the concatenated image
@@ -146,12 +154,10 @@ def concat_images(image_list, dimension=ConcatOptions.Horizontal):
     x_offset = 0
     y_offset = 0
     for i, img in enumerate(image_list):
-
         # Create a draw object to write text on the concatenated image
         draw = ImageDraw.Draw(img)
         # Write the big text image inside the current image
         text = f"{i+1}"  # Text to be written
-        
         text_position = (10, 10)  # Center the text
         font = ImageFont.load_default(size=20)
         draw.text(text_position, text, fill=(255, 0, 0), font=font)  # Write the text in black color
