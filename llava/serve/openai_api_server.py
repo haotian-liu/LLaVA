@@ -26,7 +26,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, JSONResponse
 from fastapi.security.http import HTTPAuthorizationCredentials, HTTPBearer
 import httpx
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 import shortuuid
 import tiktoken
 import uvicorn
@@ -34,10 +34,11 @@ import uvicorn
 from llava.serve.openai_helper import (
     GPTVChatCompletionRequest,
     GPTVMessage,
+    ConcatOptions,
     get_template,
     safe_append,
     load_image_from_url,
-    horizontal_concat_images
+    concat_images,
 )
 
 from fastchat.constants import (
@@ -258,7 +259,7 @@ def get_gen_params(
     temperature: float,
     top_p: float,
     top_k: Optional[int] = None,
-    concat= True,
+    concat: ConcatOptions = ConcatOptions.No,
     presence_penalty: Optional[float] = None,
     frequency_penalty: Optional[float] = None,
     max_tokens: Optional[int] = None,
@@ -269,80 +270,7 @@ def get_gen_params(
     use_beam_search: Optional[bool] = None,
 ) -> Dict[str, Any]:
     conv = get_template(model_name)
-
-    message_to_add = {
-        "text": None,
-        "image_url": None,
-    }
-
-    images = []
-
-    if isinstance(messages, str):
-        prompt = messages
-    else:
-        for message in messages:
-            if message.role == "system":
-                pass
-            elif message.role == "user":
-                for element in message.content:
-                    logger.error(element)
-                    if element.type == "text":
-                        content = element.text
-                        message_to_add["text"] = content
-                    else:
-                        content = element.image_url
-
-                        if isinstance(content, str):
-                            url = content
-                        else:
-                            url = content.url
-
-                        logger.info(url)
-                        message_to_add["image_url"] = load_image_from_url(url)
-                        images.append(message_to_add["image_url"])
-
-                if message_to_add["image_url"]:
-                    message_item = (
-                        message_to_add["text"],
-                        message_to_add["image_url"],
-                        "Default",
-                    )
-                else:
-                    message_item = message_to_add["text"]
-                conv.append_message(conv.roles[0], message_item)
-            else:
-                content = message.content
-                conv.append_message(conv.roles[1], content)
-
-        # Add a blank message for the assistant.
-        conv.append_message(conv.roles[1], None)
-        concat_image = horizontal_concat_images(images)
-
-        for i, message in enumerate(conv.messages[conv.offset:]):
-            if isinstance(message, tuple):
-                conv.messages[i] = (message[0], concat_image, 'Default')
-                break
-        
-        prompt = conv.get_prompt()
-
-    logger.info(prompt)
-
-
-    all_images = conv.get_images(return_pil=True)
-    all_image_hash = [hashlib.md5(image.tobytes()).hexdigest() for image in all_images]
-
-
-    if concat:
-        buffered = BytesIO()
-        concat_image.save(buffered, format="PNG")
-        img_b64_str = base64.b64encode(buffered.getvalue()).decode()
-        images = [img_b64_str]
-
-        if len(images) > 1:
-            prompt = prompt.replace("<image>", f"Here is {len(images)} images arrange in horizontal: <image>")
-    else:
-        images = conv.get_images()
-
+    prompt, images = process_messages(conv, messages, concat)
 
     gen_params = {
         "model": model_name,
@@ -357,6 +285,90 @@ def get_gen_params(
     }
 
     return gen_params
+
+
+def process_messages(conv, messages, concat):
+    """
+    Process the messages to generate the prompt and images for the conversation.
+
+    Args:
+        conv: The conversation object used to store the messages.
+        messages: The messages to process. It can be a string or a list of dictionaries representing messages.
+        concat: A boolean indicating whether to concatenate the images.
+
+    Returns:
+        A tuple containing the generated prompt and a list of images.
+
+    Raises:
+        Any exceptions that may occur during the processing.
+
+    """
+    if isinstance(messages, str):
+        prompt = messages
+    else:
+        prompt, images = "", []
+
+        for message in messages:
+            if message.role == "system":
+                pass
+            elif message.role == "user":
+                conv_messages = []
+                text_message = ""
+
+                for element in message.content:
+                    if element.type == "text":
+                        if text_message == "":
+                            text_message = element.text
+                        else:
+                            conv_messages.append(text_message)
+                    else:
+                        content = element.image_url
+
+                        if isinstance(content, str):
+                            url = content
+                        else:
+                            url = content.url
+
+                        conv_messages.append(
+                            (text_message, load_image_from_url(url), "Default")
+                        )
+                        text_message = ""
+
+                for conv_message in conv_messages:
+                    if len(conv.messages) % 2 != 0:
+                        conv.append_message(conv.roles[0], None)
+                    conv.append_message(conv.roles[0], conv_message)
+
+            else:
+                content = message.content
+                conv.append_message(conv.roles[1], content)
+
+        conv.append_message(conv.roles[1], None)
+        prompt = conv.get_prompt()
+
+        all_images = conv.get_images(return_pil=True)
+
+        logger.info(len(all_images))
+
+        if concat != ConcatOptions.No:
+            concat_image = concat_images(all_images, concat)
+            buffered = BytesIO()
+            concat_image.save(buffered, format="PNG")
+            concat_image.save("jg.png", format="PNG")
+            img_b64_str = base64.b64encode(buffered.getvalue()).decode()
+            images = [img_b64_str]
+
+            if len(all_images) > 1:
+                prompt = prompt.replace(
+                    "<image>",
+                    f"Here is {len(all_images)} images arranged in {concat.value}: <image>",
+                )
+        else:
+            images = conv.get_images()
+            if len(images) > 1:
+                prompt = prompt.replace("<image>", "<image> " * len(images))
+
+    return prompt, images
 
 
 async def get_worker_address(model_name: str) -> str:
@@ -426,9 +438,8 @@ async def create_chat_completion(request: GPTVChatCompletionRequest):
         max_tokens=request.max_tokens,
         echo=False,
         stop=request.stop,
+        concat=request.concat,
     )
-
-    # logger.info(gen_params)
 
     max_new_tokens, error_check_ret = await check_length(
         request,
@@ -496,7 +507,7 @@ async def chat_completion_stream_generator(
         chunk = ChatCompletionStreamResponse(
             id=id, choices=[choice_data], model=model_name
         )
-        yield f"data: {chunk.json(exclude_unset=True, ensure_ascii=False)}\n\n"
+        yield f"data: {chunk.model_dump_json(exclude_unset=True)}\n\n"
 
         previous_text = ""
         async for content in generate_completion_stream(gen_params, worker_addr):
@@ -526,10 +537,10 @@ async def chat_completion_stream_generator(
                 if content.get("finish_reason", None) is not None:
                     finish_stream_events.append(chunk)
                 continue
-            yield f"data: {chunk.json(exclude_unset=True, ensure_ascii=False)}\n\n"
+            yield f"data: {chunk.model_dump_json(exclude_unset=True)}\n\n"
     # There is not "content" field in the last delta message, so exclude_none to exclude field "content".
     for finish_chunk in finish_stream_events:
-        yield f"data: {finish_chunk.json(exclude_none=True, ensure_ascii=False)}\n\n"
+        yield f"data: {finish_chunk.model_dump_json(exclude_none=True)}\n\n"
     yield "data: [DONE]\n\n"
 
 
@@ -654,12 +665,6 @@ def create_openai_api_server():
         "--api-keys",
         type=lambda s: s.split(","),
         help="Optional list of comma separated API keys",
-    )
-    parser.add_argument(
-        "--concat",
-        type=bool,
-        default=True,
-        help="Concat multiple images",
     )
     parser.add_argument(
         "--ssl",
