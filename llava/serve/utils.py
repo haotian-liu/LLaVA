@@ -1,23 +1,16 @@
-from typing import List, Optional, Literal, Union, Dict, Any
 from enum import Enum
-from pydantic import BaseModel
-from PIL import Image, ImageDraw, ImageFont
-import requests
-
 from io import BytesIO
+from typing import Any, Dict, List, Literal, Optional, Union
 
-from llava.utils import (
-    build_logger,
-    server_error_msg,
-    violates_moderation,
-    moderation_msg,
-)
+import requests
+from PIL import Image, ImageDraw, ImageFont
+from pydantic import BaseModel
 
-
+from llava.conversation import (SeparatorStyle, conv_templates,
+                                default_conversation)
 from llava.mm_utils import load_image_from_base64
-
-
-from llava.conversation import SeparatorStyle, conv_templates, default_conversation
+from llava.utils import (build_logger, moderation_msg, server_error_msg,
+                         violates_moderation)
 
 logger = build_logger("openai-api", f"openai-api.log")
 

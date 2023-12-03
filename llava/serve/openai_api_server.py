@@ -1,4 +1,7 @@
-"""A server that provides OpenAI-compatible RESTful APIs. It supports:
+"""A server that provides OpenAI-compatible RESTful APIs. The implement is mostly based on FastChat
+openai_api_server (Reference: https://github.com/lm-sys/FastChat/blob/main/fastchat/serve/openai_api_server.py)
+
+ It supports:
 
 - Chat Completions. (Reference: https://platform.openai.com/docs/api-reference/chat)
 - Completions. (Reference: https://platform.openai.com/docs/api-reference/completions)
@@ -6,63 +9,53 @@
 
 Usage:
 python3 -m llava.serve.openai_api_server
+
 """
 
 
-import asyncio
 import argparse
+import asyncio
+import base64
+import hashlib
 import json
 import logging
 import os
-import hashlib
-from typing import Generator, Optional, Union, Dict, List, Any
 from io import BytesIO
-import base64
+from typing import Any, Dict, Generator, List, Optional, Union
+
 import aiohttp
 import fastapi
-from fastapi import Depends, HTTPException, Request
-from fastapi.exceptions import RequestValidationError
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse, JSONResponse
-from fastapi.security.http import HTTPAuthorizationCredentials, HTTPBearer
 import httpx
-from pydantic_settings import BaseSettings
 import shortuuid
 import tiktoken
 import uvicorn
-
-from llava.serve.openai_helper import (
-    GPTVChatCompletionRequest,
-    GPTVMessage,
-    ConcatOptions,
-    get_template,
-    safe_append,
-    load_image_from_url,
-    concat_images,
-)
-
+from fastapi import Depends, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.security.http import HTTPAuthorizationCredentials, HTTPBearer
 from fastchat.constants import (
-    WORKER_API_TIMEOUT,
     WORKER_API_EMBEDDING_BATCH_SIZE,
+    WORKER_API_TIMEOUT,
     ErrorCode,
 )
+from pydantic_settings import BaseSettings
 
 # from fastchat.conversation import Conversation, SeparatorStyle
 from llava.conversation import SeparatorStyle, conv_templates, default_conversation
-
-from fastchat.protocol.openai_api_protocol import (
+from llava.serve.openai_api_protocol import (
     ChatCompletionRequest,
     ChatCompletionResponse,
+    ChatCompletionResponseChoice,
     ChatCompletionResponseStreamChoice,
     ChatCompletionStreamResponse,
     ChatMessage,
-    ChatCompletionResponseChoice,
     CompletionRequest,
     CompletionResponse,
     CompletionResponseChoice,
-    DeltaMessage,
     CompletionResponseStreamChoice,
     CompletionStreamResponse,
+    DeltaMessage,
     EmbeddingsRequest,
     EmbeddingsResponse,
     ErrorResponse,
@@ -72,11 +65,23 @@ from fastchat.protocol.openai_api_protocol import (
     ModelPermission,
     UsageInfo,
 )
-from fastchat.protocol.api_protocol import (
+
+from llava.serve.openai_api_protocol import (
     APIChatCompletionRequest,
     APITokenCheckRequest,
     APITokenCheckResponse,
     APITokenCheckResponseItem,
+)
+
+
+from llava.serve.utils import (
+    ConcatOptions,
+    GPTVChatCompletionRequest,
+    GPTVMessage,
+    concat_images,
+    get_template,
+    load_image_from_url,
+    safe_append,
 )
 
 logger = logging.getLogger(__name__)
@@ -170,24 +175,6 @@ async def check_model(request) -> Optional[JSONResponse]:
             f"Only {'&&'.join(models)} allowed now, your model {request.model}",
         )
     return ret
-
-
-async def check_length(request, prompt, max_tokens, worker_addr):
-    if (
-        not isinstance(max_tokens, int) or max_tokens <= 0
-    ):  # model worker not support max_tokens=None
-        max_tokens = 1024 * 1024
-
-    context_len = await fetch_remote(
-        worker_addr + "/model_details", {"model": request.model}, "context_length"
-    )
-    token_num = await fetch_remote(
-        worker_addr + "/count_token",
-        {"model": request.model, "prompt": prompt},
-        "count",
-    )
-
-    return 500, None
 
 
 def check_requests(request) -> Optional[JSONResponse]:
@@ -334,7 +321,6 @@ def process_messages(conv, messages, concat):
                         )
                         text_message = ""
 
-
                 if text_message != "":
                     conv_messages.append(text_message)
                 for conv_message in conv_messages:
@@ -351,7 +337,7 @@ def process_messages(conv, messages, concat):
 
         all_images = conv.get_images(return_pil=True)
 
-        logger.info(len(all_images))
+        logger.debug(f"Number of images: {len(all_images)}")
 
         if concat != ConcatOptions.No:
             concat_image = concat_images(all_images, concat)
@@ -443,18 +429,6 @@ async def create_chat_completion(request: GPTVChatCompletionRequest):
         stop=request.stop,
         concat=request.concat,
     )
-
-    max_new_tokens, error_check_ret = await check_length(
-        request,
-        gen_params["prompt"],
-        gen_params["max_new_tokens"],
-        worker_addr,
-    )
-
-    if error_check_ret is not None:
-        return error_check_ret
-
-    gen_params["max_new_tokens"] = max_new_tokens
 
     generator = chat_completion_stream_generator(
         request.model, gen_params, request.n, worker_addr
@@ -634,7 +608,6 @@ async def generate_completion(generator):
             data = json.loads(chunk[5:])
 
             if data.get("choices"):
-                print(data)
                 new_token = data["choices"][0]["delta"].get("content")
 
                 if new_token and len(new_token) < 20:
