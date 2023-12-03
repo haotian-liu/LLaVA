@@ -148,6 +148,8 @@ To launch a Gradio demo locally, please run the following commands one by one. I
 flowchart BT
     %% Declare Nodes
     gws("Gradio (UI Server)")
+    openai("OpenAI (OpenAI API Server)")
+
     c("Controller (API Server):<br/>PORT: 10000")
     mw7b("Model Worker:<br/>llava-v1.5-7b<br/>PORT: 40000")
     mw13b("Model Worker:<br/>llava-v1.5-13b<br/>PORT: 40001")
@@ -165,6 +167,8 @@ flowchart BT
     subgraph Demo Connections
         direction BT
         c<-->gws
+        c<-->openai
+
         
         mw7b<-->c
         mw13b<-->c
@@ -238,24 +242,18 @@ python -m llava.serve.cli \
 <img src="images/demo_cli.gif" width="70%">
 
 ## OpenAI OpenAI-Compatible APIs
+The following OpenAI-Compatible APIs are implemented mostly based on [FastChat openai_api_server](https://github.com/lm-sys/FastChat/blob/main/docs/openai_api.md)
 
-FastChat provides OpenAI-compatible APIs for its supported models, so you can use FastChat as a local drop-in replacement for OpenAI APIs.
-The FastChat server is compatible with both [openai-python](https://github.com/openai/openai-python) library and cURL commands.
+It supported:
+- Vision Chat Completions. (Reference: https://platform.openai.com/docs/guides/vision)
 
-The following OpenAI APIs are supported:
-- Chat Completions. (Reference: https://platform.openai.com/docs/api-reference/chat)
-- Completions. (Reference: https://platform.openai.com/docs/api-reference/completions)
-- Embeddings. (Reference: https://platform.openai.com/docs/api-reference/embeddings)
-
-## RESTful API Server
-
-Launch the RESTful API server
-
+Launch the RESTful API server:
 ```bash
-python3 -m fastchat.serve.openai_api_server --host localhost --port 8000
+python3 -m llava.serve.openai_api_server --host localhost --port 8000
 ```
 
-### OpenAI Official SDK
+Usage with OpenAI Python SDK:
+
 The goal of `openai_api_server.py` is to implement a fully OpenAI-compatible API server, so the models can be used directly with [openai-python](https://github.com/openai/openai-python) library.
 
 First, install openai-python:
@@ -268,6 +266,8 @@ Then, interact with model vicuna:
 from openai import OpenAI
 
 api_key = ""
+
+# Controller endpoint
 base_url = "http://localhost:8000/api/v1"
 
 
@@ -275,7 +275,6 @@ client = OpenAI(
     api_key=api_key,
     base_url=base_url
 )
-
 
 response = client.chat.completions.create(
   model="llava-v1.5-7b",
@@ -298,24 +297,6 @@ response = client.chat.completions.create(
 )
 
 print(response.choices[0])
-```
-
-### cURL
-cURL is another good tool for observing the output of the api.
-
-List Models:
-```bash
-curl http://localhost:8000/v1/models
-```
-
-Chat Completions:
-```bash
-curl http://localhost:8000/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "vicuna-7b-v1.5",
-    "messages": [{"role": "user", "content": "Hello! What is your name?"}]
-  }'
 ```
 
 ## Train
