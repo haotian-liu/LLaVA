@@ -1,14 +1,26 @@
 #!/bin/bash
 
-deepspeed llava/train/train_mem.py \
-    --lora_enable True --lora_r 128 --lora_alpha 256 --mm_projector_lr 2e-5 \
+MODEL_VERSION=MLP-KTLim/BaseLLM_T # 우리 모델
+
+
+########### DO NOT CHANGE ###########
+########### USE THIS FOR BOTH ###########
+PROMPT_VERSION=llava_llama_2
+########### DO NOT CHANGE ###########
+
+
+deepspeed --include="localhost:0,1,2,3" llava/train/train_mem.py \
+    --lora_enable True \
+    --lora_r 128 \
+    --lora_alpha 256 \
+    --mm_projector_lr 2e-5 \
     --deepspeed ./scripts/zero3.json \
-    --model_name_or_path lmsys/vicuna-13b-v1.5 \
-    --version v1 \
-    --data_path ./playground/data/llava_v1_5_mix665k.json \
-    --image_folder ./playground/data \
+    --model_name_or_path $MODEL_VERSION \
+    --version $PROMPT_VERSION \
+    --data_path ./playground/data/LLaVA-Instruct-150K/LLaVA-Instruct-150K-ek_pr.json \
+    --image_folder ./playground/data/coco2014/train2014/ \
     --vision_tower openai/clip-vit-large-patch14-336 \
-    --pretrain_mm_mlp_adapter ./checkpoints/llava-v1.5-13b-pretrain/mm_projector.bin \
+    --pretrain_mm_mlp_adapter ./checkpoints/llava15-MLP-KTLim/BaseLLM_T-pretrain/mm_projector.bin \
     --mm_projector_type mlp2x_gelu \
     --mm_vision_select_layer -2 \
     --mm_use_im_start_end False \
@@ -16,9 +28,9 @@ deepspeed llava/train/train_mem.py \
     --image_aspect_ratio pad \
     --group_by_modality_length True \
     --bf16 True \
-    --output_dir ./checkpoints/llava-v1.5-13b-lora \
+    --output_dir ./checkpoints/X_LLaVA-baseLLM_T \
     --num_train_epochs 1 \
-    --per_device_train_batch_size 16 \
+    --per_device_train_batch_size 8 \
     --per_device_eval_batch_size 4 \
     --gradient_accumulation_steps 1 \
     --evaluation_strategy "no" \
