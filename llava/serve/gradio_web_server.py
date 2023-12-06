@@ -313,14 +313,11 @@ block_css = """
 """
 
 
-def build_demo(embed_mode):
+def build_demo():
     textbox = gr.Textbox(show_label=False, placeholder="Enter text and press ENTER", container=False)
     textbox_api = gr.Textbox(visible=False)
     with gr.Blocks(title="LLaVA", theme=gr.themes.Default(), css=block_css) as demo:
         state = gr.State()
-
-        if not embed_mode:
-            gr.Markdown(title_markdown)
 
         with gr.Row():
             with gr.Column(scale=3):
@@ -368,9 +365,6 @@ def build_demo(embed_mode):
                     regenerate_btn = gr.Button(value="🔄  Regenerate", interactive=False)
                     clear_btn = gr.Button(value="🗑️  Clear", interactive=False)
 
-        if not embed_mode:
-            gr.Markdown(tos_markdown)
-            gr.Markdown(learn_more_markdown)
         url_params = gr.JSON(visible=False)
 
         # Register listeners
@@ -517,14 +511,14 @@ if __name__ == "__main__":
                         choices=["once", "reload"])
     parser.add_argument("--share", action="store_true")
     parser.add_argument("--moderate", action="store_true")
-    parser.add_argument("--embed", action="store_true")
+    #parser.add_argument("--embed", action="store_true")
     args = parser.parse_args()
     logger.info(f"args: {args}")
 
     models = get_model_list()
 
     logger.info(args)
-    demo = build_demo(args.embed)
+    demo = build_demo()
     demo.queue(
         concurrency_count=args.concurrency_count,
         api_open=False
