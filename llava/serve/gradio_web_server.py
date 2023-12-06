@@ -240,7 +240,9 @@ def http_bot(state, model_selector, temperature, top_p, max_new_tokens, include_
 
     pload['images'] = state.get_images()
 
-    state.messages[-1][-1] = "▌"
+    # stream_marker = "▌"
+    stream_marker = ""
+    state.messages[-1][-1] = stream_marker
     if include_image:
         yield (state, state.to_gradio_chatbot(include_image=include_image)) + (disable_btn,) * 5
     else:
@@ -255,7 +257,7 @@ def http_bot(state, model_selector, temperature, top_p, max_new_tokens, include_
                 data = json.loads(chunk.decode())
                 if data["error_code"] == 0:
                     output = data["text"][len(prompt):].strip()
-                    state.messages[-1][-1] = output + "▌"
+                    state.messages[-1][-1] = output + stream_marker
                     if include_image:
                         yield (state, state.to_gradio_chatbot(include_image=include_image)) + (disable_btn,) * 5
                     else:
