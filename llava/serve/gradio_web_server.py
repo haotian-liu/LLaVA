@@ -8,12 +8,11 @@ import gradio as gr
 import requests
 
 from llava.conversation import (default_conversation, conv_templates,
-                                   SeparatorStyle)
+                                SeparatorStyle)
 from llava.constants import LOGDIR
 from llava.utils import (build_logger, server_error_msg,
-    violates_moderation, moderation_msg)
+                         violates_moderation, moderation_msg)
 import hashlib
-
 
 logger = build_logger("gradio_web_server", "gradio_web_server.log")
 
@@ -126,16 +125,16 @@ def clear_history(request: gr.Request):
     return (state, state.to_gradio_chatbot(), "", None) + (disable_btn,) * 5
 
 
-def add_text(state, text, image, image_process_mode, request: gr.Request):
+def add_text(state, text, image, image_process_mode, include_image, request: gr.Request):
     logger.info(f"add_text. ip: {request.client.host}. len: {len(text)}")
     if len(text) <= 0 and image is None:
         state.skip_next = True
-        return (state, state.to_gradio_chatbot(), "", None) + (no_change_btn,) * 5
+        return (state, state.to_gradio_chatbot(include_image=include_image), "", None) + (no_change_btn,) * 5
     if args.moderate:
         flagged = violates_moderation(text)
         if flagged:
             state.skip_next = True
-            return (state, state.to_gradio_chatbot(), moderation_msg, None) + (
+            return (state, state.to_gradio_chatbot(include_image=include_image), moderation_msg, None) + (
                 no_change_btn,) * 5
 
     text = text[:1536]  # Hard cut-off
@@ -150,17 +149,20 @@ def add_text(state, text, image, image_process_mode, request: gr.Request):
     state.append_message(state.roles[0], text)
     state.append_message(state.roles[1], None)
     state.skip_next = False
-    return (state, state.to_gradio_chatbot(), "", None) + (disable_btn,) * 5
+    return (state, state.to_gradio_chatbot(include_image=include_image), "", None) + (disable_btn,) * 5
 
 
-def http_bot(state, model_selector, temperature, top_p, max_new_tokens, request: gr.Request):
+def http_bot(state, model_selector, temperature, top_p, max_new_tokens, include_image, request: gr.Request):
     logger.info(f"http_bot. ip: {request.client.host}")
     start_tstamp = time.time()
     model_name = model_selector
 
     if state.skip_next:
         # This generate call is skipped due to invalid inputs
-        yield (state, state.to_gradio_chatbot()) + (no_change_btn,) * 5
+        if include_image:
+            yield (state, state.to_gradio_chatbot(include_image=include_image)) + (no_change_btn,) * 5
+        else:
+            yield state, state.to_gradio_chatbot(include_image=include_image)
         return
 
     if len(state.messages) == state.offset + 2:
@@ -198,14 +200,18 @@ def http_bot(state, model_selector, temperature, top_p, max_new_tokens, request:
     # Query worker address
     controller_url = args.controller_url
     ret = requests.post(controller_url + "/get_worker_address",
-            json={"model": model_name})
+                        json={"model": model_name})
     worker_addr = ret.json()["address"]
     logger.info(f"model_name: {model_name}, worker_addr: {worker_addr}")
 
     # No available worker
     if worker_addr == "":
         state.messages[-1][-1] = server_error_msg
-        yield (state, state.to_gradio_chatbot(), disable_btn, disable_btn, disable_btn, enable_btn, enable_btn)
+        if include_image:
+            yield (state, state.to_gradio_chatbot(include_image=include_image), disable_btn, disable_btn, disable_btn,
+                   enable_btn, enable_btn)
+        else:
+            yield state, state.to_gradio_chatbot(include_image=include_image)
         return
 
     # Construct prompt
@@ -235,32 +241,49 @@ def http_bot(state, model_selector, temperature, top_p, max_new_tokens, request:
     pload['images'] = state.get_images()
 
     state.messages[-1][-1] = "▌"
-    yield (state, state.to_gradio_chatbot()) + (disable_btn,) * 5
+    if include_image:
+        yield (state, state.to_gradio_chatbot(include_image=include_image)) + (disable_btn,) * 5
+    else:
+        yield state, state.to_gradio_chatbot(include_image=include_image)
 
     try:
         # Stream output
         response = requests.post(worker_addr + "/worker_generate_stream",
-            headers=headers, json=pload, stream=True, timeout=10)
+                                 headers=headers, json=pload, stream=True, timeout=10)
         for chunk in response.iter_lines(decode_unicode=False, delimiter=b"\0"):
             if chunk:
                 data = json.loads(chunk.decode())
                 if data["error_code"] == 0:
                     output = data["text"][len(prompt):].strip()
                     state.messages[-1][-1] = output + "▌"
-                    yield (state, state.to_gradio_chatbot()) + (disable_btn,) * 5
+                    if include_image:
+                        yield (state, state.to_gradio_chatbot(include_image=include_image)) + (disable_btn,) * 5
+                    else:
+                        yield state, state.to_gradio_chatbot(include_image=include_image)
                 else:
                     output = data["text"] + f" (error_code: {data['error_code']})"
                     state.messages[-1][-1] = output
-                    yield (state, state.to_gradio_chatbot()) + (disable_btn, disable_btn, disable_btn, enable_btn, enable_btn)
+                    if include_image:
+                        yield (state, state.to_gradio_chatbot(include_image=include_image)) + (
+                        disable_btn, disable_btn, disable_btn, enable_btn, enable_btn)
+                    else:
+                        yield state, state.to_gradio_chatbot(include_image=include_image)
                     return
                 time.sleep(0.03)
     except requests.exceptions.RequestException as e:
         state.messages[-1][-1] = server_error_msg
-        yield (state, state.to_gradio_chatbot()) + (disable_btn, disable_btn, disable_btn, enable_btn, enable_btn)
+        if include_image:
+            yield (state, state.to_gradio_chatbot(include_image=include_image)) + (
+            disable_btn, disable_btn, disable_btn, enable_btn, enable_btn)
+        else:
+            yield state, state.to_gradio_chatbot(include_image=include_image)
         return
 
     state.messages[-1][-1] = state.messages[-1][-1][:-1]
-    yield (state, state.to_gradio_chatbot()) + (enable_btn,) * 5
+    if include_image:
+        yield (state, state.to_gradio_chatbot(include_image=include_image)) + (enable_btn,) * 5
+    else:
+        yield state, state.to_gradio_chatbot(include_image=include_image)
 
     finish_tstamp = time.time()
     logger.info(f"{output}")
@@ -278,24 +301,6 @@ def http_bot(state, model_selector, temperature, top_p, max_new_tokens, request:
         }
         fout.write(json.dumps(data) + "\n")
 
-title_markdown = ("""
-# 🌋 LLaVA: Large Language and Vision Assistant
-[[Project Page](https://llava-vl.github.io)] [[Code](https://github.com/haotian-liu/LLaVA)] [[Model](https://github.com/haotian-liu/LLaVA/blob/main/docs/MODEL_ZOO.md)] | 📚 [[LLaVA](https://arxiv.org/abs/2304.08485)] [[LLaVA-v1.5](https://arxiv.org/abs/2310.03744)]
-""")
-
-tos_markdown = ("""
-### Terms of use
-By using this service, users are required to agree to the following terms:
-The service is a research preview intended for non-commercial use only. It only provides limited safety measures and may generate offensive content. It must not be used for any illegal, harmful, violent, racist, or sexual purposes. The service may collect user dialogue data for future research.
-Please click the "Flag" button if you get any inappropriate answer! We will collect those to keep improving our moderator.
-For an optimal experience, please use desktop computers for this demo, as mobile devices may compromise its quality.
-""")
-
-
-learn_more_markdown = ("""
-### License
-The service is a research preview intended for non-commercial use only, subject to the model [License](https://github.com/facebookresearch/llama/blob/main/MODEL_CARD.md) of LLaMA, [Terms of Use](https://openai.com/policies/terms-of-use) of the data generated by OpenAI, and [Privacy Practices](https://chrome.google.com/webstore/detail/sharegpt-share-your-chatg/daiacboceoaocpibfodeljbdfacokfjb) of ShareGPT. Please contact us if you find any potential violation.
-""")
 
 block_css = """
 
@@ -305,8 +310,10 @@ block_css = """
 
 """
 
+
 def build_demo(embed_mode):
     textbox = gr.Textbox(show_label=False, placeholder="Enter text and press ENTER", container=False)
+    textbox_api = gr.Textbox(visible=False)
     with gr.Blocks(title="LLaVA", theme=gr.themes.Default(), css=block_css) as demo:
         state = gr.State()
 
@@ -332,13 +339,16 @@ def build_demo(embed_mode):
                 cur_dir = os.path.dirname(os.path.abspath(__file__))
                 gr.Examples(examples=[
                     [f"{cur_dir}/examples/extreme_ironing.jpg", "What is unusual about this image?"],
-                    [f"{cur_dir}/examples/waterview.jpg", "What are the things I should be cautious about when I visit here?"],
+                    [f"{cur_dir}/examples/waterview.jpg",
+                     "What are the things I should be cautious about when I visit here?"],
                 ], inputs=[imagebox, textbox])
 
                 with gr.Accordion("Parameters", open=False) as parameter_row:
-                    temperature = gr.Slider(minimum=0.0, maximum=1.0, value=0.2, step=0.1, interactive=True, label="Temperature",)
-                    top_p = gr.Slider(minimum=0.0, maximum=1.0, value=0.7, step=0.1, interactive=True, label="Top P",)
-                    max_output_tokens = gr.Slider(minimum=0, maximum=1024, value=512, step=64, interactive=True, label="Max output tokens",)
+                    temperature = gr.Slider(minimum=0.0, maximum=1.0, value=0.2, step=0.1, interactive=True,
+                                            label="Temperature", )
+                    top_p = gr.Slider(minimum=0.0, maximum=1.0, value=0.7, step=0.1, interactive=True, label="Top P", )
+                    max_output_tokens = gr.Slider(minimum=0, maximum=1024, value=512, step=64, interactive=True,
+                                                  label="Max output tokens", )
 
             with gr.Column(scale=8):
                 chatbot = gr.Chatbot(elem_id="chatbot", label="LLaVA Chatbot", height=550)
@@ -347,11 +357,12 @@ def build_demo(embed_mode):
                         textbox.render()
                     with gr.Column(scale=1, min_width=50):
                         submit_btn = gr.Button(value="Send", variant="primary")
+                        submit_api_btn = gr.Button(value="Send", variant="primary", visible=False)
                 with gr.Row(elem_id="buttons") as button_row:
                     upvote_btn = gr.Button(value="👍  Upvote", interactive=False)
                     downvote_btn = gr.Button(value="👎  Downvote", interactive=False)
                     flag_btn = gr.Button(value="⚠️  Flag", interactive=False)
-                    #stop_btn = gr.Button(value="⏹️  Stop Generation", interactive=False)
+                    # stop_btn = gr.Button(value="⏹️  Stop Generation", interactive=False)
                     regenerate_btn = gr.Button(value="🔄  Regenerate", interactive=False)
                     clear_btn = gr.Button(value="🗑️  Clear", interactive=False)
 
@@ -366,60 +377,94 @@ def build_demo(embed_mode):
             upvote_last_response,
             [state, model_selector],
             [textbox, upvote_btn, downvote_btn, flag_btn],
-            queue=False
+            queue=False,
+            api_name='upvote_click',
         )
         downvote_btn.click(
             downvote_last_response,
             [state, model_selector],
             [textbox, upvote_btn, downvote_btn, flag_btn],
-            queue=False
+            queue=False,
+            api_name='downvote_click',
         )
         flag_btn.click(
             flag_last_response,
             [state, model_selector],
             [textbox, upvote_btn, downvote_btn, flag_btn],
-            queue=False
+            queue=False,
+            api_name='flag_click',
         )
+
+        include_image = gr.Checkbox(value=True)
 
         regenerate_btn.click(
             regenerate,
             [state, image_process_mode],
             [state, chatbot, textbox, imagebox] + btn_list,
-            queue=False
+            queue=False,
+            api_name='regenerate_btn',
         ).then(
             http_bot,
-            [state, model_selector, temperature, top_p, max_output_tokens],
-            [state, chatbot] + btn_list
+            [state, model_selector, temperature, top_p, max_output_tokens, include_image],
+            [state, chatbot] + btn_list,
+            api_name='regenerate_click',
         )
 
         clear_btn.click(
             clear_history,
             None,
             [state, chatbot, textbox, imagebox] + btn_list,
-            queue=False
+            queue=False,
+            api_name='clear',
         )
 
         textbox.submit(
             add_text,
-            [state, textbox, imagebox, image_process_mode],
+            [state, textbox, imagebox, image_process_mode, include_image],
             [state, chatbot, textbox, imagebox] + btn_list,
-            queue=False
+            queue=False,
+            api_name='textbox_btn',
         ).then(
             http_bot,
-            [state, model_selector, temperature, top_p, max_output_tokens],
-            [state, chatbot] + btn_list
+            [state, model_selector, temperature, top_p, max_output_tokens, include_image],
+            [state, chatbot] + btn_list,
+            api_name='textbox_submit',
+        )
+
+        textbox_api.submit(
+            add_text,
+            [state, textbox, imagebox, image_process_mode, include_image],
+            [state, chatbot],
+            queue=False,
+            api_name='textbox_api_btn',
+            # preprocess=False,
+        ).then(
+            http_bot,
+            [state, model_selector, temperature, top_p, max_output_tokens, include_image],
+            [state, chatbot],
+            api_name='textbox_api_submit',
+            # preprocess=False,
+            # postprocess=False,
         )
 
         submit_btn.click(
             add_text,
-            [state, textbox, imagebox, image_process_mode],
+            [state, textbox, imagebox, image_process_mode, include_image],
             [state, chatbot, textbox, imagebox] + btn_list,
-            queue=False
+            queue=False,
+            api_name='submit_btn',
         ).then(
             http_bot,
-            [state, model_selector, temperature, top_p, max_output_tokens],
-            [state, chatbot] + btn_list
+            [state, model_selector, temperature, top_p, max_output_tokens, include_image],
+            [state, chatbot] + btn_list,
+            api_name='submit_click',
         )
+
+        demo_setup_kwargs = dict(fn=load_demo_refresh_model_list,
+                                 inputs=None,
+                                 outputs=[state, model_selector])
+        demo_btn = gr.Button(visible=False)
+        demo_btn.click(**demo_setup_kwargs, api_name='demo_load')
 
         if args.model_list_mode == "once":
             demo.load(
@@ -430,14 +475,32 @@ def build_demo(embed_mode):
                 queue=False
             )
         elif args.model_list_mode == "reload":
-            demo.load(
-                load_demo_refresh_model_list,
-                None,
-                [state, model_selector],
-                queue=False
-            )
+            demo.load(**demo_setup_kwargs,
+                      queue=False
+                      )
         else:
             raise ValueError(f"Unknown model list mode: {args.model_list_mode}")
+
+        # Handle uploads from API
+        upload_api_btn = gr.UploadButton("Upload File Results", visible=False)
+        file_upload_api = gr.File(visible=False)
+        file_upload_text = gr.Textbox(visible=False)
+
+        def upload_file(files):
+            if isinstance(files, list):
+                file_paths = [file.name for file in files]
+            elif isinstance(files, dict):
+                file_paths = files['name']
+                assert os.path.isfile(file_paths)
+            else:
+                file_paths = files.name
+            return file_paths, file_paths
+
+        upload_api_btn.upload(fn=upload_file,
+                              inputs=upload_api_btn,
+                              outputs=[file_upload_api, file_upload_text],
+                              api_name='upload_api',
+                              preprocess=False)
 
     return demo
 
@@ -449,7 +512,7 @@ if __name__ == "__main__":
     parser.add_argument("--controller-url", type=str, default="http://localhost:21001")
     parser.add_argument("--concurrency-count", type=int, default=10)
     parser.add_argument("--model-list-mode", type=str, default="once",
-        choices=["once", "reload"])
+                        choices=["once", "reload"])
     parser.add_argument("--share", action="store_true")
     parser.add_argument("--moderate", action="store_true")
     parser.add_argument("--embed", action="store_true")

@@ -156,7 +156,7 @@ class Conversation:
                         images.append(img_b64_str)
         return images
 
-    def to_gradio_chatbot(self):
+    def to_gradio_chatbot(self, include_image=True):
         ret = []
         for i, (role, msg) in enumerate(self.messages[self.offset:]):
             if i % 2 == 0:
@@ -179,7 +179,10 @@ class Conversation:
                     image.save(buffered, format="JPEG")
                     img_b64_str = base64.b64encode(buffered.getvalue()).decode()
                     img_str = f'<img src="data:image/png;base64,{img_b64_str}" alt="user upload image" />'
-                    msg = img_str + msg.replace('<image>', '').strip()
+                    if include_image:
+                        msg = img_str + msg.replace('<image>', '').strip()
+                    else:
+                        msg = msg.replace('<image>', '').strip()
                     ret.append([msg, None])
                 else:
                     ret.append([msg, None])
