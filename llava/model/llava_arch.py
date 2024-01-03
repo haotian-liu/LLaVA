@@ -44,6 +44,7 @@ class LlavaMetaModel:
         mm_vision_select_layer = model_args.mm_vision_select_layer
         mm_vision_select_feature = model_args.mm_vision_select_feature
         pretrain_mm_mlp_adapter = model_args.pretrain_mm_mlp_adapter
+        use_timm_vision_tower = model_args.use_timm_vision_tower
 
         self.config.mm_vision_tower = vision_tower
 
@@ -66,6 +67,7 @@ class LlavaMetaModel:
         self.config.mm_hidden_size = vision_tower.hidden_size
         self.config.mm_vision_select_layer = mm_vision_select_layer
         self.config.mm_vision_select_feature = mm_vision_select_feature
+        self.config.use_timm_vision_tower = use_timm_vision_tower
 
         if getattr(self, 'mm_projector', None) is None:
             self.mm_projector = build_vision_projector(self.config)

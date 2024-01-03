@@ -58,6 +58,7 @@ class ModelArguments:
     mm_use_im_start_end: bool = field(default=False)
     mm_use_im_patch_token: bool = field(default=True)
     mm_vision_select_feature: Optional[str] = field(default="patch")
+    use_timm_vision_tower: bool = field(default=False)
 
 
 @dataclass
@@ -68,6 +69,10 @@ class DataArguments:
     is_multimodal: bool = False
     image_folder: Optional[str] = field(default=None)
     image_aspect_ratio: str = 'square'
+    ##### use laion_data
+    laion_path: str = field(default=None,
+                           metadata={"help": "path for laion400m"})
+    laion_amount: int = 0
 
 
 @dataclass
@@ -623,6 +628,30 @@ def preprocess(
     return dict(input_ids=input_ids, labels=targets)
 
 
+import webdataset as wds
+import glob
+import io
+def create_laion_400m_dataset(
+    data_dir,
+    cache_path=None,
+):
+    """Create a WebDataset reader, it can read a webdataset of image, text and json"""
+    meta_file_list = glob.glob(os.path.join(data_dir, "split*", "*.tar"))
+    print("Find", len(meta_file_list), "tar files")
+    image_dataset = wds.WebDataset(meta_file_list, cache_dir=cache_path,
+                                             cache_size=20,
+                                             handler=wds.handlers.warn_and_continue,
+                                             resampled=True)
+    image_dataloader = wds.WebLoader(
+        dataset          =   image_dataset,
+        batch_size       =   1,
+        num_workers      =   0,
+        pin_memory       =   True,
+        prefetch_factor  =   None,
+    )
+    data_iterator = image_dataloader.iterator()
+    return data_iterator
+
 class LazySupervisedDataset(Dataset):
     """Dataset for supervised fine-tuning."""
 
@@ -635,10 +664,30 @@ class LazySupervisedDataset(Dataset):
         rank0_print("Formatting inputs...Skip in lazy mode")
         self.tokenizer = tokenizer
         self.list_data_dict = list_data_dict
+
+        self.caption_prompt = [
+            'Describe the image concisely.',
+            'Provide a brief description of the given image.',
+            'Offer a succinct explanation of the picture presented.',
+            'Summarize the visual content of the image.',
+            'Give a short and clear explanation of the subsequent image.',
+            'Share a concise interpretation of the image provided.',
+            """Present a compact description of the photo's key features.""",
+            'Relay a brief, clear account of the picture shown.',
+            'Render a clear and concise summary of the photo.',
+            'Write a terse but informative summary of the picture.',
+            'Create a compact narrative representing the image presented.'
+        ]
+        self.laion_iter = None
+        ###### add laion_400m data
+        if data_args.laion_path is not None:
+            self.laion_iter = create_laion_dataset(data_args.laion_path)
+
         self.data_args = data_args
 
     def __len__(self):
-        return len(self.list_data_dict)
+        # return len(self.list_data_dict)
+        return len(self.list_data_dict) + self.data_args.laion_amount
 
     @property
     def lengths(self):
@@ -657,7 +706,63 @@ class LazySupervisedDataset(Dataset):
             length_list.append(cur_len)
         return length_list
 
+    def get_laion_item(self,):
+        valid_flag = False
+        while not valid_flag:
+            cur_data = next(self.laion_iter)
+            main_data = json.loads(cur_data['json'][0])
+            if main_data['width'] >= 50 and main_data['height'] >= 50 and main_data['caption'] is not None and len(main_data['caption']) < 200:
+                valid_flag = True
+                break
+        image_file = io.BytesIO(cur_data['jpg'][0])
+        image = Image.open(image_file).convert('RGB')
+        caption = json.loads(cur_data['json'][0])['caption']
+
+        processor = self.data_args.image_processor
+        if self.data_args.image_aspect_ratio == 'pad':
+            def expand2square(pil_img, background_color):
+                width, height = pil_img.size
+                if width == height:
+                    return pil_img
+                elif width > height:
+                    result = Image.new(pil_img.mode, (width, width), background_color)
+                    result.paste(pil_img, (0, (width - height) // 2))
+                    return result
+                else:
+                    result = Image.new(pil_img.mode, (height, height), background_color)
+                    result.paste(pil_img, ((height - width) // 2, 0))
+                    return result
+            image = expand2square(image, tuple(int(x*255) for x in processor.image_mean))
+            image = processor.preprocess(image, return_tensors='pt')['pixel_values'][0]
+        else:
+            image = processor.preprocess(image, return_tensors='pt')['pixel_values'][0]
+
+        cur_prompt = random.choice(self.caption_prompt)
+        format_item = {}
+        format_item['conversations'] = []
+
+        format_item['conversations'].append({'from': 'human', 'value': f'{cur_prompt}\n{DEFAULT_IMAGE_TOKEN}'})
+        format_item['conversations'].append({'from': 'gpt', 'value': f'{caption}'})
+
+        sources = preprocess_multimodal(
+            copy.deepcopy([format_item['conversations']]),
+            self.data_args)
+
+        data_dict = preprocess(
+            sources,
+            self.tokenizer,
+            has_image=True)
+
+        data_dict = dict(input_ids=data_dict["input_ids"][0],
+                             labels=data_dict["labels"][0])
+        data_dict['image'] = image
+
+        return data_dict
+
     def __getitem__(self, i) -> Dict[str, torch.Tensor]:
+        if i>= len(self.list_data_dict):
+            return self.get_laion_item()
+
         sources = self.list_data_dict[i]
         if isinstance(i, int):
             sources = [sources]
