@@ -35,7 +35,7 @@ from llava.model import *
 from llava.mm_utils import tokenizer_image_token
 
 from PIL import Image
-
+import random
 
 local_rank = None
 
@@ -71,7 +71,7 @@ class DataArguments:
     image_aspect_ratio: str = 'square'
     ##### use laion_data
     laion_path: str = field(default=None,
-                           metadata={"help": "path for laion400m"})
+                           metadata={"help": "path for laion"})
     laion_amount: int = 0
 
 
@@ -631,7 +631,7 @@ def preprocess(
 import webdataset as wds
 import glob
 import io
-def create_laion_400m_dataset(
+def create_laion_dataset(
     data_dir,
     cache_path=None,
 ):
@@ -679,7 +679,7 @@ class LazySupervisedDataset(Dataset):
             'Create a compact narrative representing the image presented.'
         ]
         self.laion_iter = None
-        ###### add laion_400m data
+        ###### add laion data
         if data_args.laion_path is not None:
             self.laion_iter = create_laion_dataset(data_args.laion_path)
 
@@ -981,7 +981,7 @@ def train():
             model_args=model_args,
             fsdp=training_args.fsdp
         )
-        
+
         vision_tower = model.get_vision_tower()
         vision_tower.to(dtype=torch.bfloat16 if training_args.bf16 else torch.float16, device=training_args.device)
 
