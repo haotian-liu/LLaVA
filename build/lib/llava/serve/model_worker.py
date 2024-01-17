@@ -152,6 +152,7 @@ class ModelWorker:
         else:
             images = None
             image_args = {}
+
         temperature = float(params.get("temperature", 1.0))
         top_p = float(params.get("top_p", 1.0))
         max_context_length = getattr(model.config, 'max_position_embeddings', 2048)
@@ -169,6 +170,7 @@ class ModelWorker:
         if max_new_tokens < 1:
             yield json.dumps({"text": ori_prompt + "Exceeds max token length. Please start a new conversation, thanks.", "error_code": 0}).encode() + b"\0"
             return
+
         thread = Thread(target=model.generate, kwargs=dict(
             inputs=input_ids,
             do_sample=do_sample,
@@ -183,7 +185,7 @@ class ModelWorker:
         thread.start()
 
         generated_text = ori_prompt
-        for new_text in streamer:       
+        for new_text in streamer:
             generated_text += new_text
             if generated_text.endswith(stop_str):
                 generated_text = generated_text[:-len(stop_str)]
