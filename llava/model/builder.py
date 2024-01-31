@@ -101,6 +101,14 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
             if 'mpt' in model_name.lower():
                 tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=True)
                 model = LlavaMPTForCausalLM.from_pretrained(model_path, low_cpu_mem_usage=True, **kwargs)
+            elif 'mistral' in model_name.lower():
+                tokenizer = AutoTokenizer.from_pretrained(model_path)
+                model = LlavaMistralForCausalLM.from_pretrained(
+                    model_path,
+                    low_cpu_mem_usage=True,
+                    use_flash_attention_2=False,
+                    **kwargs
+                )
             else:
                 tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False)
                 model = LlavaLlamaForCausalLM.from_pretrained(model_path, low_cpu_mem_usage=True, **kwargs)

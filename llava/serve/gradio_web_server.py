@@ -168,6 +168,15 @@ def http_bot(state, model_selector, temperature, top_p, max_new_tokens, request:
         if "llava" in model_name.lower():
             if 'llama-2' in model_name.lower():
                 template_name = "llava_llama_2"
+            elif "mistral" in model_name.lower() or "mixtral" in model_name.lower():
+                if 'orca' in model_name.lower():
+                    template_name = "mistral_orca"
+                elif 'hermes' in model_name.lower():
+                    template_name = "chatml_direct"
+                else:
+                    template_name = "mistral_instruct"
+            elif 'llava-v1.6-34b' in model_name.lower():
+                template_name = "chatml_direct"
             elif "v1" in model_name.lower():
                 if 'mmtag' in model_name.lower():
                     template_name = "v1_mmtag"
@@ -280,7 +289,7 @@ def http_bot(state, model_selector, temperature, top_p, max_new_tokens, request:
 
 title_markdown = ("""
 # 🌋 LLaVA: Large Language and Vision Assistant
-[[Project Page](https://llava-vl.github.io)] [[Code](https://github.com/haotian-liu/LLaVA)] [[Model](https://github.com/haotian-liu/LLaVA/blob/main/docs/MODEL_ZOO.md)] | 📚 [[LLaVA](https://arxiv.org/abs/2304.08485)] [[LLaVA-v1.5](https://arxiv.org/abs/2310.03744)]
+[[Project Page](https://llava-vl.github.io)] [[Code](https://github.com/haotian-liu/LLaVA)] [[Model](https://github.com/haotian-liu/LLaVA/blob/main/docs/MODEL_ZOO.md)] | 📚 [[LLaVA](https://arxiv.org/abs/2304.08485)] [[LLaVA-v1.5](https://arxiv.org/abs/2310.03744)] [[LLaVA-v1.6](https://llava-vl.github.io/blog/2024-01-30-llava-1-6/)]
 """)
 
 tos_markdown = ("""
