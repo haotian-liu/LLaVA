@@ -52,6 +52,7 @@ def main(args):
         roles = conv.roles
 
     image = load_image(args.image_file)
+    image_size = image.size
     # Similar operation in model_worker.py
     image_tensor = process_images([image], image_processor, model.config)
     if type(image_tensor) is list:
@@ -94,6 +95,7 @@ def main(args):
             output_ids = model.generate(
                 input_ids,
                 images=image_tensor,
+                image_sizes=[image_size],
                 do_sample=True if args.temperature > 0 else False,
                 temperature=args.temperature,
                 max_new_tokens=args.max_new_tokens,

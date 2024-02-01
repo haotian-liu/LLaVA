@@ -1,6 +1,6 @@
 # Model Zoo
 
-**To Use LLaVA-1.5 checkpoints, your llava package version must be newer than 1.1.0. [Instructions](https://github.com/haotian-liu/LLaVA#upgrade-to-latest-code-base) on how to upgrade.**
+**To Use LLaVA-1.6 checkpoints, your llava package version must be newer than 1.2.0. [Instructions](https://github.com/haotian-liu/LLaVA#upgrade-to-latest-code-base) on how to upgrade.**
 
 If you are interested in including any other details in Model Zoo, please open an issue :)
 
