@@ -180,7 +180,7 @@ class LlavaMetaForCausalLM(ABC):
                             image_feature = unpad_image(image_feature, image_sizes[image_idx])
                             image_feature = torch.cat((
                                 image_feature,
-                                self.model.image_newline[:, None, None].expand(*image_feature.shape[:-1], 1)
+                                self.model.image_newline[:, None, None].expand(*image_feature.shape[:-1], 1).to(image_feature.device)
                             ), dim=-1)
                             image_feature = image_feature.flatten(1, 2).transpose(0, 1)
                         else:
