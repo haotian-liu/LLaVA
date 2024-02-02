@@ -72,6 +72,10 @@ def eval_model(args):
 
     if "llama-2" in model_name.lower():
         conv_mode = "llava_llama_2"
+    elif "mistral" in model_name.lower():
+        conv_mode = "mistral_instruct"
+    elif "v1.6-34b" in model_name.lower():
+        conv_mode = "chatml_direct"
     elif "v1" in model_name.lower():
         conv_mode = "llava_v1"
     elif "mpt" in model_name.lower():
