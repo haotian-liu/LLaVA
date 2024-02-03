@@ -148,8 +148,6 @@ Please check out our [Model Zoo](https://github.com/haotian-liu/LLaVA/blob/main/
 
 ## Demo
 
-To run our demo, you need to prepare LLaVA checkpoints locally.  Please follow the instructions [here](#llava-weights) to download the checkpoints.
-
 ### Gradio Web UI
 
 To launch a Gradio demo locally, please run the following commands one by one. If you plan to launch multiple model workers to compare between different checkpoints, you only need to launch the controller and the web server *ONCE*.
@@ -161,6 +159,8 @@ flowchart BT
     c("Controller (API Server):<br/>PORT: 10000")
     mw7b("Model Worker:<br/>llava-v1.5-7b<br/>PORT: 40000")
     mw13b("Model Worker:<br/>llava-v1.5-13b<br/>PORT: 40001")
+    sglw13b("SGLang Backend:<br/>llava-v1.6-34b<br/>http://localhost:30000")
+    lsglw13b("SGLang Worker:<br/>llava-v1.6-34b<br/>PORT: 40002")
 
     %% Declare Styles
     classDef data fill:#3af,stroke:#48a,stroke-width:2px,color:#444
@@ -178,6 +178,8 @@ flowchart BT
         
         mw7b<-->c
         mw13b<-->c
+        lsglw13b<-->c
+        sglw13b<-->lsglw13b
     end
 ```
 
@@ -191,6 +193,30 @@ python -m llava.serve.controller --host 0.0.0.0 --port 10000
 python -m llava.serve.gradio_web_server --controller http://localhost:10000 --model-list-mode reload
 ```
 You just launched the Gradio web interface. Now, you can open the web interface with the URL printed on the screen. You may notice that there is no model in the model list. Do not worry, as we have not launched any model worker yet. It will be automatically updated when you launch a model worker.
+
+#### Launch a SGLang worker
+
+This is the recommended way to serve LLaVA model with high throughput, and you need to install SGLang first. Note that currently `4-bit` quantization is not supported yet on SGLang-LLaVA, and if you have limited GPU VRAM, please check out model worker with [quantization](https://github.com/haotian-liu/LLaVA?tab=readme-ov-file#launch-a-model-worker-4-bit-8-bit-inference-quantized).
+
+```Shell
+pip install "sglang[all]"
+```
+
+You'll first launch a SGLang backend worker which will execute the models on GPUs. Remember the `--port` you've set and you'll use that later.
+
+```Shell
+# Single GPU
+CUDA_VISIBLE_DEVICES=0 python3 -m sglang.launch_server --model-path liuhaotian/llava-v1.5-7b --tokenizer-path llava-hf/llava-1.5-7b-hf --port 30000
+
+# Multiple GPUs with tensor parallel
+CUDA_VISIBLE_DEVICES=0,1 python3 -m sglang.launch_server --model-path liuhaotian/llava-v1.5-13b --tokenizer-path llava-hf/llava-1.5-13b-hf --port 30000 --tp 2
+```
+
+You'll then launch a LLaVA-SGLang worker that will communicate between LLaVA controller and SGLang backend to route the requests. Set `--sgl-endpoint` to `http://127.0.0.1:port` where `port` is the one you just set (default: 30000).
+
+```Shell
+python -m llava.serve.sglang_worker --host 0.0.0.0 --controller http://localhost:10000 --port 40000 --worker http://localhost:40000 --sgl-endpoint http://127.0.0.1:30000
+```
 
 #### Launch a model worker
 
