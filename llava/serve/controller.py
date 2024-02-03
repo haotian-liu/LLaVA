@@ -61,7 +61,7 @@ class Controller:
         self.dispatch_method = DispatchMethod.from_str(dispatch_method)
 
         self.heart_beat_thread = threading.Thread(
-            target=heart_beat_controller, args=(self,))
+            target=heart_beat_controller, args=(self,), daemon=True)
         self.heart_beat_thread.start()
 
         logger.info("Init controller")
