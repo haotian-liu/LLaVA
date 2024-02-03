@@ -314,7 +314,7 @@ block_css = """
 
 """
 
-def build_demo(embed_mode):
+def build_demo(embed_mode, cur_dir=None):
     textbox = gr.Textbox(show_label=False, placeholder="Enter text and press ENTER", container=False)
     with gr.Blocks(title="LLaVA", theme=gr.themes.Default(), css=block_css) as demo:
         state = gr.State()
