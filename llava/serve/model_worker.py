@@ -45,7 +45,7 @@ class ModelWorker:
     def __init__(self, controller_addr, worker_addr,
                  worker_id, no_register,
                  model_path, model_base, model_name,
-                 load_8bit, load_4bit, device):
+                 load_8bit, load_4bit, device, use_flash_attn=False):
         self.controller_addr = controller_addr
         self.worker_addr = worker_addr
         self.worker_id = worker_id
@@ -63,7 +63,7 @@ class ModelWorker:
         self.device = device
         logger.info(f"Loading the model {self.model_name} on worker {worker_id} ...")
         self.tokenizer, self.model, self.image_processor, self.context_len = load_pretrained_model(
-            model_path, model_base, self.model_name, load_8bit, load_4bit, device=self.device)
+            model_path, model_base, self.model_name, load_8bit, load_4bit, device=self.device, use_flash_attn=use_flash_attn)
         self.is_multimodal = 'llava' in self.model_name.lower()
 
         if not no_register:
@@ -268,6 +268,7 @@ if __name__ == "__main__":
     parser.add_argument("--no-register", action="store_true")
     parser.add_argument("--load-8bit", action="store_true")
     parser.add_argument("--load-4bit", action="store_true")
+    parser.add_argument("--use-flash-attn", action="store_true")
     args = parser.parse_args()
     logger.info(f"args: {args}")
 
@@ -283,5 +284,6 @@ if __name__ == "__main__":
                          args.model_name,
                          args.load_8bit,
                          args.load_4bit,
-                         args.device)
+                         args.device,
+                         use_flash_attn=args.use_flash_attn)
     uvicorn.run(app, host=args.host, port=args.port, log_level="info")
