@@ -333,7 +333,7 @@ def build_demo():
                 image_process_mode = gr.Radio(
                     ["Crop", "Resize", "Pad", "Default"],
                     value="Default",
-                    label="Preprocess for non-square image", visible=False)
+                    label="Preprocess for non-square image", visible=True)
 
                 cur_dir = os.path.dirname(os.path.abspath(__file__))
                 gr.Examples(examples=[
@@ -391,7 +391,7 @@ def build_demo():
             api_name='flag_click',
         )
 
-        include_image = gr.Checkbox(value=True)
+        include_image = gr.Checkbox(value=True, label="Include Image in Chat")
 
         regenerate_btn.click(
             regenerate,
