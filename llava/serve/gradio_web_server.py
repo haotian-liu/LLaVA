@@ -19,9 +19,9 @@ logger = build_logger("gradio_web_server", "gradio_web_server.log")
 
 headers = {"User-Agent": "LLaVA Client"}
 
-no_change_btn = gr.Button.update()
-enable_btn = gr.Button.update(interactive=True)
-disable_btn = gr.Button.update(interactive=False)
+no_change_btn = gr.Button()
+enable_btn = gr.Button(interactive=True)
+disable_btn = gr.Button(interactive=False)
 
 priority = {
     "vicuna-13b": "aaaaaaa",
@@ -58,12 +58,11 @@ function() {
 def load_demo(url_params, request: gr.Request):
     logger.info(f"load_demo. ip: {request.client.host}. params: {url_params}")
 
-    dropdown_update = gr.Dropdown.update(visible=True)
+    dropdown_update = gr.Dropdown(visible=True)
     if "model" in url_params:
         model = url_params["model"]
         if model in models:
-            dropdown_update = gr.Dropdown.update(
-                value=model, visible=True)
+            dropdown_update = gr.Dropdown(value=model, visible=True)
 
     state = default_conversation.copy()
     return state, dropdown_update
@@ -73,7 +72,7 @@ def load_demo_refresh_model_list(request: gr.Request):
     logger.info(f"load_demo. ip: {request.client.host}")
     models = get_model_list()
     state = default_conversation.copy()
-    dropdown_update = gr.Dropdown.update(
+    dropdown_update = gr.Dropdown(
         choices=models,
         value=models[0] if len(models) > 0 else ""
     )
@@ -314,7 +313,7 @@ block_css = """
 
 """
 
-def build_demo(embed_mode, cur_dir=None):
+def build_demo(embed_mode, cur_dir=None, concurrency_count=10):
     textbox = gr.Textbox(show_label=False, placeholder="Enter text and press ENTER", container=False)
     with gr.Blocks(title="LLaVA", theme=gr.themes.Default(), css=block_css) as demo:
         state = gr.State()
@@ -350,7 +349,12 @@ def build_demo(embed_mode, cur_dir=None):
                     max_output_tokens = gr.Slider(minimum=0, maximum=1024, value=512, step=64, interactive=True, label="Max output tokens",)
 
             with gr.Column(scale=8):
-                chatbot = gr.Chatbot(elem_id="chatbot", label="LLaVA Chatbot", height=550)
+                chatbot = gr.Chatbot(
+                    elem_id="chatbot",
+                    label="LLaVA Chatbot",
+                    height=650,
+                    layout="panel",
+                )
                 with gr.Row():
                     with gr.Column(scale=8):
                         textbox.render()
@@ -374,31 +378,28 @@ def build_demo(embed_mode, cur_dir=None):
         upvote_btn.click(
             upvote_last_response,
             [state, model_selector],
-            [textbox, upvote_btn, downvote_btn, flag_btn],
-            queue=False
+            [textbox, upvote_btn, downvote_btn, flag_btn]
         )
         downvote_btn.click(
             downvote_last_response,
             [state, model_selector],
-            [textbox, upvote_btn, downvote_btn, flag_btn],
-            queue=False
+            [textbox, upvote_btn, downvote_btn, flag_btn]
         )
         flag_btn.click(
             flag_last_response,
             [state, model_selector],
-            [textbox, upvote_btn, downvote_btn, flag_btn],
-            queue=False
+            [textbox, upvote_btn, downvote_btn, flag_btn]
         )
 
         regenerate_btn.click(
             regenerate,
             [state, image_process_mode],
-            [state, chatbot, textbox, imagebox] + btn_list,
-            queue=False
+            [state, chatbot, textbox, imagebox] + btn_list
         ).then(
             http_bot,
             [state, model_selector, temperature, top_p, max_output_tokens],
-            [state, chatbot] + btn_list
+            [state, chatbot] + btn_list,
+            concurrency_limit=concurrency_count
         )
 
         clear_btn.click(
@@ -416,18 +417,19 @@ def build_demo(embed_mode, cur_dir=None):
         ).then(
             http_bot,
             [state, model_selector, temperature, top_p, max_output_tokens],
-            [state, chatbot] + btn_list
+            [state, chatbot] + btn_list,
+            concurrency_limit=concurrency_count
         )
 
         submit_btn.click(
             add_text,
             [state, textbox, imagebox, image_process_mode],
-            [state, chatbot, textbox, imagebox] + btn_list,
-            queue=False
+            [state, chatbot, textbox, imagebox] + btn_list
         ).then(
             http_bot,
             [state, model_selector, temperature, top_p, max_output_tokens],
-            [state, chatbot] + btn_list
+            [state, chatbot] + btn_list,
+            concurrency_limit=concurrency_count
         )
 
         if args.model_list_mode == "once":
@@ -435,8 +437,7 @@ def build_demo(embed_mode, cur_dir=None):
                 load_demo,
                 [url_params],
                 [state, model_selector],
-                _js=get_window_url_params,
-                queue=False
+                _js=get_window_url_params
             )
         elif args.model_list_mode == "reload":
             demo.load(
@@ -456,7 +457,7 @@ if __name__ == "__main__":
     parser.add_argument("--host", type=str, default="0.0.0.0")
     parser.add_argument("--port", type=int)
     parser.add_argument("--controller-url", type=str, default="http://localhost:21001")
-    parser.add_argument("--concurrency-count", type=int, default=10)
+    parser.add_argument("--concurrency-count", type=int, default=16)
     parser.add_argument("--model-list-mode", type=str, default="once",
         choices=["once", "reload"])
     parser.add_argument("--share", action="store_true")
@@ -468,9 +469,8 @@ if __name__ == "__main__":
     models = get_model_list()
 
     logger.info(args)
-    demo = build_demo(args.embed)
+    demo = build_demo(args.embed, concurrency_count=args.concurrency_count)
     demo.queue(
-        concurrency_count=args.concurrency_count,
         api_open=False
     ).launch(
         server_name=args.host,
