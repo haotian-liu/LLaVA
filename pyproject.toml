@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "llava"
-version = "1.2.2"
+version = "1.2.2.post1"
 description = "Towards GPT-4 like large language and visual assistant."
 readme = "README.md"
 requires-python = ">=3.8"
@@ -23,7 +23,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-train = ["deepspeed==0.9.5", "ninja", "wandb"]
+train = ["deepspeed==0.12.6", "ninja", "wandb"]
+build = ["build", "twine"]
 
 [project.urls]
 "Homepage" = "https://llava-vl.github.io"
