@@ -5,7 +5,7 @@ from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_S
 from llava.conversation import conv_templates, SeparatorStyle
 from llava.model.builder import load_pretrained_model
 from llava.utils import disable_torch_init
-from llava.mm_utils import process_images, tokenizer_image_token, get_model_name_from_path, KeywordsStoppingCriteria
+from llava.mm_utils import process_images, tokenizer_image_token, get_model_name_from_path
 
 from PIL import Image
 
@@ -92,7 +92,6 @@ def main(args):
         input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).to(model.device)
         stop_str = conv.sep if conv.sep_style != SeparatorStyle.TWO else conv.sep2
         keywords = [stop_str]
-        stopping_criteria = KeywordsStoppingCriteria(keywords, tokenizer, input_ids)
         streamer = TextStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
 
         with torch.inference_mode():
@@ -104,8 +103,7 @@ def main(args):
                 temperature=args.temperature,
                 max_new_tokens=args.max_new_tokens,
                 streamer=streamer,
-                use_cache=True,
-                stopping_criteria=[stopping_criteria])
+                use_cache=True)
 
         outputs = tokenizer.decode(output_ids[0, input_ids.shape[1]:]).strip()
         conv.messages[-1][-1] = outputs

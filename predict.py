@@ -4,7 +4,7 @@ from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN
 from llava.conversation import conv_templates, SeparatorStyle
 from llava.model.builder import load_pretrained_model
 from llava.utils import disable_torch_init
-from llava.mm_utils import tokenizer_image_token, KeywordsStoppingCriteria
+from llava.mm_utils import tokenizer_image_token
 from transformers.generation.streamers import TextIteratorStreamer
 
 from PIL import Image
@@ -112,7 +112,6 @@ class Predictor(BasePredictor):
         input_ids = tokenizer_image_token(prompt, self.tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).cuda()
         stop_str = conv.sep if conv.sep_style != SeparatorStyle.TWO else conv.sep2
         keywords = [stop_str]
-        stopping_criteria = KeywordsStoppingCriteria(keywords, self.tokenizer, input_ids)
         streamer = TextIteratorStreamer(self.tokenizer, skip_prompt=True, timeout=20.0)
     
         with torch.inference_mode():
@@ -124,8 +123,7 @@ class Predictor(BasePredictor):
                 top_p=top_p,
                 max_new_tokens=max_tokens,
                 streamer=streamer,
-                use_cache=True,
-                stopping_criteria=[stopping_criteria]))
+                use_cache=True))
             thread.start()
             # workaround: second-to-last token is always " "
             # but we want to keep it if it's not the second-to-last token

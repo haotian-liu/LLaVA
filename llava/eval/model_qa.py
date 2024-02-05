@@ -10,25 +10,6 @@ from llava.conversation import default_conversation
 from llava.utils import disable_torch_init
 
 
-# new stopping implementation
-class KeywordsStoppingCriteria(StoppingCriteria):
-    def __init__(self, keywords, tokenizer, input_ids):
-        self.keywords = keywords
-        self.tokenizer = tokenizer
-        self.start_len = None
-        self.input_ids = input_ids
-
-    def __call__(self, output_ids: torch.LongTensor, scores: torch.FloatTensor, **kwargs) -> bool:
-        if self.start_len is None:
-            self.start_len = self.input_ids.shape[1]
-        else:
-            outputs = self.tokenizer.batch_decode(output_ids[:, self.start_len:], skip_special_tokens=True)[0]
-            for keyword in self.keywords:
-                if keyword in outputs:
-                    return True
-        return False
-
-
 @torch.inference_mode()
 def eval_model(model_name, questions_file, answers_file):
     # Model
@@ -50,14 +31,12 @@ def eval_model(model_name, questions_file, answers_file):
         prompt = conv.get_prompt()
         inputs = tokenizer([prompt])
         input_ids = torch.as_tensor(inputs.input_ids).cuda()
-        stopping_criteria = KeywordsStoppingCriteria([conv.sep], tokenizer, input_ids)
         output_ids = model.generate(
             input_ids,
             do_sample=True,
             use_cache=True,
             temperature=0.7,
-            max_new_tokens=1024,
-            stopping_criteria=[stopping_criteria])
+            max_new_tokens=1024,)
         outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0]
         try:
             index = outputs.index(conv.sep, len(prompt))
