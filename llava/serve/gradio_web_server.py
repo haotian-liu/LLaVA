@@ -438,7 +438,7 @@ def build_demo(embed_mode, cur_dir=None, concurrency_count=10):
                 load_demo,
                 [url_params],
                 [state, model_selector],
-                _js=get_window_url_params
+                js=get_window_url_params
             )
         elif args.model_list_mode == "reload":
             demo.load(
