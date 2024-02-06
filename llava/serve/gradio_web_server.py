@@ -333,7 +333,6 @@ block_css = """
 
 def build_demo():
     textbox = gr.Textbox(show_label=False, placeholder="Enter text and press ENTER", container=False)
-    chat_history = gr.Textbox(show_label=True, label="Enter chat_history as [['human', 'bot']]")
     textbox_api = gr.Textbox(visible=False)
     with gr.Blocks(title="LLaVA", theme=gr.themes.Default(), css=block_css) as demo:
         state = gr.State()
@@ -367,6 +366,7 @@ def build_demo():
                     top_p = gr.Slider(minimum=0.0, maximum=1.0, value=0.7, step=0.1, interactive=True, label="Top P", )
                     max_output_tokens = gr.Slider(minimum=0, maximum=1024, value=512, step=64, interactive=True,
                                                   label="Max output tokens", )
+                    chat_history = gr.Textbox(show_label=True, label="Enter chat_history as [['human', 'bot']]")
 
             with gr.Column(scale=8):
                 chatbot = gr.Chatbot(elem_id="chatbot", label="LLaVA Chatbot", height=550)
