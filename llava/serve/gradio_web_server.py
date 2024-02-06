@@ -149,6 +149,8 @@ def add_text(state, text, chat_history, image, image_process_mode, include_image
             state = default_conversation.copy()
 
     # handle passed-in chat history
+    if not chat_history:
+        chat_history = []
     if isinstance(chat_history, str):
         chat_history = ast.literal_eval(chat_history)
         assert isinstance(chat_history, list), "Chat history must be a list: %s" % chat_history
@@ -293,7 +295,7 @@ def http_bot(state, model_selector, temperature, top_p, max_new_tokens, include_
                     else:
                         yield state, state.to_gradio_chatbot(include_image=include_image)
                     return
-                time.sleep(0.03)
+                time.sleep(0.01)
     except requests.exceptions.RequestException as e:
         state.messages[-1][-1] = server_error_msg
         if include_image:
@@ -303,7 +305,7 @@ def http_bot(state, model_selector, temperature, top_p, max_new_tokens, include_
             yield state, state.to_gradio_chatbot(include_image=include_image)
         return
 
-    state.messages[-1][-1] = state.messages[-1][-1][:-1]
+    # state.messages[-1][-1] = state.messages[-1][-1][:-1]
     if include_image:
         yield (state, state.to_gradio_chatbot(include_image=include_image)) + (enable_btn,) * 5
     else:
@@ -370,7 +372,7 @@ def build_demo():
                     top_p = gr.Slider(minimum=0.0, maximum=1.0, value=0.7, step=0.1, interactive=True, label="Top P", )
                     max_output_tokens = gr.Slider(minimum=0, maximum=1024, value=512, step=64, interactive=True,
                                                   label="Max output tokens", )
-                    chat_history = gr.Textbox(show_label=True, label="Enter chat_history as [['human', 'bot']]")
+                    chat_history = gr.Textbox(value='[]', show_label=True, label="Enter chat_history as [['human', 'bot']]")
 
             with gr.Column(scale=8):
                 chatbot = gr.Chatbot(elem_id="chatbot", label="LLaVA Chatbot", height=550)
