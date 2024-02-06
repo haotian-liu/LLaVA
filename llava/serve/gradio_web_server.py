@@ -151,9 +151,9 @@ def add_text(state, text, chat_history, image, image_process_mode, include_image
         if chat and chat[0] and isinstance(chat[0], str) and chat[1] and isinstance(chat[1], str):
             chat_history.append(chat)
         elif chat and chat[0] and isinstance(chat[0], str):
-            chat_history.append((chat[0], "Image Generated"))
+            chat_history.append([chat[0], "Image Generated"])
         elif chat and chat[1] and isinstance(chat[1], str):
-            chat_history.append(("User Uploaded Image", chat[1]))
+            chat_history.append(["User Uploaded Image", chat[1]])
 
     if chat_history and chat_history[0] and chat_history[0][0]:
         in_history = True
