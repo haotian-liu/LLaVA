@@ -138,22 +138,37 @@ def add_text(state, text, chat_history, image, image_process_mode, include_image
             return (state, state.to_gradio_chatbot(include_image=include_image), moderation_msg, None) + (
                 no_change_btn,) * 5
 
-    text = text[:1536]  # Hard cut-off
-    if image is not None:
-        text = text[:1200]  # Hard cut-off for images
-        if '<image>' not in text:
-            # text = '<Image><image></Image>' + text
-            text = text + '\n<image>'
-        text = (text, image, image_process_mode)
-        if len(state.get_images(return_pil=True)) > 0:
-            state = default_conversation.copy()
-
     # handle passed-in chat history
     if not chat_history:
         chat_history = []
     if isinstance(chat_history, str):
         chat_history = ast.literal_eval(chat_history)
         assert isinstance(chat_history, list), "Chat history must be a list: %s" % chat_history
+
+    if chat_history and chat_history[0] and chat_history[0][0]:
+        in_history = True
+        text_with_image = chat_history[0][0]
+    else:
+        in_history = False
+        text_with_image = text
+
+    if image is not None:
+        text_with_image = text_with_image[:1200]  # Hard cut-off for images
+    else:
+        text_with_image = text_with_image[:1536]  # Hard cut-off
+
+    if image is not None:
+        if '<image>' not in text_with_image:
+            # text = '<Image><image></Image>' + text
+            text_with_image += '\n<image>'
+        text_with_image = (text_with_image, image, image_process_mode)
+        if len(state.get_images(return_pil=True)) > 0:
+            state = default_conversation.copy()
+    if in_history:
+        chat_history[0][0] = text_with_image
+    else:
+        text = text_with_image
+
     if chat_history:
         for chat in chat_history:
             if chat and chat[0]:
@@ -163,6 +178,7 @@ def add_text(state, text, chat_history, image, image_process_mode, include_image
 
     state.append_message(state.roles[0], text)
     state.append_message(state.roles[1], None)
+
     state.skip_next = False
     return (state, state.to_gradio_chatbot(include_image=include_image), "", None) + (disable_btn,) * 5
 
