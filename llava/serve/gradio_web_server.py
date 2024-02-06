@@ -125,7 +125,7 @@ def clear_history(request: gr.Request):
     return (state, state.to_gradio_chatbot(), "", None) + (disable_btn,) * 5
 
 
-def add_text(state, text, image, image_process_mode, include_image, request: gr.Request):
+def add_text(state, text, chat_history, image, image_process_mode, include_image, request: gr.Request):
     logger.info(f"add_text. ip: {request.client.host}. len: {len(text)}")
     if len(text) <= 0 and image is None:
         state.skip_next = True
@@ -146,6 +146,14 @@ def add_text(state, text, image, image_process_mode, include_image, request: gr.
         text = (text, image, image_process_mode)
         if len(state.get_images(return_pil=True)) > 0:
             state = default_conversation.copy()
+
+    # handle passed-in chat history
+    for chat in chat_history:
+        if chat and chat[0]:
+            state.append_message(state.roles[0], chat[0])
+        if chat and chat[1]:
+            state.append_message(state.roles[1], chat[1])
+
     state.append_message(state.roles[0], text)
     state.append_message(state.roles[1], None)
     state.skip_next = False
@@ -324,6 +332,7 @@ block_css = """
 
 def build_demo():
     textbox = gr.Textbox(show_label=False, placeholder="Enter text and press ENTER", container=False)
+    chat_history = gr.Textbox(show_label=False, placeholder="Enter chat_history as [['human', 'bot']]", container=False)
     textbox_api = gr.Textbox(visible=False)
     with gr.Blocks(title="LLaVA", theme=gr.themes.Default(), css=block_css) as demo:
         state = gr.State()
@@ -425,7 +434,7 @@ def build_demo():
 
         textbox.submit(
             add_text,
-            [state, textbox, imagebox, image_process_mode, include_image],
+            [state, textbox, chat_history, imagebox, image_process_mode, include_image],
             [state, chatbot, textbox, imagebox] + btn_list,
             queue=False,
             api_name='textbox_btn',
@@ -438,7 +447,7 @@ def build_demo():
 
         textbox_api.submit(
             add_text,
-            [state, textbox, imagebox, image_process_mode, include_image],
+            [state, textbox, chat_history, imagebox, image_process_mode, include_image],
             [state, chatbot],
             queue=False,
             api_name='textbox_api_btn',
@@ -454,7 +463,7 @@ def build_demo():
 
         submit_btn.click(
             add_text,
-            [state, textbox, imagebox, image_process_mode, include_image],
+            [state, textbox, chat_history, imagebox, image_process_mode, include_image],
             [state, chatbot, textbox, imagebox] + btn_list,
             queue=False,
             api_name='submit_btn',
