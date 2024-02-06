@@ -145,6 +145,16 @@ def add_text(state, text, chat_history, image, image_process_mode, include_image
         chat_history = ast.literal_eval(chat_history)
         assert isinstance(chat_history, list), "Chat history must be a list: %s" % chat_history
 
+    chat_history0 = chat_history.copy()
+    chat_history = []
+    for chati, chat in enumerate(chat_history0):
+        if chat and chat[0] and isinstance(chat[0], str) and chat[1] and isinstance(chat[1], str):
+            chat_history.append(chat)
+        elif chat and chat[0] and isinstance(chat[0], str):
+            chat_history.append((chat[0], "Image Generated"))
+        elif chat and chat[1] and isinstance(chat[1], str):
+            chat_history.append(("User Uploaded Image", chat[1]))
+
     if chat_history and chat_history[0] and chat_history[0][0]:
         in_history = True
         text_with_image = chat_history[0][0]
