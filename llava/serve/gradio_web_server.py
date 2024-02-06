@@ -148,11 +148,12 @@ def add_text(state, text, chat_history, image, image_process_mode, include_image
             state = default_conversation.copy()
 
     # handle passed-in chat history
-    for chat in chat_history:
-        if chat and chat[0]:
-            state.append_message(state.roles[0], chat[0])
-        if chat and chat[1]:
-            state.append_message(state.roles[1], chat[1])
+    if chat_history:
+        for chat in chat_history:
+            if chat and chat[0]:
+                state.append_message(state.roles[0], chat[0])
+            if chat and chat[1]:
+                state.append_message(state.roles[1], chat[1])
 
     state.append_message(state.roles[0], text)
     state.append_message(state.roles[1], None)
