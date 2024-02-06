@@ -333,7 +333,7 @@ block_css = """
 
 def build_demo():
     textbox = gr.Textbox(show_label=False, placeholder="Enter text and press ENTER", container=False)
-    chat_history = gr.Textbox(show_label=False, placeholder="Enter chat_history as [['human', 'bot']]", container=False)
+    chat_history = gr.Textbox(show_label=True, label="Enter chat_history as [['human', 'bot']]")
     textbox_api = gr.Textbox(visible=False)
     with gr.Blocks(title="LLaVA", theme=gr.themes.Default(), css=block_css) as demo:
         state = gr.State()
