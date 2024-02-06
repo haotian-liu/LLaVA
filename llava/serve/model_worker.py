@@ -19,10 +19,11 @@ from llava.constants import WORKER_HEART_BEAT_INTERVAL
 from llava.utils import (build_logger, server_error_msg,
     pretty_print_semaphore)
 from llava.model.builder import load_pretrained_model
-from llava.mm_utils import process_images, load_image_from_base64, tokenizer_image_token
+from llava.mm_utils import process_images, load_image_from_base64, tokenizer_image_token, KeywordsStoppingCriteria
 from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
-from transformers import TextIteratorStreamer
+from transformers import TextIteratorStreamer, StoppingCriteriaList
 from threading import Thread
+
 
 
 GB = 1 << 30
@@ -163,8 +164,8 @@ class ModelWorker:
         do_sample = True if temperature > 0.001 else False
 
         input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).to(self.device)
-        keywords = [stop_str]
-        # stopping_criteria = KeywordsStoppingCriteria(keywords, tokenizer, input_ids)
+        keywords = [stop_str] 
+        stopping_criteria = KeywordsStoppingCriteria(keywords, tokenizer, input_ids)
         streamer = TextIteratorStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True, timeout=15)
 
         max_new_tokens = min(max_new_tokens, max_context_length - input_ids.shape[-1] - num_image_tokens)
@@ -181,6 +182,7 @@ class ModelWorker:
             max_new_tokens=max_new_tokens,
             streamer=streamer,
             use_cache=True,
+            stopping_criteria = StoppingCriteriaList([stopping_criteria]),
             **image_args
         ))
         thread.start()
