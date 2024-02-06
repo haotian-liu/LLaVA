@@ -1,4 +1,5 @@
 import argparse
+import ast
 import datetime
 import json
 import os
@@ -148,6 +149,9 @@ def add_text(state, text, chat_history, image, image_process_mode, include_image
             state = default_conversation.copy()
 
     # handle passed-in chat history
+    if isinstance(chat_history, str):
+        chat_history = ast.literal_eval(chat_history)
+        assert isinstance(chat_history, list), "Chat history must be a list: %s" % chat_history
     if chat_history:
         for chat in chat_history:
             if chat and chat[0]:
