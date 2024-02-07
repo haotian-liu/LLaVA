@@ -105,7 +105,7 @@ def main(args):
                 streamer=streamer,
                 use_cache=True)
 
-        outputs = tokenizer.decode(output_ids[0, input_ids.shape[1]:]).strip()
+        outputs = tokenizer.decode(output_ids).strip()
         conv.messages[-1][-1] = outputs
 
         if args.debug:
