@@ -519,6 +519,13 @@ def build_demo():
                 [url_params],
                 [state, model_selector],
                 _js=get_window_url_params,
+#                js=get_window_url_params
+#            )
+#        elif args.model_list_mode == "reload":
+#            demo.load(
+#                load_demo_refresh_model_list,
+#                None,
+#                [state, model_selector],
                 queue=False
             )
         elif args.model_list_mode == "reload":
