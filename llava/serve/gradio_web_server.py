@@ -426,7 +426,7 @@ def build_demo(concurrency_count=10):
             [textbox, upvote_btn, downvote_btn, flag_btn],
             #queue=False,
             api_name='upvote_click',
-            concurency_limit=0,
+            concurrency_limit=None,
         )
         downvote_btn.click(
             downvote_last_response,
@@ -434,7 +434,7 @@ def build_demo(concurrency_count=10):
             [textbox, upvote_btn, downvote_btn, flag_btn],
             #queue=False,
             api_name='downvote_click',
-            concurency_limit=0,
+            concurrency_limit=None,
         )
         flag_btn.click(
             flag_last_response,
@@ -442,7 +442,7 @@ def build_demo(concurrency_count=10):
             [textbox, upvote_btn, downvote_btn, flag_btn],
             #queue=False,
             api_name='flag_click',
-            concurency_limit=0,
+            concurrency_limit=None,
         )
 
         include_image = gr.Checkbox(value=True, label="Include Image in Chat")
@@ -452,14 +452,14 @@ def build_demo(concurrency_count=10):
             [state, image_process_mode],
             [state, chatbot, textbox, imagebox] + btn_list,
             #queue=False,
-            concurency_limit=0,
+            concurrency_limit=None,
             api_name='regenerate_btn',
         ).then(
             http_bot,
             [state, model_selector, temperature, top_p, max_output_tokens, include_image],
             [state, chatbot] + btn_list,
             api_name='regenerate_click',
-            concurency_limit=concurrency_count,
+            concurrency_limit=concurrency_count,
         )
 
         clear_btn.click(
@@ -467,7 +467,7 @@ def build_demo(concurrency_count=10):
             None,
             [state, chatbot, textbox, imagebox] + btn_list,
             #queue=False,
-            concurency_limit=0,
+            concurrency_limit=None,
             api_name='clear',
         )
 
@@ -476,14 +476,14 @@ def build_demo(concurrency_count=10):
             [state, textbox, chat_history, imagebox, image_process_mode, include_image],
             [state, chatbot, textbox, imagebox] + btn_list,
             #queue=False,
-            concurency_limit=0,
+            concurrency_limit=None,
             api_name='textbox_btn',
         ).then(
             http_bot,
             [state, model_selector, temperature, top_p, max_output_tokens, include_image],
             [state, chatbot] + btn_list,
             api_name='textbox_submit',
-            concurency_limit=concurrency_count,
+            concurrency_limit=concurrency_count,
         )
 
         textbox_api.submit(
@@ -491,7 +491,7 @@ def build_demo(concurrency_count=10):
             [state, textbox, chat_history, imagebox, image_process_mode, include_image],
             [state, chatbot],
             #queue=False,
-            concurency_limit=0,
+            concurrency_limit=None,
             api_name='textbox_api_btn',
             # preprocess=False,
         ).then(
@@ -499,7 +499,7 @@ def build_demo(concurrency_count=10):
             [state, model_selector, temperature, top_p, max_output_tokens, include_image],
             [state, chatbot],
             api_name='textbox_api_submit',
-            concurency_limit=concurrency_count,
+            concurrency_limit=concurrency_count,
             # preprocess=False,
             # postprocess=False,
         )
@@ -509,14 +509,14 @@ def build_demo(concurrency_count=10):
             [state, textbox, chat_history, imagebox, image_process_mode, include_image],
             [state, chatbot, textbox, imagebox] + btn_list,
             #queue=False,
-            concurency_limit=0,
+            concurrency_limit=None,
             api_name='submit_btn',
         ).then(
             http_bot,
             [state, model_selector, temperature, top_p, max_output_tokens, include_image],
             [state, chatbot] + btn_list,
             api_name='submit_click',
-            concurency_limit=concurrency_count,
+            concurrency_limit=concurrency_count,
         )
 
         demo_setup_kwargs = dict(fn=load_demo_refresh_model_list,
@@ -538,12 +538,12 @@ def build_demo(concurrency_count=10):
 #                load_demo_refresh_model_list,
 #                None,
 #                [state, model_selector],
-                concurency_limit=0,
+                concurrency_limit=None,
                 #queue=False
             )
         elif args.model_list_mode == "reload":
             demo.load(**demo_setup_kwargs,
-                      concurency_limit=0,
+                      concurrency_limit=None,
                       #queue=False
                       )
         else:
