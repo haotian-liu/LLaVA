@@ -19,9 +19,9 @@ logger = build_logger("gradio_web_server", "gradio_web_server.log")
 
 headers = {"User-Agent": "LLaVA Client"}
 
-no_change_btn = gr.Button.update()
-enable_btn = gr.Button.update(interactive=True)
-disable_btn = gr.Button.update(interactive=False)
+no_change_btn = gr.Button()
+enable_btn = gr.Button(interactive=True)
+disable_btn = gr.Button(interactive=False)
 
 priority = {
     "vicuna-13b": "aaaaaaa",
@@ -58,11 +58,11 @@ function() {
 def load_demo(url_params, request: gr.Request):
     logger.info(f"load_demo. ip: {request.client.host}. params: {url_params}")
 
-    dropdown_update = gr.Dropdown.update(visible=True)
+    dropdown_update = gr.Dropdown(visible=True)
     if "model" in url_params:
         model = url_params["model"]
         if model in models:
-            dropdown_update = gr.Dropdown.update(
+            dropdown_update = gr.Dropdown(
                 value=model, visible=True)
 
     state = default_conversation.copy()
@@ -73,7 +73,7 @@ def load_demo_refresh_model_list(request: gr.Request):
     logger.info(f"load_demo. ip: {request.client.host}")
     models = get_model_list()
     state = default_conversation.copy()
-    dropdown_update = gr.Dropdown.update(
+    dropdown_update = gr.Dropdown(
         choices=models,
         value=models[0] if len(models) > 0 else ""
     )
@@ -363,7 +363,7 @@ block_css = """
 """
 
 
-def build_demo():
+def build_demo(concurrency_count=10):
     textbox = gr.Textbox(show_label=False, placeholder="Enter text and press ENTER", container=False)
     textbox_api = gr.Textbox(visible=False)
     with gr.Blocks(title="LLaVA", theme=gr.themes.Default(), css=block_css) as demo:
@@ -424,22 +424,25 @@ def build_demo():
             upvote_last_response,
             [state, model_selector],
             [textbox, upvote_btn, downvote_btn, flag_btn],
-            queue=False,
+            #queue=False,
             api_name='upvote_click',
+            concurency_limit=0,
         )
         downvote_btn.click(
             downvote_last_response,
             [state, model_selector],
             [textbox, upvote_btn, downvote_btn, flag_btn],
-            queue=False,
+            #queue=False,
             api_name='downvote_click',
+            concurency_limit=0,
         )
         flag_btn.click(
             flag_last_response,
             [state, model_selector],
             [textbox, upvote_btn, downvote_btn, flag_btn],
-            queue=False,
+            #queue=False,
             api_name='flag_click',
+            concurency_limit=0,
         )
 
         include_image = gr.Checkbox(value=True, label="Include Image in Chat")
@@ -448,20 +451,23 @@ def build_demo():
             regenerate,
             [state, image_process_mode],
             [state, chatbot, textbox, imagebox] + btn_list,
-            queue=False,
+            #queue=False,
+            concurency_limit=0,
             api_name='regenerate_btn',
         ).then(
             http_bot,
             [state, model_selector, temperature, top_p, max_output_tokens, include_image],
             [state, chatbot] + btn_list,
             api_name='regenerate_click',
+            concurency_limit=concurrency_count,
         )
 
         clear_btn.click(
             clear_history,
             None,
             [state, chatbot, textbox, imagebox] + btn_list,
-            queue=False,
+            #queue=False,
+            concurency_limit=0,
             api_name='clear',
         )
 
@@ -469,20 +475,23 @@ def build_demo():
             add_text,
             [state, textbox, chat_history, imagebox, image_process_mode, include_image],
             [state, chatbot, textbox, imagebox] + btn_list,
-            queue=False,
+            #queue=False,
+            concurency_limit=0,
             api_name='textbox_btn',
         ).then(
             http_bot,
             [state, model_selector, temperature, top_p, max_output_tokens, include_image],
             [state, chatbot] + btn_list,
             api_name='textbox_submit',
+            concurency_limit=concurrency_count,
         )
 
         textbox_api.submit(
             add_text,
             [state, textbox, chat_history, imagebox, image_process_mode, include_image],
             [state, chatbot],
-            queue=False,
+            #queue=False,
+            concurency_limit=0,
             api_name='textbox_api_btn',
             # preprocess=False,
         ).then(
@@ -490,6 +499,7 @@ def build_demo():
             [state, model_selector, temperature, top_p, max_output_tokens, include_image],
             [state, chatbot],
             api_name='textbox_api_submit',
+            concurency_limit=concurrency_count,
             # preprocess=False,
             # postprocess=False,
         )
@@ -498,13 +508,15 @@ def build_demo():
             add_text,
             [state, textbox, chat_history, imagebox, image_process_mode, include_image],
             [state, chatbot, textbox, imagebox] + btn_list,
-            queue=False,
+            #queue=False,
+            concurency_limit=0,
             api_name='submit_btn',
         ).then(
             http_bot,
             [state, model_selector, temperature, top_p, max_output_tokens, include_image],
             [state, chatbot] + btn_list,
             api_name='submit_click',
+            concurency_limit=concurrency_count,
         )
 
         demo_setup_kwargs = dict(fn=load_demo_refresh_model_list,
@@ -526,11 +538,13 @@ def build_demo():
 #                load_demo_refresh_model_list,
 #                None,
 #                [state, model_selector],
-                queue=False
+                concurency_limit=0,
+                #queue=False
             )
         elif args.model_list_mode == "reload":
             demo.load(**demo_setup_kwargs,
-                      queue=False
+                      concurency_limit=0,
+                      #queue=False
                       )
         else:
             raise ValueError(f"Unknown model list mode: {args.model_list_mode}")
@@ -564,7 +578,7 @@ if __name__ == "__main__":
     parser.add_argument("--host", type=str, default="0.0.0.0")
     parser.add_argument("--port", type=int)
     parser.add_argument("--controller-url", type=str, default="http://localhost:21001")
-    parser.add_argument("--concurrency-count", type=int, default=10)
+    parser.add_argument("--concurrency-count", type=int, default=16)
     parser.add_argument("--model-list-mode", type=str, default="once",
                         choices=["once", "reload"])
     parser.add_argument("--share", action="store_true")
