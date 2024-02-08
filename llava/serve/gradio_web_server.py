@@ -592,7 +592,6 @@ if __name__ == "__main__":
     logger.info(args)
     demo = build_demo()
     demo.queue(
-        concurrency_count=args.concurrency_count,
         default_concurrency_limit=args.concurrency_count,
         api_open=False
     ).launch(
