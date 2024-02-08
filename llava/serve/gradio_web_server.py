@@ -579,7 +579,7 @@ if __name__ == "__main__":
     parser.add_argument("--port", type=int)
     parser.add_argument("--controller-url", type=str, default="http://localhost:21001")
     parser.add_argument("--concurrency-count", type=int, default=16)
-    parser.add_argument("--model-list-mode", type=str, default="once",
+    parser.add_argument("--model-list-mode", type=str, default="reload",
                         choices=["once", "reload"])
     parser.add_argument("--share", action="store_true")
     parser.add_argument("--moderate", action="store_true")
