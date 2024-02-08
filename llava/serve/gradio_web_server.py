@@ -538,12 +538,12 @@ def build_demo(concurrency_count=10):
 #                load_demo_refresh_model_list,
 #                None,
 #                [state, model_selector],
-                concurrency_limit=None,
+                #concurrency_limit=None,
                 #queue=False
             )
         elif args.model_list_mode == "reload":
             demo.load(**demo_setup_kwargs,
-                      concurrency_limit=None,
+                      #concurrency_limit=None,
                       #queue=False
                       )
         else:
@@ -593,6 +593,7 @@ if __name__ == "__main__":
     demo = build_demo()
     demo.queue(
         concurrency_count=args.concurrency_count,
+        default_concurrency_limit=args.concurrency_count,
         api_open=False
     ).launch(
         server_name=args.host,
