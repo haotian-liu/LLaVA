@@ -4,6 +4,7 @@ import datetime
 import json
 import os
 import time
+import uuid
 
 import gradio as gr
 import requests
@@ -202,6 +203,7 @@ def add_text(state, text, chat_history, image, image_process_mode, include_image
 
 
 def http_bot(state, model_selector, temperature, top_p, max_new_tokens, include_image, request: gr.Request):
+    t0 = time.time()
     if request:
         logger.info(f"http_bot. ip: {request.client.host}")
     start_tstamp = time.time()
@@ -277,13 +279,16 @@ def http_bot(state, model_selector, temperature, top_p, max_new_tokens, include_
     prompt = state.get_prompt()
 
     all_images = state.get_images(return_pil=True)
-    all_image_hash = [hashlib.md5(image.tobytes()).hexdigest() for image in all_images]
+    all_image_hash = [str(uuid.uuid4()) for image in all_images]
+    # avoid unnecessary hashing
+    #all_image_hash = [hashlib.md5(image.tobytes()).hexdigest() for image in all_images]
     for image, hash in zip(all_images, all_image_hash):
         t = datetime.datetime.now()
         filename = os.path.join(LOGDIR, "serve_images", f"{t.year}-{t.month:02d}-{t.day:02d}", f"{hash}.jpg")
         if not os.path.isfile(filename):
             os.makedirs(os.path.dirname(filename), exist_ok=True)
             image.save(filename)
+    print("duration image load-hash: %s" % (time.time() - t0), flush=True)
 
     # Make requests
     pload = {
@@ -308,6 +313,8 @@ def http_bot(state, model_selector, temperature, top_p, max_new_tokens, include_
         yield state, state.to_gradio_chatbot(include_image=include_image)
 
     output = None
+    first = True
+    t0 = time.time()
     try:
         # Stream output
         response = requests.post(worker_addr + "/worker_generate_stream",
@@ -318,6 +325,10 @@ def http_bot(state, model_selector, temperature, top_p, max_new_tokens, include_
                 if data["error_code"] == 0:
                     output = data["text"][len(prompt):].strip()
                     state.messages[-1][-1] = output + stream_marker
+
+                    if first:
+                        print("duration first yield: %s" % (time.time() - t0), flush=True)
+
                     if include_image:
                         yield (state, state.to_gradio_chatbot(include_image=include_image)) + (disable_btn,) * 5
                     else:
@@ -501,10 +512,16 @@ def build_demo(concurrency_count=10):
         def add_text_and_http_bot(state1, text1, chat_history1, image1, image_process_mode1, include_image1,
                                   model_selector1, temperature1, top_p1, max_output_tokens1,
                                   request: gr.Request):
+            t0 = time.time()
             state1, chatbot1, textbox1, imagebox1, btn1, btn2, btn3, btn4, btn5 = \
                 add_text(state1, text1, chat_history1, image1, image_process_mode1, include_image1, request)
+            print("Duration add_text: %s" % (time.time() - t0), flush=True)
+
+            t0 = time.time()
             ret = yield from http_bot(state1, model_selector1, temperature1, top_p1, max_output_tokens1, include_image1,
                                       request)
+            print("Duration http_bot: %s" % (time.time() - t0), flush=True)
+
             return ret
 
         textbox_api.submit(
