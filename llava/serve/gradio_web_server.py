@@ -544,7 +544,7 @@ def build_demo(args, models0, state0, concurrency_count=10):
                 functools.partial(load_demo, models0=models0),
                 [url_params],
                 [state, model_selector],
-                js=get_window_url_params,
+                #js=get_window_url_params,
             )
         elif args.model_list_mode == "reload":
             demo.load(**demo_setup_kwargs,
