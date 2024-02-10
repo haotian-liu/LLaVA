@@ -366,6 +366,14 @@ def http_bot(state, model_selector, temperature, top_p, max_new_tokens, include_
         fout.write(json.dumps(data) + "\n")
 
 
+def add_text_and_http_bot(state, text, chat_history, image, image_process_mode, include_image,
+                          model_selector, temperature, top_p, max_output_tokens,
+                          request: gr.Request,
+                          args=None):
+    state, chatbot = add_text(state, text, chat_history, image, image_process_mode, include_image, request, args=args)
+    return http_bot(state, model_selector, temperature, top_p, max_output_tokens, include_image, request, args=args)
+
+
 block_css = """
 
 #buttons button {
@@ -500,21 +508,12 @@ def build_demo(args, models0, state0, concurrency_count=10):
         )
 
         textbox_api.submit(
-            functools.partial(add_text, args=args),
-            [state, textbox, chat_history, imagebox, image_process_mode, include_image],
+            functools.partial(add_text_and_http_bot, args=args),
+            [state, textbox, chat_history, imagebox, image_process_mode, include_image,
+             model_selector, temperature, top_p, max_output_tokens],
             [state, chatbot],
-            # queue=False,
-            concurrency_limit=None,
-            api_name='textbox_api_btn',
-            # preprocess=False,
-        ).then(
-            functools.partial(http_bot, args=args),
-            [state, model_selector, temperature, top_p, max_output_tokens, include_image],
-            [state, chatbot],
-            api_name='textbox_api_submit',
             concurrency_limit=concurrency_count,
-            # preprocess=False,
-            # postprocess=False,
+            api_name='textbox_api_submit',
         )
 
         submit_btn.click(
