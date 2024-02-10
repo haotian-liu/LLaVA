@@ -361,7 +361,7 @@ def http_bot(state, model_selector, temperature, top_p, max_new_tokens, include_
             "finish": round(finish_tstamp, 4),
             "state": state.dict(),
             "images": all_image_hash,
-            "ip": request.client.host,
+            "ip": request.client.host if request else "Unknown",
         }
         fout.write(json.dumps(data) + "\n")
 
