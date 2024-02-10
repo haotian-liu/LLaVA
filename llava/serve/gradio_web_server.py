@@ -370,7 +370,8 @@ def add_text_and_http_bot(state, text, chat_history, image, image_process_mode, 
                           model_selector, temperature, top_p, max_output_tokens,
                           request: gr.Request,
                           args=None):
-    state, chatbot = add_text(state, text, chat_history, image, image_process_mode, include_image, request, args=args)
+    state, chatbot, textbox, imagebox, btn1, btn2, btn3, btn4, btn5 = \
+        add_text(state, text, chat_history, image, image_process_mode, include_image, request, args=args)
     return http_bot(state, model_selector, temperature, top_p, max_output_tokens, include_image, request, args=args)
 
 
