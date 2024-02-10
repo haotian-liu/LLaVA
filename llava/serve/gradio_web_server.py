@@ -1,6 +1,7 @@
 import argparse
 import ast
 import datetime
+import functools
 import json
 import os
 import time
@@ -35,7 +36,7 @@ def get_conv_log_filename():
     return name
 
 
-def get_model_list():
+def get_model_list(args):
     ret = requests.post(args.controller_url + "/refresh_all_workers")
     assert ret.status_code == 200
     ret = requests.post(args.controller_url + "/list_models")
@@ -55,13 +56,13 @@ function() {
 """
 
 
-def load_demo(url_params, request: gr.Request):
+def load_demo(url_params, request: gr.Request, models0=None):
     logger.info(f"load_demo. ip: {request.client.host}. params: {url_params}")
 
     dropdown_update = gr.Dropdown(visible=True)
     if "model" in url_params:
         model = url_params["model"]
-        if model in models:
+        if model in models0:
             dropdown_update = gr.Dropdown(
                 value=model, visible=True)
 
@@ -69,9 +70,9 @@ def load_demo(url_params, request: gr.Request):
     return state, dropdown_update
 
 
-def load_demo_refresh_model_list(request: gr.Request):
+def load_demo_refresh_model_list(request: gr.Request, args=None):
     logger.info(f"load_demo. ip: {request.client.host}")
-    models = get_model_list()
+    models = get_model_list(args)
     state = default_conversation.copy()
     dropdown_update = gr.Dropdown(
         choices=models,
@@ -126,7 +127,7 @@ def clear_history(request: gr.Request):
     return (state, state.to_gradio_chatbot(), "", None) + (disable_btn,) * 5
 
 
-def add_text(state, text, chat_history, image, image_process_mode, include_image, request: gr.Request):
+def add_text(state, text, chat_history, image, image_process_mode, include_image, request: gr.Request, args=None):
     logger.info(f"add_text. ip: {request.client.host}. len: {len(text)}")
     if len(text) <= 0 and image is None:
         state.skip_next = True
@@ -193,7 +194,7 @@ def add_text(state, text, chat_history, image, image_process_mode, include_image
     return (state, state.to_gradio_chatbot(include_image=include_image), "", None) + (disable_btn,) * 5
 
 
-def http_bot(state, model_selector, temperature, top_p, max_new_tokens, include_image, request: gr.Request):
+def http_bot(state, model_selector, temperature, top_p, max_new_tokens, include_image, request: gr.Request, args=None):
     logger.info(f"http_bot. ip: {request.client.host}")
     start_tstamp = time.time()
     model_name = model_selector
@@ -298,6 +299,7 @@ def http_bot(state, model_selector, temperature, top_p, max_new_tokens, include_
     else:
         yield state, state.to_gradio_chatbot(include_image=include_image)
 
+    output = None
     try:
         # Stream output
         response = requests.post(worker_addr + "/worker_generate_stream",
@@ -317,7 +319,7 @@ def http_bot(state, model_selector, temperature, top_p, max_new_tokens, include_
                     state.messages[-1][-1] = output
                     if include_image:
                         yield (state, state.to_gradio_chatbot(include_image=include_image)) + (
-                        disable_btn, disable_btn, disable_btn, enable_btn, enable_btn)
+                            disable_btn, disable_btn, disable_btn, enable_btn, enable_btn)
                     else:
                         yield state, state.to_gradio_chatbot(include_image=include_image)
                     return
@@ -326,7 +328,7 @@ def http_bot(state, model_selector, temperature, top_p, max_new_tokens, include_
         state.messages[-1][-1] = server_error_msg
         if include_image:
             yield (state, state.to_gradio_chatbot(include_image=include_image)) + (
-            disable_btn, disable_btn, disable_btn, enable_btn, enable_btn)
+                disable_btn, disable_btn, disable_btn, enable_btn, enable_btn)
         else:
             yield state, state.to_gradio_chatbot(include_image=include_image)
         return
@@ -338,7 +340,8 @@ def http_bot(state, model_selector, temperature, top_p, max_new_tokens, include_
         yield state, state.to_gradio_chatbot(include_image=include_image)
 
     finish_tstamp = time.time()
-    logger.info(f"{output}")
+    if output is not None:
+        logger.info(f"{output}")
 
     with open(get_conv_log_filename(), "a") as fout:
         data = {
@@ -363,18 +366,18 @@ block_css = """
 """
 
 
-def build_demo(concurrency_count=10):
+def build_demo(args, models0, state0, concurrency_count=10):
     textbox = gr.Textbox(show_label=False, placeholder="Enter text and press ENTER", container=False)
     textbox_api = gr.Textbox(visible=False)
     with gr.Blocks(title="LLaVA", theme=gr.themes.Default(), css=block_css) as demo:
-        state = gr.State()
+        state = gr.State(state0)
 
         with gr.Row():
             with gr.Column(scale=3):
                 with gr.Row(elem_id="model_selector_row"):
                     model_selector = gr.Dropdown(
-                        choices=models,
-                        value=models[0] if len(models) > 0 else "",
+                        choices=models0,
+                        value=models0[0] if len(models0) > 0 else "",
                         interactive=True,
                         show_label=False,
                         container=False)
@@ -398,7 +401,8 @@ def build_demo(concurrency_count=10):
                     top_p = gr.Slider(minimum=0.0, maximum=1.0, value=0.7, step=0.1, interactive=True, label="Top P", )
                     max_output_tokens = gr.Slider(minimum=0, maximum=1024, value=512, step=64, interactive=True,
                                                   label="Max output tokens", )
-                    chat_history = gr.Textbox(value='[]', show_label=True, label="Enter chat_history as [['human', 'bot']]")
+                    chat_history = gr.Textbox(value='[]', show_label=True,
+                                              label="Enter chat_history as [['human', 'bot']]")
 
             with gr.Column(scale=8):
                 chatbot = gr.Chatbot(elem_id="chatbot", label="LLaVA Chatbot", height=550)
@@ -424,7 +428,7 @@ def build_demo(concurrency_count=10):
             upvote_last_response,
             [state, model_selector],
             [textbox, upvote_btn, downvote_btn, flag_btn],
-            #queue=False,
+            # queue=False,
             api_name='upvote_click',
             concurrency_limit=None,
         )
@@ -432,7 +436,7 @@ def build_demo(concurrency_count=10):
             downvote_last_response,
             [state, model_selector],
             [textbox, upvote_btn, downvote_btn, flag_btn],
-            #queue=False,
+            # queue=False,
             api_name='downvote_click',
             concurrency_limit=None,
         )
@@ -440,7 +444,7 @@ def build_demo(concurrency_count=10):
             flag_last_response,
             [state, model_selector],
             [textbox, upvote_btn, downvote_btn, flag_btn],
-            #queue=False,
+            # queue=False,
             api_name='flag_click',
             concurrency_limit=None,
         )
@@ -451,11 +455,11 @@ def build_demo(concurrency_count=10):
             regenerate,
             [state, image_process_mode],
             [state, chatbot, textbox, imagebox] + btn_list,
-            #queue=False,
+            # queue=False,
             concurrency_limit=None,
             api_name='regenerate_btn',
         ).then(
-            http_bot,
+            functools.partial(http_bot, args=args),
             [state, model_selector, temperature, top_p, max_output_tokens, include_image],
             [state, chatbot] + btn_list,
             api_name='regenerate_click',
@@ -466,20 +470,20 @@ def build_demo(concurrency_count=10):
             clear_history,
             None,
             [state, chatbot, textbox, imagebox] + btn_list,
-            #queue=False,
+            # queue=False,
             concurrency_limit=None,
             api_name='clear',
         )
 
         textbox.submit(
-            add_text,
+            functools.partial(add_text, args=args),
             [state, textbox, chat_history, imagebox, image_process_mode, include_image],
             [state, chatbot, textbox, imagebox] + btn_list,
-            #queue=False,
+            # queue=False,
             concurrency_limit=None,
             api_name='textbox_btn',
         ).then(
-            http_bot,
+            functools.partial(http_bot, args=args),
             [state, model_selector, temperature, top_p, max_output_tokens, include_image],
             [state, chatbot] + btn_list,
             api_name='textbox_submit',
@@ -487,15 +491,15 @@ def build_demo(concurrency_count=10):
         )
 
         textbox_api.submit(
-            add_text,
+            functools.partial(add_text, args=args),
             [state, textbox, chat_history, imagebox, image_process_mode, include_image],
             [state, chatbot],
-            #queue=False,
+            # queue=False,
             concurrency_limit=None,
             api_name='textbox_api_btn',
             # preprocess=False,
         ).then(
-            http_bot,
+            functools.partial(http_bot, args=args),
             [state, model_selector, temperature, top_p, max_output_tokens, include_image],
             [state, chatbot],
             api_name='textbox_api_submit',
@@ -505,21 +509,21 @@ def build_demo(concurrency_count=10):
         )
 
         submit_btn.click(
-            add_text,
+            functools.partial(add_text, args=args),
             [state, textbox, chat_history, imagebox, image_process_mode, include_image],
             [state, chatbot, textbox, imagebox] + btn_list,
-            #queue=False,
+            # queue=False,
             concurrency_limit=None,
             api_name='submit_btn',
         ).then(
-            http_bot,
+            functools.partial(http_bot, args=args),
             [state, model_selector, temperature, top_p, max_output_tokens, include_image],
             [state, chatbot] + btn_list,
             api_name='submit_click',
             concurrency_limit=concurrency_count,
         )
 
-        demo_setup_kwargs = dict(fn=load_demo_refresh_model_list,
+        demo_setup_kwargs = dict(fn=functools.partial(load_demo_refresh_model_list, args=args),
                                  inputs=None,
                                  outputs=[state, model_selector])
         demo_btn = gr.Button(visible=False)
@@ -527,24 +531,14 @@ def build_demo(concurrency_count=10):
 
         if args.model_list_mode == "once":
             demo.load(
-                load_demo,
+                functools.partial(load_demo, models0=models0),
                 [url_params],
                 [state, model_selector],
-                _js=get_window_url_params,
-#                js=get_window_url_params
-#            )
-#        elif args.model_list_mode == "reload":
-#            demo.load(
-#                load_demo_refresh_model_list,
-#                None,
-#                [state, model_selector],
-                #concurrency_limit=None,
-                #queue=False
+                js=get_window_url_params,
             )
         elif args.model_list_mode == "reload":
             demo.load(**demo_setup_kwargs,
-                      #concurrency_limit=None,
-                      #queue=False
+                      concurrency_limit=None,
                       )
         else:
             raise ValueError(f"Unknown model list mode: {args.model_list_mode}")
@@ -573,7 +567,7 @@ def build_demo(concurrency_count=10):
     return demo
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", type=str, default="0.0.0.0")
     parser.add_argument("--port", type=int)
@@ -583,14 +577,15 @@ if __name__ == "__main__":
                         choices=["once", "reload"])
     parser.add_argument("--share", action="store_true")
     parser.add_argument("--moderate", action="store_true")
-    #parser.add_argument("--embed", action="store_true")
+    # parser.add_argument("--embed", action="store_true")
     args = parser.parse_args()
     logger.info(f"args: {args}")
 
-    models = get_model_list()
+    models0 = get_model_list(args)
+    state0 = default_conversation.copy()
 
     logger.info(args)
-    demo = build_demo()
+    demo = build_demo(args, models0, state0, concurrency_count=args.concurrency_count)
     demo.queue(
         default_concurrency_limit=args.concurrency_count,
         api_open=True
@@ -599,3 +594,7 @@ if __name__ == "__main__":
         server_port=args.port,
         share=args.share
     )
+
+
+if __name__ == "__main__":
+    main()
