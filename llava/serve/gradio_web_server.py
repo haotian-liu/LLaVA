@@ -576,7 +576,7 @@ def build_demo(args, models0, state0, concurrency_count=10):
     return demo
 
 
-def main():
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", type=str, default="0.0.0.0")
     parser.add_argument("--port", type=int)
@@ -603,7 +603,3 @@ def main():
         server_port=args.port,
         share=args.share
     )
-
-
-if __name__ == "__main__":
-    main()
