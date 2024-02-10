@@ -61,7 +61,7 @@ def load_demo(url_params, request: gr.Request, models0=None):
         logger.info(f"load_demo. ip: {request.client.host}. params: {url_params}")
 
     dropdown_update = gr.Dropdown(visible=True)
-    if "model" in url_params:
+    if url_params and "model" in url_params:
         model = url_params["model"]
         if model in models0:
             dropdown_update = gr.Dropdown(
@@ -366,16 +366,6 @@ def http_bot(state, model_selector, temperature, top_p, max_new_tokens, include_
         fout.write(json.dumps(data) + "\n")
 
 
-def add_text_and_http_bot(state, text, chat_history, image, image_process_mode, include_image,
-                          model_selector, temperature, top_p, max_output_tokens,
-                          request: gr.Request,
-                          args=None):
-    state, chatbot, textbox, imagebox, btn1, btn2, btn3, btn4, btn5 = \
-        add_text(state, text, chat_history, image, image_process_mode, include_image, request, args=args)
-    ret = yield from http_bot(state, model_selector, temperature, top_p, max_output_tokens, include_image, request, args=args)
-    return ret
-
-
 block_css = """
 
 #buttons button {
@@ -509,8 +499,17 @@ def build_demo(args, models0, state0, concurrency_count=10):
             concurrency_limit=concurrency_count,
         )
 
+        def add_text_and_http_bot(state1, text1, chat_history1, image1, image_process_mode1, include_image1,
+                                  model_selector1, temperature1, top_p1, max_output_tokens1,
+                                  request: gr.Request):
+            state1, chatbot1, textbox1, imagebox1, btn1, btn2, btn3, btn4, btn5 = \
+                add_text(state1, text1, chat_history1, image1, image_process_mode1, include_image1, request, args=args)
+            ret = yield from http_bot(state1, model_selector1, temperature1, top_p1, max_output_tokens1, include_image1,
+                                      request, args=args)
+            return ret
+
         textbox_api.submit(
-            functools.partial(add_text_and_http_bot, args=args),
+            add_text_and_http_bot,
             [state, textbox, chat_history, imagebox, image_process_mode, include_image,
              model_selector, temperature, top_p, max_output_tokens],
             [state, chatbot],
@@ -544,7 +543,7 @@ def build_demo(args, models0, state0, concurrency_count=10):
                 functools.partial(load_demo, models0=models0),
                 [url_params],
                 [state, model_selector],
-                #js=get_window_url_params,
+                # js=get_window_url_params,
             )
         elif args.model_list_mode == "reload":
             demo.load(**demo_setup_kwargs,
