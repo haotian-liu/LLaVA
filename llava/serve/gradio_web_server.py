@@ -328,6 +328,7 @@ def http_bot(state, model_selector, temperature, top_p, max_new_tokens, include_
 
                     if first:
                         print("duration first yield: %s" % (time.time() - t0), flush=True)
+                        first = False
 
                     if include_image:
                         yield (state, state.to_gradio_chatbot(include_image=include_image)) + (disable_btn,) * 5
