@@ -1,7 +1,6 @@
 import argparse
 import ast
 import datetime
-import functools
 import json
 import os
 import time
@@ -56,7 +55,7 @@ function() {
 """
 
 
-def load_demo(url_params, request: gr.Request, models0=None):
+def load_demo(url_params, request: gr.Request):
     if request:
         logger.info(f"load_demo. ip: {request.client.host}. params: {url_params}")
 
@@ -71,7 +70,7 @@ def load_demo(url_params, request: gr.Request, models0=None):
     return state, dropdown_update
 
 
-def load_demo_refresh_model_list(request: gr.Request, args=None):
+def load_demo_refresh_model_list(request: gr.Request):
     if request:
         logger.info(f"load_demo. ip: {request.client.host}")
     models = get_model_list(args)
@@ -134,7 +133,7 @@ def clear_history(request: gr.Request):
     return (state, state.to_gradio_chatbot(), "", None) + (disable_btn,) * 5
 
 
-def add_text(state, text, chat_history, image, image_process_mode, include_image, request: gr.Request, args=None):
+def add_text(state, text, chat_history, image, image_process_mode, include_image, request: gr.Request):
     if request:
         logger.info(f"add_text. ip: {request.client.host}. len: {len(text)}")
     if len(text) <= 0 and image is None:
@@ -202,7 +201,7 @@ def add_text(state, text, chat_history, image, image_process_mode, include_image
     return (state, state.to_gradio_chatbot(include_image=include_image), "", None) + (disable_btn,) * 5
 
 
-def http_bot(state, model_selector, temperature, top_p, max_new_tokens, include_image, request: gr.Request, args=None):
+def http_bot(state, model_selector, temperature, top_p, max_new_tokens, include_image, request: gr.Request):
     if request:
         logger.info(f"http_bot. ip: {request.client.host}")
     start_tstamp = time.time()
@@ -375,7 +374,7 @@ block_css = """
 """
 
 
-def build_demo(args, models0, state0, concurrency_count=10):
+def build_demo(concurrency_count=10):
     textbox = gr.Textbox(show_label=False, placeholder="Enter text and press ENTER", container=False)
     textbox_api = gr.Textbox(visible=False)
     with gr.Blocks(title="LLaVA", theme=gr.themes.Default(), css=block_css) as demo:
@@ -468,7 +467,7 @@ def build_demo(args, models0, state0, concurrency_count=10):
             concurrency_limit=None,
             api_name='regenerate_btn',
         ).then(
-            functools.partial(http_bot, args=args),
+            http_bot,
             [state, model_selector, temperature, top_p, max_output_tokens, include_image],
             [state, chatbot] + btn_list,
             api_name='regenerate_click',
@@ -485,14 +484,14 @@ def build_demo(args, models0, state0, concurrency_count=10):
         )
 
         textbox.submit(
-            functools.partial(add_text, args=args),
+            add_text,
             [state, textbox, chat_history, imagebox, image_process_mode, include_image],
             [state, chatbot, textbox, imagebox] + btn_list,
             # queue=False,
             concurrency_limit=None,
             api_name='textbox_btn',
         ).then(
-            functools.partial(http_bot, args=args),
+            http_bot,
             [state, model_selector, temperature, top_p, max_output_tokens, include_image],
             [state, chatbot] + btn_list,
             api_name='textbox_submit',
@@ -503,9 +502,9 @@ def build_demo(args, models0, state0, concurrency_count=10):
                                   model_selector1, temperature1, top_p1, max_output_tokens1,
                                   request: gr.Request):
             state1, chatbot1, textbox1, imagebox1, btn1, btn2, btn3, btn4, btn5 = \
-                add_text(state1, text1, chat_history1, image1, image_process_mode1, include_image1, request, args=args)
+                add_text(state1, text1, chat_history1, image1, image_process_mode1, include_image1, request)
             ret = yield from http_bot(state1, model_selector1, temperature1, top_p1, max_output_tokens1, include_image1,
-                                      request, args=args)
+                                      request)
             return ret
 
         textbox_api.submit(
@@ -518,21 +517,21 @@ def build_demo(args, models0, state0, concurrency_count=10):
         )
 
         submit_btn.click(
-            functools.partial(add_text, args=args),
+            add_text,
             [state, textbox, chat_history, imagebox, image_process_mode, include_image],
             [state, chatbot, textbox, imagebox] + btn_list,
             # queue=False,
             concurrency_limit=None,
             api_name='submit_btn',
         ).then(
-            functools.partial(http_bot, args=args),
+            http_bot,
             [state, model_selector, temperature, top_p, max_output_tokens, include_image],
             [state, chatbot] + btn_list,
             api_name='submit_click',
             concurrency_limit=concurrency_count,
         )
 
-        demo_setup_kwargs = dict(fn=functools.partial(load_demo_refresh_model_list, args=args),
+        demo_setup_kwargs = dict(fn=load_demo_refresh_model_list,
                                  inputs=None,
                                  outputs=[state, model_selector])
         demo_btn = gr.Button(visible=False)
@@ -540,7 +539,7 @@ def build_demo(args, models0, state0, concurrency_count=10):
 
         if args.model_list_mode == "once":
             demo.load(
-                functools.partial(load_demo, models0=models0),
+                load_demo,
                 [url_params],
                 [state, model_selector],
                 # js=get_window_url_params,
@@ -594,7 +593,7 @@ if __name__ == "__main__":
     state0 = default_conversation.copy()
 
     logger.info(args)
-    demo = build_demo(args, models0, state0, concurrency_count=args.concurrency_count)
+    demo = build_demo(concurrency_count=args.concurrency_count)
     demo.queue(
         default_concurrency_limit=args.concurrency_count,
         api_open=True
