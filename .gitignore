@@ -33,3 +33,7 @@ ckpts*
 
 # Demo
 serve_images/
+
+eval/
+LLaVA-Pretrain/
+conda_llava/
