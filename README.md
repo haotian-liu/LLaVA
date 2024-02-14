@@ -1,5 +1,23 @@
 # 🌋 LLaVA: Large Language and Vision Assistant
 
+## THIS FORK
+
+Adds a REPL script to speed up prompt engineering work:
+
+```
+python run_llava_repl.py --model-path "<Hugging face model name>" --image-file  <path to image file>
+```
+
+Example:
+
+```
+python run_llava_repl.py --model-path "liuhaotian/llava-v1.6-mistral-7b" --image-file "../style-scraper/temp/screenshot.jpg"
+```
+
+- the screenshot can be grabbed via [style-scraper](https://github.com/mrseanryan/style-scraper)
+
+---
+
 *Visual instruction tuning towards large language and vision models with GPT-4 level capabilities.*
 
 [📢 [LLaVA-NeXT Blog](https://llava-vl.github.io/blog/2024-01-30-llava-next/)] [[Project Page](https://llava-vl.github.io/)] [[Demo](https://llava.hliu.cc/)]  [[Data](https://github.com/haotian-liu/LLaVA/blob/main/docs/Data.md)] [[Model Zoo](https://github.com/haotian-liu/LLaVA/blob/main/docs/MODEL_ZOO.md)]
