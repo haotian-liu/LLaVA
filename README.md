@@ -18,7 +18,11 @@ python -m llava.serve.cli \
     --load-4bit
 ```
 
-3. Run Training
+3. Download Training Data
+- Dowload [blip_laion_cc_sbu_558k](https://huggingface.co/datasets/liuhaotian/LLaVA-Pretrain/blob/main/blip_laion_cc_sbu_558k.json) into playground/data/LLaVA-Pretrain
+- Dowload and unizp [images](https://huggingface.co/datasets/liuhaotian/LLaVA-CC3M-Pretrain-595K/blob/main/images.zip) into playground/data/LLaVA-Pretrain/images
+
+4. Train
 ```Python
 ./scripts/Mistral/pretrain.sh
 ```
