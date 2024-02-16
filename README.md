@@ -17,3 +17,8 @@ python -m llava.serve.cli \
     --image-file "https://llava-vl.github.io/static/images/view.jpg" \
     --load-4bit
 ```
+
+3. Run Training
+```Python
+./scripts/v1_5/pretrain.sh
+```
