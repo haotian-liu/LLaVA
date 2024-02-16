@@ -1,6 +1,6 @@
-How to run this repo
+# How to run this repo
 
-1. Install Package
+Install Conda Environment
 ```Shell
 conda create -n llava python=3.10 -y
 conda activate llava
@@ -10,7 +10,7 @@ pip install -e ".[train]"
 pip install flash-attn --no-build-isolation
 ```
 
-2. Run Inference
+## Inference
 ```Python
 python -m llava.serve.cli \
     --model-path liuhaotian/llava-v1.5-7b \
@@ -18,11 +18,12 @@ python -m llava.serve.cli \
     --load-4bit
 ```
 
-3. Download Training Data
+## Training
+1. Download Training Data
 - Dowload [blip_laion_cc_sbu_558k](https://huggingface.co/datasets/liuhaotian/LLaVA-Pretrain/blob/main/blip_laion_cc_sbu_558k.json) into playground/data/LLaVA-Pretrain
 - Dowload and unizp [images](https://huggingface.co/datasets/liuhaotian/LLaVA-CC3M-Pretrain-595K/blob/main/images.zip) into playground/data/LLaVA-Pretrain/images
 
-4. Train
+2. Train
 ```Python
 ./scripts/Mistral/pretrain.sh
 ```
