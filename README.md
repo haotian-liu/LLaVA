@@ -20,5 +20,5 @@ python -m llava.serve.cli \
 
 3. Run Training
 ```Python
-./scripts/v1_5/pretrain.sh
+./scripts/Mistral/pretrain.sh
 ```
