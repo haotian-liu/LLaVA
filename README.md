@@ -2,16 +2,18 @@
 
 ## THIS FORK
 
-Adds a REPL script to speed up prompt engineering work:
+- Adds 'evaluate between epochs' enhancement from wand - see [article](https://wandb.ai/byyoung3/ml-news/reports/How-to-Fine-Tune-LLaVA-on-a-Custom-Dataset--Vmlldzo2NjUwNTc1)
+- Add QLORA training script - train_qlora__wandb.sh
+- Adds a REPL script to speed up prompt engineering work:
 
 ```
-python run_llava_repl.py --model-path "<Hugging face model name>" --image-file  <path to image file>
+python run_llava_repl__sr.py --model-path "<Hugging face model name>" --image-file  <path to image file>
 ```
 
 Example:
 
 ```
-python run_llava_repl.py --model-path "liuhaotian/llava-v1.6-mistral-7b" --image-file "../style-scraper/temp/screenshot.jpg"
+python run_llava_repl__sr.py --model-path "liuhaotian/llava-v1.6-mistral-7b" --image-file "../style-scraper/temp/screenshot.jpg"
 ```
 
 - the screenshot can be grabbed via [style-scraper](https://github.com/mrseanryan/style-scraper)
