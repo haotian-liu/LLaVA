@@ -5,6 +5,7 @@ __pycache__
 dist
 
 # Log
+*_log
 *.log
 *.log.*
 *.json
