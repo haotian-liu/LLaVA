@@ -74,7 +74,11 @@ class DataArguments:
     is_multimodal: bool = False
     image_folder: Optional[str] = field(default=None)
     image_aspect_ratio: str = 'square'
-
+    # Added by wandb
+    validation_data_path: Optional[str] = field(
+            default=None,
+            metadata={"help": "Path to the validation data."}
+        )
 
 @dataclass
 class TrainingArguments(transformers.TrainingArguments):
@@ -779,9 +783,13 @@ def make_supervised_data_module(tokenizer: transformers.PreTrainedTokenizer,
     train_dataset = LazySupervisedDataset(tokenizer=tokenizer,
                                 data_path=data_args.data_path,
                                 data_args=data_args)
+    eval_dataset = LazySupervisedDataset(tokenizer=tokenizer, # Added by wandb
+                                data_path=data_args.validation_data_path,
+                                data_args=data_args)
+
     data_collator = DataCollatorForSupervisedDataset(tokenizer=tokenizer)
     return dict(train_dataset=train_dataset,
-                eval_dataset=None,
+                eval_dataset=eval_dataset,  # Added by wandb
                 data_collator=data_collator)
 
 
@@ -958,9 +966,58 @@ def train(attn_implementation=None):
 
     data_module = make_supervised_data_module(tokenizer=tokenizer,
                                               data_args=data_args)
+
+    ####### BRETT ADDED THIS CALLBACK - # Added by wandb
+    from transformers import TrainerCallback
+    class SaveCallback(TrainerCallback):
+        def __init__(self):
+            super().__init__()
+            self.best_metric = None
+
+        def on_save(self, args, state, control, **kwargs):
+            checkpoint_dir = os.path.join(args.output_dir, 'checkpoint-{}'.format(state.global_step))
+            if args.lora_enable:
+                state_dict = get_peft_state_maybe_zero_3(
+                    model.named_parameters(), training_args.lora_bias
+                )
+                non_lora_state_dict = get_peft_state_non_lora_maybe_zero_3(
+                    model.named_parameters()
+                )
+                if args.local_rank in [-1, 0]:
+                    model.config.save_pretrained(checkpoint_dir)
+                    model.save_pretrained(checkpoint_dir, state_dict=state_dict)
+                    torch.save(non_lora_state_dict, os.path.join(checkpoint_dir, 'non_lora_trainables.bin'))
+
+        def on_evaluate(self, args, state, control, metrics, **kwargs):
+            metric_for_best_model = 'eval_loss'
+            metric_value = metrics.get(metric_for_best_model)
+
+            if self.best_metric is None or metric_value < self.best_metric:
+                self.best_metric = metric_value
+                best_model_dir = os.path.join(args.output_dir, 'best_llava_eval_model')
+
+                if args.lora_enable:
+                    state_dict = get_peft_state_maybe_zero_3(
+                        model.named_parameters(), args.lora_bias
+                    )
+                    non_lora_state_dict = get_peft_state_non_lora_maybe_zero_3(
+                        model.named_parameters()
+                    )
+                    if args.local_rank in [-1, 0]:
+                        model.config.save_pretrained(best_model_dir)
+                        model.save_pretrained(best_model_dir, state_dict=state_dict)
+                        torch.save(non_lora_state_dict, os.path.join(best_model_dir, 'non_lora_trainables.bin'))
+
+    ####### BRETT ADDED THIS EVAL CODE # Added by wandb
+    training_args.do_eval = True  # Enable evaluation
+    training_args.evaluation_strategy = "epoch"  # Evaluate at the end of each epoch
+    training_args.per_device_eval_batch_size = training_args.train_batch_size  # Set batch size for evaluation
+    # training_args.eval_steps = 10  # If using "steps" strategy, evaluate every 500 steps
+
     trainer = LLaVATrainer(model=model,
                     tokenizer=tokenizer,
                     args=training_args,
+                    callbacks=[SaveCallback()], # Added by wandb
                     **data_module)
 
     if list(pathlib.Path(training_args.output_dir).glob("checkpoint-*")):
