@@ -1,0 +1,2 @@
+,know_gen_rec,rec,ocr_spat,math_ocr_spat,spat_rec,ocr,math_ocr,know_rec,gen_ocr_spat_rec,know_ocr_gen_rec,ocr_spat_rec,ocr_rec,know_ocr_spat,know_spat_rec,gen_ocr_spat,math_ocr_spat_rec,total,std,runs
+llava-v1.5-7b,17.8,73.0,18.3,14.3,58.3,46.7,0.0,27.8,46.2,12.5,14.3,50.0,0.0,0.0,10.0,0.0,31.1,0.2,"[31.2, 30.8, 31.2]"

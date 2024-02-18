@@ -1,0 +1,218 @@
+{"image": "v1_0.png", "text": "What is x in the equation?", "category": "conv", "question_id": 0}
+{"image": "v1_1.png", "text": "What is d in the last equation?", "category": "conv", "question_id": 1}
+{"image": "v1_1.png", "text": "What is x in the equation?", "category": "conv", "question_id": 2}
+{"image": "v1_3.png", "text": "What is the answer to the bottom left equation?", "category": "conv", "question_id": 3}
+{"image": "v1_3.png", "text": "What is the answer to the second equation on the right?", "category": "conv", "question_id": 4}
+{"image": "v1_5.png", "text": "What is the answer to the second last equation on the right?", "category": "conv", "question_id": 5}
+{"image": "v1_5.png", "text": "What is y in the last equation?", "category": "conv", "question_id": 6}
+{"image": "v1_7.png", "text": "Find the pattern of how the \"X\" operator is redefined, and answer the given equation in the image.", "category": "conv", "question_id": 7}
+{"image": "v1_8.png", "text": "What will the girl on the right write on the board?", "category": "conv", "question_id": 8}
+{"image": "v1_9.png", "text": "How many gallons of supreme gasoline can I get with $50?", "category": "conv", "question_id": 9}
+{"image": "v1_9.png", "text": "What is the price difference between diesel and regular gasoline?", "category": "conv", "question_id": 10}
+{"image": "v1_11.jpg", "text": "What is the total price for a bottle of Merlot and a bottle of Cabernet shown in the image?", "category": "conv", "question_id": 11}
+{"image": "v1_11.jpg", "text": "What is the cost of three bottles of Moet champagne?", "category": "conv", "question_id": 12}
+{"image": "v1_13.jpg", "text": "I am getting one funghi pizza and one prosciutto pizza. How much should I pay in total?", "category": "conv", "question_id": 13}
+{"image": "v1_13.jpg", "text": "I am getting two margherita pizza and one calzone. How much should I pay in total?", "category": "conv", "question_id": 14}
+{"image": "v1_15.png", "text": "What is the original price for pork belly before discount?", "category": "conv", "question_id": 15}
+{"image": "v1_16.jpg", "text": "What is the gasoline price?", "category": "conv", "question_id": 16}
+{"image": "v1_17.jpg", "text": "What is the color of the hat worn by the person in the front left?", "category": "conv", "question_id": 17}
+{"image": "v1_18.jpg", "text": "What is located to the right of the shampoo?", "category": "conv", "question_id": 18}
+{"image": "v1_18.jpg", "text": "What is in the right most bottle?", "category": "conv", "question_id": 19}
+{"image": "v1_20.jpg", "text": "What is the spatial relation between the frisbee and the man?", "category": "conv", "question_id": 20}
+{"image": "v1_21.jpg", "text": "Which car is on the parking spot 33?", "category": "conv", "question_id": 21}
+{"image": "v1_21.jpg", "text": "Which spot is the red car parking on?", "category": "conv", "question_id": 22}
+{"image": "v1_23.png", "text": "What is the price for tomatoes?", "category": "conv", "question_id": 23}
+{"image": "v1_23.png", "text": "What fruit is the the right of plums?", "category": "conv", "question_id": 24}
+{"image": "v1_25.png", "text": "Based on the image, what is the total international awareness of Tina Fey?", "category": "conv", "question_id": 25}
+{"image": "v1_25.png", "text": "Based on the image, in which country does Tina Fey have the highest level of total awareness?", "category": "conv", "question_id": 26}
+{"image": "v1_27.png", "text": "What earth's interior structure does number 2 indicate?", "category": "conv", "question_id": 27}
+{"image": "v1_28.jpg", "text": "What is the number displayed on the motorcycle ridden by the motorcyclist wearing a yellow suit?", "category": "conv", "question_id": 28}
+{"image": "v1_28.jpg", "text": "What is the number displayed on the motorcycle on the right?", "category": "conv", "question_id": 29}
+{"image": "v1_30.jpg", "text": "Are which one of these two jets are larger in size?", "category": "conv", "question_id": 30}
+{"image": "v1_31.png", "text": "Is the person bigger than the car?", "category": "conv", "question_id": 31}
+{"image": "v1_32.png", "text": "What should I do after kneading the dough, before dividing it into pieces?", "category": "conv", "question_id": 32}
+{"image": "v1_33.png", "text": "Should I add sugar when mixing egg and milk?", "category": "conv", "question_id": 33}
+{"image": "v1_34.jpg", "text": "What should I do before cutting herbs, sausage, and mushrooms?", "category": "conv", "question_id": 34}
+{"image": "v1_35.png", "text": "What is the index of the step when we need to add all purpose flour?", "category": "conv", "question_id": 35}
+{"image": "v1_36.jpg", "text": "What should we add in the third step?", "category": "conv", "question_id": 36}
+{"image": "v1_37.jpg", "text": "What should kids do after snap fingers?", "category": "conv", "question_id": 37}
+{"image": "v1_38.jpg", "text": "What should be drawn in the fourth step?", "category": "conv", "question_id": 38}
+{"image": "v1_39.jpg", "text": "What is the step after using probe to spread tire puncture?", "category": "conv", "question_id": 39}
+{"image": "v1_40.png", "text": "What is the second step suggested?", "category": "conv", "question_id": 40}
+{"image": "v1_41.png", "text": "What is the last strategy given in the image?", "category": "conv", "question_id": 41}
+{"image": "v1_42.png", "text": "What is the average total fueling cost excluding the Ford F150?", "category": "conv", "question_id": 42}
+{"image": "v1_42.png", "text": "What is the highest fueling cost?", "category": "conv", "question_id": 43}
+{"image": "v1_44.png", "text": "Which category did the worst job in plastic recycling, considering the amount of plastic made and thrown out?", "category": "conv", "question_id": 44}
+{"image": "v1_44.png", "text": "What is the difference in metric tonnes between the amount of plastic produced and the amount discarded?", "category": "conv", "question_id": 45}
+{"image": "v1_46.png", "text": "What is the estimated average standing charge for the year 2023?", "category": "conv", "question_id": 46}
+{"image": "v1_46.png", "text": "What is the estimated total cost for the year 2023?", "category": "conv", "question_id": 47}
+{"image": "v1_48.jpg", "text": "In which direction does the living room window face?", "category": "conv", "question_id": 48}
+{"image": "v1_49.jpg", "text": "What are the appliances in the kitchen in this floorplan?", "category": "conv", "question_id": 49}
+{"image": "v1_50.jpg", "text": "Which room is bigger, the double garage or the living room?", "category": "conv", "question_id": 50}
+{"image": "v1_50.jpg", "text": "Which room is bigger, the master bedroom or the patio?", "category": "conv", "question_id": 51}
+{"image": "v1_52.png", "text": "What is the solution if the lamp is plugged in and the bulb has burned out?", "category": "conv", "question_id": 52}
+{"image": "v1_53.png", "text": "Which step in the flowchart is drawn with a diamond shape?", "category": "conv", "question_id": 53}
+{"image": "v1_54.png", "text": "What is the average wait time to climb out of bed?", "category": "conv", "question_id": 54}
+{"image": "v1_55.png", "text": "Which year has the highest growth rate of median house price?", "category": "conv", "question_id": 55}
+{"image": "v1_56.png", "text": "What is Japan's gdp in 2012?", "category": "conv", "question_id": 56}
+{"image": "v1_57.jpg", "text": "In which years did rowing and athletics have the same number of gold medals?", "category": "conv", "question_id": 57}
+{"image": "v1_58.png", "text": "Which department is the person who has the highest salary from?", "category": "conv", "question_id": 58}
+{"image": "v1_58.png", "text": "Based on the table, how much is Wilkins earning?", "category": "conv", "question_id": 59}
+{"image": "v1_60.png", "text": "Which country has a below-average profit margin?", "category": "conv", "question_id": 60}
+{"image": "v1_60.png", "text": "Which country has the highest profit margin?", "category": "conv", "question_id": 61}
+{"image": "v1_62.png", "text": "In which month is the highest income generated?", "category": "conv", "question_id": 62}
+{"image": "v1_62.png", "text": "What percentage does salary contribute to total income?", "category": "conv", "question_id": 63}
+{"image": "v1_64.png", "text": "Who is the person on the left?", "category": "conv", "question_id": 64}
+{"image": "v1_65.png", "text": "Who is the person in the image?", "category": "conv", "question_id": 65}
+{"image": "v1_66.jpg", "text": "Who is the person in the bottom right?", "category": "conv", "question_id": 66}
+{"image": "v1_67.png", "text": "Which one is unsweetened?", "category": "conv", "question_id": 67}
+{"image": "v1_68.png", "text": "Is this apple organic?", "category": "conv", "question_id": 68}
+{"image": "v1_69.jpg", "text": "What is the calories for the entire bag?", "category": "conv", "question_id": 69}
+{"image": "v1_70.png", "text": "What is the name of this dish?", "category": "conv", "question_id": 70}
+{"image": "v1_71.jpg", "text": "What is the name of this dish?", "category": "conv", "question_id": 71}
+{"image": "v1_72.png", "text": "What is the name of this dish?", "category": "conv", "question_id": 72}
+{"image": "v1_73.jpg", "text": "What is the make of the car on the left?", "category": "conv", "question_id": 73}
+{"image": "v1_74.jpg", "text": "What does this factory make?", "category": "conv", "question_id": 74}
+{"image": "v1_75.jpg", "text": "what is the green logo on the car?", "category": "conv", "question_id": 75}
+{"image": "v1_76.png", "text": "What is the name of this landmark?", "category": "conv", "question_id": 76}
+{"image": "v1_77.jpg", "text": "What is the name of this landmark?", "category": "conv", "question_id": 77}
+{"image": "v1_78.jpg", "text": "What is the name of this landmark?", "category": "conv", "question_id": 78}
+{"image": "v1_79.jpg", "text": "What is the face value of this banknote?", "category": "conv", "question_id": 79}
+{"image": "v1_80.jpg", "text": "What is this banknote?", "category": "conv", "question_id": 80}
+{"image": "v1_81.jpg", "text": "What type of currency does this banknote represent?", "category": "conv", "question_id": 81}
+{"image": "v1_82.png", "text": "Which chest xray disease can be found? (Options include: Atelectasis; Cardiomegaly; Effusion; Infiltration; Mass; Nodule; Pneumonia; Pneumothorax; Consolidation; Edema; Emphysema; Fibrosis; Pleural Thickening; Hernia.)", "category": "conv", "question_id": 82}
+{"image": "v1_83.png", "text": "Which chest xray disease can be found? (Options include: Atelectasis; Cardiomegaly; Effusion; Infiltration; Mass; Nodule; Pneumonia; Pneumothorax; Consolidation; Edema; Emphysema; Fibrosis; Pleural Thickening; Hernia.)", "category": "conv", "question_id": 83}
+{"image": "v1_84.png", "text": "Which chest xray disease can be found? (Options include: Atelectasis; Cardiomegaly; Effusion; Infiltration; Mass; Nodule; Pneumonia; Pneumothorax; Consolidation; Edema; Emphysema; Fibrosis; Pleural Thickening; Hernia.)", "category": "conv", "question_id": 84}
+{"image": "v1_85.jpg", "text": "How many birds are there?", "category": "conv", "question_id": 85}
+{"image": "v1_86.jpg", "text": "How many tomatoes are there?", "category": "conv", "question_id": 86}
+{"image": "v1_87.jpg", "text": "How many books are there?", "category": "conv", "question_id": 87}
+{"image": "v1_88.jpg", "text": "What are all the scene text in the image?", "category": "conv", "question_id": 88}
+{"image": "v1_89.jpg", "text": "What are all the scene text in the image?", "category": "conv", "question_id": 89}
+{"image": "v1_90.jpg", "text": "What are all the scene text in the image?", "category": "conv", "question_id": 90}
+{"image": "v1_91.jpg", "text": "What are all the scene text in the image?", "category": "conv", "question_id": 91}
+{"image": "v1_92.jpg", "text": "What are all the scene text in the image?", "category": "conv", "question_id": 92}
+{"image": "v1_93.jpg", "text": "What are all the scene text in the image?", "category": "conv", "question_id": 93}
+{"image": "v1_94.jpg", "text": "What is the brand of this device?", "category": "conv", "question_id": 94}
+{"image": "v1_95.jpg", "text": "What is the license plate number?", "category": "conv", "question_id": 95}
+{"image": "v1_96.jpg", "text": "What are all the French scene text in the image?", "category": "conv", "question_id": 96}
+{"image": "v1_97.jpg", "text": "What are all the Chinese scene text in the image?", "category": "conv", "question_id": 97}
+{"image": "v1_98.jpg", "text": "Which continent is highlighted?", "category": "conv", "question_id": 98}
+{"image": "v1_99.png", "text": "Which are producers in this food web?", "category": "conv", "question_id": 99}
+{"image": "v1_100.png", "text": "Compare the average kinetic energies of the particles in each sample. The diagrams below show two pure samples of gas in identical closed, rigid containers. Each colored ball represents one gas particle. Both samples have the same number of particles. Which sample has the higher temperature? Sample A or sample B?", "category": "conv", "question_id": 100}
+{"image": "v1_101.png", "text": "Which of these highlighted cities is the farthest north?", "category": "conv", "question_id": 101}
+{"image": "v1_102.png", "text": "Where is this photo taken?", "category": "conv", "question_id": 102}
+{"image": "v1_103.png", "text": "Where is this photo taken?", "category": "conv", "question_id": 103}
+{"image": "v1_104.png", "text": "Where is this photo taken?", "category": "conv", "question_id": 104}
+{"image": "v1_105.png", "text": "In which country was this photo taken?", "category": "conv", "question_id": 105}
+{"image": "v1_106.jpg", "text": "Are the trees taller than the giraffes?", "category": "conv", "question_id": 106}
+{"image": "v1_107.jpg", "text": "Is this airplane taking off or landing?", "category": "conv", "question_id": 107}
+{"image": "v1_108.jpg", "text": "How many people are sitting down?", "category": "conv", "question_id": 108}
+{"image": "v1_109.jpg", "text": "Is the trash empty or full?", "category": "conv", "question_id": 109}
+{"image": "v1_110.jpg", "text": "Does the giraffe appear dangerous?", "category": "conv", "question_id": 110}
+{"image": "v1_111.jpg", "text": "Is there any reflection of zebra in water?", "category": "conv", "question_id": 111}
+{"image": "v1_112.jpg", "text": "Is the man happy?", "category": "conv", "question_id": 112}
+{"image": "v1_113.jpg", "text": "Are all of the cats the same color?", "category": "conv", "question_id": 113}
+{"image": "v1_114.jpg", "text": "Is that wine in the background?", "category": "conv", "question_id": 114}
+{"image": "v1_115.jpg", "text": "Is the man going to fall down?", "category": "conv", "question_id": 115}
+{"image": "v1_116.jpg", "text": "What place is pictured?", "category": "conv", "question_id": 116}
+{"image": "v1_117.jpg", "text": "Is it outdoors?", "category": "conv", "question_id": 117}
+{"image": "v1_118.jpg", "text": "How's the weather?", "category": "conv", "question_id": 118}
+{"image": "v1_119.jpg", "text": "What is the color of the fence made of metal?", "category": "conv", "question_id": 119}
+{"image": "v1_120.jpg", "text": "Does the person to the left of the man appear to be sitting?", "category": "conv", "question_id": 120}
+{"image": "v1_121.jpg", "text": "Is the plate of the table both dirty and silver?", "category": "conv", "question_id": 121}
+{"image": "v1_122.jpg", "text": "Is the curtain on the right side or on the left of the picture?", "category": "conv", "question_id": 122}
+{"image": "v1_123.jpg", "text": "Is there a computer in this photo?", "category": "conv", "question_id": 123}
+{"image": "v1_124.jpg", "text": "Are there napkins under the utensil to the left of the rice?", "category": "conv", "question_id": 124}
+{"image": "v1_125.jpg", "text": "Are there nuts or vegetables?", "category": "conv", "question_id": 125}
+{"image": "v1_126.jpg", "text": "Are there both plates and forks in this picture?", "category": "conv", "question_id": 126}
+{"image": "v1_127.jpg", "text": "What is this bird called?", "category": "conv", "question_id": 127}
+{"image": "v1_128.jpg", "text": "Which animal in the picture is larger, the cat or the dog?", "category": "conv", "question_id": 128}
+{"image": "v1_129.jpg", "text": "On the right desk, what is to the left of the laptop? ", "category": "conv", "question_id": 129}
+{"image": "v1_130.jpg", "text": "Does the man ride a horse?", "category": "conv", "question_id": 130}
+{"image": "v1_131.jpg", "text": "Is the surfer to the left or to the right of the surfboard?", "category": "conv", "question_id": 131}
+{"image": "v1_132.jpg", "text": "What is the lamp on, a side table or a nightstand?", "category": "conv", "question_id": 132}
+{"image": "v1_133.jpg", "text": "What do both the stump and the fence have in common?", "category": "conv", "question_id": 133}
+{"image": "v1_134.jpg", "text": "Is the spoon made of the same material as the chopsticks?", "category": "conv", "question_id": 134}
+{"image": "v1_135.jpg", "text": "Does the shirt have a different color than the kite?", "category": "conv", "question_id": 135}
+{"image": "v1_136.jpg", "text": "Do all these people have the same gender?", "category": "conv", "question_id": 136}
+{"image": "v1_137.jpg", "text": "Are these two animals different species?", "category": "conv", "question_id": 137}
+{"image": "v1_138.jpg", "text": "Where are the persons? Answer it and give the rationale.", "category": "conv", "question_id": 138}
+{"image": "v1_139.jpg", "text": "Why are the persons wearing black clothes? Answer it and give the rationale.", "category": "conv", "question_id": 139}
+{"image": "v1_140.jpg", "text": "Why is the woman wearing a robe? Answer it and give the rationale.", "category": "conv", "question_id": 140}
+{"image": "v1_141.jpg", "text": "Where is this happening? Answer it and give the rationale.", "category": "conv", "question_id": 141}
+{"image": "v1_142.jpg", "text": "Is it summertime in the scene? Answer it and give the rationale.", "category": "conv", "question_id": 142}
+{"image": "v1_143.jpg", "text": "Is the woman in red going to be mad at the man, for looking at the woman in dress? Answer it and give the rationale.", "category": "conv", "question_id": 143}
+{"image": "v1_144.jpg", "text": "Why does the woman have both of her hands in the air? Answer it and give the rationale.", "category": "conv", "question_id": 144}
+{"image": "v1_145.jpg", "text": "What kind of school does the boy go to? Answer it and give the rationale.", "category": "conv", "question_id": 145}
+{"image": "v1_146.jpg", "text": "Do the persons live in this house? Answer it and give the rationale.", "category": "conv", "question_id": 146}
+{"image": "v1_147.jpg", "text": "Why are the man and woman in white so close to each other? Answer it and give the rationale.", "category": "conv", "question_id": 147}
+{"image": "v1_148.jpg", "text": "Can you explain this meme?", "category": "conv", "question_id": 148}
+{"image": "v1_149.jpg", "text": "Can you explain this meme?", "category": "conv", "question_id": 149}
+{"image": "v1_150.jpg", "text": "Can you explain this meme?", "category": "conv", "question_id": 150}
+{"image": "v1_151.jpg", "text": "Can you explain this meme?", "category": "conv", "question_id": 151}
+{"image": "v1_152.jpg", "text": "Can you explain this meme?", "category": "conv", "question_id": 152}
+{"image": "v1_153.jpg", "text": "What is funny about this image?", "category": "conv", "question_id": 153}
+{"image": "v1_154.png", "text": "What is funny about this image?", "category": "conv", "question_id": 154}
+{"image": "v1_155.png", "text": "What occasions would someone use this meme?", "category": "conv", "question_id": 155}
+{"image": "v1_156.jpg", "text": "What occasions would someone use this meme?", "category": "conv", "question_id": 156}
+{"image": "v1_157.jpg", "text": "What occasions would someone use this meme?", "category": "conv", "question_id": 157}
+{"image": "v1_158.jpg", "text": "How to cook this dish?", "category": "conv", "question_id": 158}
+{"image": "v1_159.jpg", "text": "How to make this?", "category": "conv", "question_id": 159}
+{"image": "v1_160.jpg", "text": "How to cook this dish?", "category": "conv", "question_id": 160}
+{"image": "v1_161.jpg", "text": "How to cook this dish?", "category": "conv", "question_id": 161}
+{"image": "v1_162.jpg", "text": "How to cook this dish?", "category": "conv", "question_id": 162}
+{"image": "v1_163.jpg", "text": "How to cook this dish?", "category": "conv", "question_id": 163}
+{"image": "v1_164.jpg", "text": "How to cook this dish?", "category": "conv", "question_id": 164}
+{"image": "v1_165.jpg", "text": "How to cook this dish?", "category": "conv", "question_id": 165}
+{"image": "v1_166.jpg", "text": "How to cook this dish?", "category": "conv", "question_id": 166}
+{"image": "v1_167.jpg", "text": "How to cook this dish?", "category": "conv", "question_id": 167}
+{"image": "v1_168.jpg", "text": "Can you give a short introduction to this movie?", "category": "conv", "question_id": 168}
+{"image": "v1_169.jpg", "text": "Can you give a short introduction to this movie?", "category": "conv", "question_id": 169}
+{"image": "v1_170.jpg", "text": "Can you give a short introduction to this movie?", "category": "conv", "question_id": 170}
+{"image": "v1_171.jpg", "text": "Can you give a short introduction to this movie?", "category": "conv", "question_id": 171}
+{"image": "v1_172.jpg", "text": "Can you give a short introduction to this movie?", "category": "conv", "question_id": 172}
+{"image": "v1_173.jpg", "text": "Can you give a short introduction to this movie?", "category": "conv", "question_id": 173}
+{"image": "v1_174.jpg", "text": "Can you give a short introduction to this movie?", "category": "conv", "question_id": 174}
+{"image": "v1_175.jpg", "text": "Can you give a short introduction to this movie?", "category": "conv", "question_id": 175}
+{"image": "v1_176.jpg", "text": "Can you give a short introduction to this movie?", "category": "conv", "question_id": 176}
+{"image": "v1_177.jpg", "text": "Can you give a short introduction to this movie?", "category": "conv", "question_id": 177}
+{"image": "v1_178.jpg", "text": "Can you give a short introduction to this painting?", "category": "conv", "question_id": 178}
+{"image": "v1_179.jpg", "text": "Can you give a short introduction to this painting?", "category": "conv", "question_id": 179}
+{"image": "v1_180.jpg", "text": "Can you give a short introduction to this painting?", "category": "conv", "question_id": 180}
+{"image": "v1_181.jpg", "text": "Can you give a short introduction to this painting?", "category": "conv", "question_id": 181}
+{"image": "v1_182.jpg", "text": "Can you give a short introduction to this painting?", "category": "conv", "question_id": 182}
+{"image": "v1_183.jpg", "text": "Can you give a short introduction to this painting?", "category": "conv", "question_id": 183}
+{"image": "v1_184.jpg", "text": "Can you give a short introduction to this painting?", "category": "conv", "question_id": 184}
+{"image": "v1_185.jpg", "text": "Can you give a short introduction to this painting?", "category": "conv", "question_id": 185}
+{"image": "v1_186.jpg", "text": "Can you give a short introduction to this painting?", "category": "conv", "question_id": 186}
+{"image": "v1_187.jpg", "text": "Can you give a short introduction to this painting?", "category": "conv", "question_id": 187}
+{"image": "v1_188.jpg", "text": "What is this disease (give short introduction) and how to treat it?", "category": "conv", "question_id": 188}
+{"image": "v1_189.jpg", "text": "What is this disease (give short introduction) and how to treat it?", "category": "conv", "question_id": 189}
+{"image": "v1_190.jpg", "text": "What is this disease (give short introduction) and how to treat it?", "category": "conv", "question_id": 190}
+{"image": "v1_191.jpg", "text": "What is this disease (give short introduction) and how to treat it?", "category": "conv", "question_id": 191}
+{"image": "v1_192.jpg", "text": "What is this disease (give short introduction) and how to treat it?", "category": "conv", "question_id": 192}
+{"image": "v1_193.jpg", "text": "What is this disease (give short introduction) and how to treat it?", "category": "conv", "question_id": 193}
+{"image": "v1_194.jpg", "text": "What is this disease (give short introduction) and how to treat it?", "category": "conv", "question_id": 194}
+{"image": "v1_195.jpg", "text": "What is this disease (give short introduction) and how to treat it?", "category": "conv", "question_id": 195}
+{"image": "v1_196.jpg", "text": "What is this disease (give short introduction) and how to treat it?", "category": "conv", "question_id": 196}
+{"image": "v1_197.jpg", "text": "What is this disease (give short introduction) and how to treat it?", "category": "conv", "question_id": 197}
+{"image": "v1_198.jpg", "text": "Can you give a short introduction to this person?", "category": "conv", "question_id": 198}
+{"image": "v1_199.jpg", "text": "Can you give a short introduction to this person?", "category": "conv", "question_id": 199}
+{"image": "v1_200.jpg", "text": "Can you give a short introduction to this person?", "category": "conv", "question_id": 200}
+{"image": "v1_201.jpg", "text": "Can you give a short introduction to this person?", "category": "conv", "question_id": 201}
+{"image": "v1_202.jpg", "text": "Can you give a short introduction to this person?", "category": "conv", "question_id": 202}
+{"image": "v1_203.jpg", "text": "Can you give a short introduction to this person?", "category": "conv", "question_id": 203}
+{"image": "v1_204.jpg", "text": "Can you give a short introduction to this person?", "category": "conv", "question_id": 204}
+{"image": "v1_205.jpg", "text": "Can you give a short introduction to this person?", "category": "conv", "question_id": 205}
+{"image": "v1_206.jpg", "text": "Can you give a short introduction to this person?", "category": "conv", "question_id": 206}
+{"image": "v1_207.jpg", "text": "Can you give a short introduction to this person?", "category": "conv", "question_id": 207}
+{"image": "v1_208.png", "text": "The graph below shows the long-term international migration, UK, 1999-2008.\n\nSummarize the information by selecting and reporting the main features, and make comparisons where relevant.\n\nYou should write at least 150 words.", "category": "conv", "question_id": 208}
+{"image": "v1_209.png", "text": "The graph and table below give information about water use worldwide and water consumption in two different countries.\n\nSummarise the information by selecting and reporting the main features, and make comparisons where relevant.\n\nYou should write at least 150 words.", "category": "conv", "question_id": 209}
+{"image": "v1_210.png", "text": "The charts below give information about USA marriage and divorce rates between 1970 and 2000, and the marital status of adult Americans in two of the years.\n\nSummarise the information by selecting and reporting the main features, and make comparisons where relevant.\n\nYou should write at least 150 words.", "category": "conv", "question_id": 210}
+{"image": "v1_211.png", "text": "The chart below shows the amount spent on six consumer goods in four European countries.\n\nWrite a report for a university lecturer describing the information shown below.\n\nYou should write at least 150 words.", "category": "conv", "question_id": 211}
+{"image": "v1_212.png", "text": "The table below gives information about the underground railway systems in six cities.\n\nSummarise the information by selecting and reporting the main features, and make comparisons where relevant.\n\nYou should write at least 150 words.", "category": "conv", "question_id": 212}
+{"image": "v1_213.jpg", "text": "The table below gives information on consumer spending on different items in five different countries in 2002.\n\nSummarise the information by selecting and reporting the main features, and make comparisons where relevant.\n\nYou should write at least 150 words.", "category": "conv", "question_id": 213}
+{"image": "v1_214.png", "text": "The pie charts below show units of electricity production by fuel source in Australia and France in 1980 and 2000.\n\nSummarise the information by selecting and reporting the main features, and make comparisons where relevant.\n\nYou should write at least 150 words.", "category": "conv", "question_id": 214}
+{"image": "v1_215.jpg", "text": "Chorleywood is a village near London whose population has increased steadily since the middle of the nineteenth century. The map below shows the development of the village.\n\nWrite a report for a university lecturer describing the development of the village. \n\nYou should write at least 150 words.", "category": "conv", "question_id": 215}
+{"image": "v1_216.png", "text": "The map below is of the town of Garlsdon. A new supermarket (S) is planned for the town. The map shows two possible sites for the supermarket.\n\nSummarise the information by selecting and reporting the main features, and make comparisons where relevant. \n\nYou should write at least 150 words.", "category": "conv", "question_id": 216}
+{"image": "v1_217.png", "text": "The diagram below shows how the Australian Bureau of Meteorology collects up-to-the-minute information on the weather in order to produce reliable forecasts.\n\nWrite a report for a university lecturer describing the information shown below. \n\nYou should write at least 150 words.", "category": "conv", "question_id": 217}

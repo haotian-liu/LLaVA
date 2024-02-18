@@ -7,8 +7,8 @@ dist
 # Log
 *.log
 *.log.*
-*.json
-*.jsonl
+# *.json
+# *.jsonl
 
 # Data
 !**/alpaca-data-conversation.json
@@ -33,8 +33,9 @@ ckpts*
 
 # Demo
 serve_images/
+images/
 
-eval/
+# eval/
 LLaVA-Pretrain/
 conda_llava/
 cache/
