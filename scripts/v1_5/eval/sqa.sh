@@ -7,7 +7,8 @@ python -m llava.eval.model_vqa_science \
     --answers-file ./playground/data/eval/scienceqa/answers/llava-v1.5-13b.jsonl \
     --single-pred-prompt \
     --temperature 0 \
-    --conv-mode vicuna_v1
+    --conv-mode vicuna_v1 \
+    # --load-8bit
 
 python llava/eval/eval_science_qa.py \
     --base-dir ./playground/data/eval/scienceqa \
