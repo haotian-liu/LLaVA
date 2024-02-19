@@ -1,3 +1,7 @@
+## Fluffyvision
+Fluffyvision makes it easy to use LLaVA by integrating a GUI that lets you choose a directory along with an instruction and it will generate a response for each image in the directory.
+More info about LLaVA can be found below.
+
 # 🌋 LLaVA: Large Language and Vision Assistant
 
 *Visual instruction tuning towards large language and vision models with GPT-4 level capabilities.*
@@ -451,6 +455,3 @@ If you find LLaVA useful for your research and applications, please cite using t
 For future project ideas, please check out:
 - [SEEM: Segment Everything Everywhere All at Once](https://github.com/UX-Decoder/Segment-Everything-Everywhere-All-At-Once)
 - [Grounded-Segment-Anything](https://github.com/IDEA-Research/Grounded-Segment-Anything) to detect, segment, and generate anything by marrying [Grounding DINO](https://github.com/IDEA-Research/GroundingDINO) and [Segment-Anything](https://github.com/facebookresearch/segment-anything).
-
-## Fluffyvision
-Fluffyvision makes it easy to use LLaVA by integrating a GUI that lets you choose a directory along with an instruction and it will generate a response for each image in the directory.
