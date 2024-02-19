@@ -5,8 +5,12 @@ import shutil
 import tarfile
 import tempfile
 from typing import NamedTuple
-import requests
-from urllib.parse import urlparse
+
+from llava.utils import disable_torch_init
+from file_utils import is_url, download_file, download_weights, REPLICATE_WEIGHTS_URL, DEFAULT_WEIGHTS
+
+# we don't use the huggingface hub cache, but we need to set this to a local folder
+os.environ["HUGGINGFACE_HUB_CACHE"] = os.getcwd() + "/models"
 
 def run_training(
         image_folder: Path,
@@ -67,20 +71,7 @@ def run_training(
     subprocess.run(command, env=env, check=True)
 
 
-def download_file(url: str, local_path: Path) -> None:
-    # Stream download to handle large files
-    with requests.get(url, stream=True) as r:
-        r.raise_for_status()
-        with open(local_path, 'wb') as f:
-            for chunk in r.iter_content(chunk_size=8192):
-                f.write(chunk)
 
-def is_url(path: str) -> bool:
-    try:
-        result = urlparse(path)
-        return all([result.scheme, result.netloc])
-    except ValueError:
-        return False
 
 class TrainingOutput(BaseModel):
     # this must be a key named `weights`, otherwise image creation will silently fail
@@ -93,6 +84,11 @@ def train(
     learning_rate: float = Input(description="The learning rate during training", ge=1e-10, default=2e-4),
     model_max_length: int = Input(description="The maximum length (in number of tokens) for the inputs to the model.", ge=1, default=2048),
     ) -> TrainingOutput:
+    
+    # download base models
+    for weight in DEFAULT_WEIGHTS:
+        download_weights(weight["src"], weight["dest"], weight["files"])
+    disable_torch_init()
     
     # Path to the weights file
     weights_file = Path("my_weights.tar")
