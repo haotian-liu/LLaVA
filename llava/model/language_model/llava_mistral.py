@@ -27,7 +27,7 @@ from ..llava_arch import LlavaMetaModel, LlavaMetaForCausalLM
 
 
 class LlavaConfig(MistralConfig):
-    model_type = "llava_misteral"
+    model_type = "llava_mistral"
 
 
 class LlavaMistralModel(LlavaMetaModel, MistralModel):
@@ -107,5 +107,5 @@ class LlavaMistralForCausalLM(MistralForCausalLM, LlavaMetaForCausalLM):
             _inputs['images'] = images
         return _inputs
 
-AutoConfig.register("llava", LlavaConfig)
+AutoConfig.register("llava_mistral", LlavaConfig)
 AutoModelForCausalLM.register(LlavaConfig, LlavaMistralForCausalLM)
