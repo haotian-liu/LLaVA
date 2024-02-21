@@ -46,16 +46,9 @@ def load_images(image_files):
         out.append(image)
     return out
 
-
-def eval_model(args):
-    # Model
-    disable_torch_init()
-
-    model_name = get_model_name_from_path(args.model_path)
-    tokenizer, model, image_processor, context_len = load_pretrained_model(
-        args.model_path, args.model_base, model_name
-    )
-
+def run_for_outputs(cfig, args):
+    model, image_processor, tokenizer, p_conv_mode = cfig.model, cfig.image_processor, cfig.tokenizer, cfig.p_conv_mode
+    
     qs = args.query
     image_token_se = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN
     if IMAGE_PLACEHOLDER in qs:
@@ -69,29 +62,7 @@ def eval_model(args):
         else:
             qs = DEFAULT_IMAGE_TOKEN + "\n" + qs
 
-    if "llama-2" in model_name.lower():
-        conv_mode = "llava_llama_2"
-    elif "mistral" in model_name.lower():
-        conv_mode = "mistral_instruct"
-    elif "v1.6-34b" in model_name.lower():
-        conv_mode = "chatml_direct"
-    elif "v1" in model_name.lower():
-        conv_mode = "llava_v1"
-    elif "mpt" in model_name.lower():
-        conv_mode = "mpt"
-    else:
-        conv_mode = "llava_v0"
-
-    if args.conv_mode is not None and conv_mode != args.conv_mode:
-        print(
-            "[WARNING] the auto inferred conversation mode is {}, while `--conv-mode` is {}, using {}".format(
-                conv_mode, args.conv_mode, args.conv_mode
-            )
-        )
-    else:
-        args.conv_mode = conv_mode
-
-    conv = conv_templates[args.conv_mode].copy()
+    conv = conv_templates[p_conv_mode].copy()
     conv.append_message(conv.roles[0], qs)
     conv.append_message(conv.roles[1], None)
     prompt = conv.get_prompt()
@@ -126,7 +97,46 @@ def eval_model(args):
 
     outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
     print(outputs)
+    return outputs # return for further processing
 
+def get_model_and_processor(model_path, model_base, p_conv_mode):
+    # Model
+    disable_torch_init()
+    
+    model_name = get_model_name_from_path(model_path)
+    tokenizer, model, image_processor, _ = load_pretrained_model(
+        model_path, model_base, model_name
+    )
+    
+    if "llama-2" in model_name.lower():
+        conv_mode = "llava_llama_2"
+    elif "mistral" in model_name.lower():
+        conv_mode = "mistral_instruct"
+    elif "v1.6-34b" in model_name.lower():
+        conv_mode = "chatml_direct"
+    elif "v1" in model_name.lower():
+        conv_mode = "llava_v1"
+    elif "mpt" in model_name.lower():
+        conv_mode = "mpt"
+    else:
+        conv_mode = "llava_v0"
+
+    if p_conv_mode is not None and conv_mode != p_conv_mode:
+        print(
+            "[WARNING] the auto inferred conversation mode is {}, while `--conv-mode` is {}, using {}".format(
+                conv_mode, p_conv_mode, p_conv_mode
+            )
+        )
+    else:
+        p_conv_mode = conv_mode
+    
+    
+    return model, image_processor, tokenizer, p_conv_mode
+
+def eval_model(args):
+    model, image_processor, tokenizer, p_conv_mode = get_model_and_processor(args.model_path, args.model_base, args.conv_mode)
+    cfig = {"model": model, "image_processor": image_processor, "tokenizer": tokenizer, "p_conv_mode": p_conv_mode}
+    return run_for_outputs(cfig, args)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
