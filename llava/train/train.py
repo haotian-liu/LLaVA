@@ -481,7 +481,7 @@ def preprocess_llama_2(
 #         input_ids=input_ids,
 #         labels=targets,
 #     )
- 
+
 def preprocess_v1(
     sources,
     tokenizer: transformers.PreTrainedTokenizer,
@@ -868,15 +868,11 @@ def train():
                 cache_dir=training_args.cache_dir,
                 **bnb_model_from_pretrained_args
             )
-        # elif 'Mistral' in model_args.model_name_or_path:
-        #     config = transformers.AutoConfig.from_pretrained(model_args.model_name_or_path, trust_remote_code=True)
-        #     config.attn_config['attn_impl'] = training_args.mpt_attn_impl
-        #     model = LlavaMistralForCausalLM.from_pretrained(
-        #         model_args.model_name_or_path,
-        #         config=config,
-        #         cache_dir=training_args.cache_dir,
-        #         **bnb_model_from_pretrained_args
-        #     )
+        elif 'Mistral' in model_args.model_name_or_path:
+            model = LlavaMistralForCausalLM.from_pretrained(
+                model_args.model_name_or_path,
+                cache_dir=training_args.cache_dir,
+                **bnb_model_from_pretrained_args)
         else:
             model = LlavaLlamaForCausalLM.from_pretrained(
                 model_args.model_name_or_path,
@@ -962,7 +958,7 @@ def train():
             model_args=model_args,
             fsdp=training_args.fsdp
         )
-        
+
         vision_tower = model.get_vision_tower()
         vision_tower.to(dtype=torch.bfloat16 if training_args.bf16 else torch.float16, device=training_args.device)
 
