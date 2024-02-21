@@ -157,7 +157,7 @@ image_file = "https://llava-vl.github.io/static/images/view.jpg"
 model, image_processor, tokenizer, p_conv_mode = get_model_and_processor(model_path)
 cfig = {"model": model, "image_processor": image_processor, "tokenizer": tokenizer, "p_conv_mode": p_conv_mode}
 
-args = SimpleNamespace(query=prompt, image_file=img_path, 
+args = SimpleNamespace(query=prompt, image_file=image_file, 
                         sep=",", temperature=0, top_p=None, num_beams=1, max_new_tokens=512)
 run_for_outputs(cfig, args)
 ```
