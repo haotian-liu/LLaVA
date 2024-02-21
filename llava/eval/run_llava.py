@@ -47,7 +47,7 @@ def load_images(image_files):
     return out
 
 def run_for_outputs(cfig, args):
-    model, image_processor, tokenizer, p_conv_mode = cfig.model, cfig.image_processor, cfig.tokenizer, cfig.p_conv_mode
+    model, image_processor, tokenizer, p_conv_mode = cfig["model"], cfig["image_processor"], cfig["tokenizer"], cfig["p_conv_mode"]
     
     qs = args.query
     image_token_se = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN
@@ -99,7 +99,7 @@ def run_for_outputs(cfig, args):
     print(outputs)
     return outputs # return for further processing
 
-def get_model_and_processor(model_path, model_base, p_conv_mode):
+def get_model_and_processor(model_path, model_base=None, p_conv_mode=None):
     # Model
     disable_torch_init()
     
