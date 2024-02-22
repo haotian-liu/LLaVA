@@ -32,6 +32,7 @@ from llava.train.llava_trainer import LLaVATrainer
 
 from llava import conversation as conversation_lib
 from llava.model import *
+from llava.model.language_model.llava_mistral import LlavaMistralForCausalLM
 from llava.mm_utils import tokenizer_image_token
 
 from PIL import Image
