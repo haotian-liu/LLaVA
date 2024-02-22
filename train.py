@@ -5,10 +5,21 @@ import shutil
 import tarfile
 import tempfile
 from typing import NamedTuple
-import requests
-from urllib.parse import urlparse
 
-def run_training(image_folder: Path, data_path: Path, output_dir: Path):
+from llava.utils import disable_torch_init
+from file_utils import is_url, download_file, download_weights, REPLICATE_WEIGHTS_URL, DEFAULT_WEIGHTS
+
+# we don't use the huggingface hub cache, but we need to set this to a local folder
+os.environ["HUGGINGFACE_HUB_CACHE"] = os.getcwd() + "/models"
+
+def run_training(
+        image_folder: Path,
+        data_path: Path,
+        output_dir: Path,
+        num_train_epochs: int = 1,
+        learning_rate: float = 2e-4,
+        model_max_length: int = 2048
+    ):
     # Command and arguments as a list
     command = [
         'python',
@@ -34,20 +45,20 @@ def run_training(image_folder: Path, data_path: Path, output_dir: Path):
         '--image_aspect_ratio', 'pad',
         '--group_by_modality_length', 'True',
         '--bf16', 'True',
-        '--num_train_epochs', '1',
+        '--num_train_epochs', str(num_train_epochs),
         '--per_device_train_batch_size', '16',
         '--per_device_eval_batch_size', '4',
         '--gradient_accumulation_steps', '1',
         '--evaluation_strategy', 'no',
         '--save_strategy', 'steps',
         '--save_total_limit', '1',
-        '--learning_rate', '2e-4',
+        '--learning_rate', str(learning_rate),
         '--weight_decay', '0.',
         '--warmup_ratio', '0.03',
         '--lr_scheduler_type', 'cosine',
         '--logging_steps', '1',
         '--tf32', 'True',
-        '--model_max_length', '2048',
+        '--model_max_length', str(model_max_length),
         '--gradient_checkpointing', 'True',
         '--dataloader_num_workers', '4',
         '--lazy_preprocess', 'True',
@@ -60,28 +71,25 @@ def run_training(image_folder: Path, data_path: Path, output_dir: Path):
     subprocess.run(command, env=env, check=True)
 
 
-def download_file(url: str, local_path: Path) -> None:
-    # Stream download to handle large files
-    with requests.get(url, stream=True) as r:
-        r.raise_for_status()
-        with open(local_path, 'wb') as f:
-            for chunk in r.iter_content(chunk_size=8192):
-                f.write(chunk)
 
-def is_url(path: str) -> bool:
-    try:
-        result = urlparse(path)
-        return all([result.scheme, result.netloc])
-    except ValueError:
-        return False
 
 class TrainingOutput(BaseModel):
     # this must be a key named `weights`, otherwise image creation will silently fail
     # source: https://github.com/replicate/api/blob/6b73b27e0da6afbea0531bb4162e9b4f5a74d744/pkg/server/internal.go#L282 
     weights: Path
 
-# todo: download_weights
-def train(train_data: str = Input(description="https url or path name of a zipfile containing training data. Training data should have a json file data.json and an images/ folder. data.json should link the images from images/ to conversations.")) -> TrainingOutput:
+def train(
+    train_data: str = Input(description="https url or path name of a zipfile containing training data. Training data should have a json file data.json and an images/ folder. data.json should link the images from images/ to conversations."),
+    num_train_epochs: int = Input(description="The number of training epochs", ge=1, le=1000, default=1),
+    learning_rate: float = Input(description="The learning rate during training", ge=1e-10, default=2e-4),
+    model_max_length: int = Input(description="The maximum length (in number of tokens) for the inputs to the model.", ge=1, default=2048),
+    ) -> TrainingOutput:
+    
+    # download base models
+    for weight in DEFAULT_WEIGHTS:
+        download_weights(weight["src"], weight["dest"], weight["files"])
+    disable_torch_init()
+    
     # Path to the weights file
     weights_file = Path("my_weights.tar")
 
@@ -113,7 +121,14 @@ def train(train_data: str = Input(description="https url or path name of a zipfi
         output_dir.mkdir(parents=True, exist_ok=True)
 
         # Run the training command
-        run_training(image_folder, data_path, output_dir)
+        run_training(
+            image_folder,
+            data_path, 
+            output_dir,
+            num_train_epochs=num_train_epochs,
+            learning_rate=learning_rate,
+            model_max_length=model_max_length
+        )
 
         # Tar the checkpoints and put into weights_file without compression
         with tarfile.open(str(weights_file), "w") as tar:

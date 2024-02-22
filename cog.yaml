@@ -35,6 +35,9 @@ build:
     - curl -o /usr/local/bin/pget -L "https://github.com/replicate/pget/releases/download/v0.0.3/pget" && chmod +x /usr/local/bin/pget
     - pip install flash_attn==2.3.3 --no-build-isolation
 
+# the model on replicate
+image: r8.im/yorickvp/llava-13b
+
 # predict.py defines how predictions are run on your model
 predict: "predict.py:Predictor"
 
