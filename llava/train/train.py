@@ -861,7 +861,7 @@ def train():
 
     if model_args.vision_tower is not None:
         if 'mpt' in model_args.model_name_or_path:
-            config = transformers.AutoConfig.from_pretrained(model_args.model_name_or_path, trust_remote_code=True)
+            config = transformers.AutoConfig.from_pretrained(model_args.model_name_or_path, trust_remote_code=True, )
             config.attn_config['attn_impl'] = training_args.mpt_attn_impl
             model = LlavaMPTForCausalLM.from_pretrained(
                 model_args.model_name_or_path,
@@ -873,6 +873,7 @@ def train():
             model = LlavaMistralForCausalLM.from_pretrained(
                 model_args.model_name_or_path,
                 cache_dir=training_args.cache_dir,
+                attn_implementation="flash_attention_2",
                 **bnb_model_from_pretrained_args)
         else:
             model = LlavaLlamaForCausalLM.from_pretrained(
