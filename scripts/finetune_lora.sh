@@ -19,8 +19,8 @@ deepspeed llava/train/train_mem.py \
     --lora_enable True \
     --model_name_or_path ./checkpoints/$MODEL_VERSION \
     --version $PROMPT_VERSION \
-    --data_path ./playground/data/llava_instruct_80k.json \
-    --image_folder /path/to/coco/train2017 \
+    --data_path /home/akash/data/LLAVA_data.json \
+    --image_folder /home/akash/data/ \
     --vision_tower openai/clip-vit-large-patch14 \
     --pretrain_mm_mlp_adapter ./checkpoints/llava-$MODEL_VERSION-pretrain/mm_projector.bin \
     --mm_vision_select_layer -2 \
@@ -45,5 +45,4 @@ deepspeed llava/train/train_mem.py \
     --model_max_length 2048 \
     --gradient_checkpointing True \
     --lazy_preprocess True \
-    --dataloader_num_workers 4 \
-    --report_to wandb
+    --dataloader_num_workers 4 
