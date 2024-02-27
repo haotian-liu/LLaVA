@@ -14,7 +14,7 @@
 # MODEL_VERSION="llama-2-7b-chat"
 ################## LLaMA-2 ##################
 
-deepspeed llava/train/train_mem.py \
+deepspeed /home/akash/LLaVA/llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
     --lora_enable True \
     --model_name_or_path ./checkpoints/$MODEL_VERSION \
