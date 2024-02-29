@@ -30,17 +30,21 @@ def image_parser(args):
     if type(args.image_file) is str:
         out = args.image_file.split(args.sep)
     else:
-        out = args.image_file
+        out = [args.image_file]
     return out
 
 
 def load_image(image_file):
-    if image_file.startswith("http") or image_file.startswith("https"):
+    if (
+        type(image_file) is str
+        and image_file.startswith("http")
+        or image_file.startswith("https")
+    ):
         response = requests.get(image_file)
         image = Image.open(BytesIO(response.content)).convert("RGB")
     elif type(image_file) is str:
         image = Image.open(image_file).convert("RGB")
-    elif type(image_file) is bytes:
+    else:
         image = Image.open(BytesIO(image_file)).convert("RGB")
     return image
 
