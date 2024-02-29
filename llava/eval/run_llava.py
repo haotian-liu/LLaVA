@@ -12,7 +12,11 @@ from llava.constants import (
 from llava.conversation import conv_templates, SeparatorStyle
 from llava.model.builder import load_pretrained_model
 from llava.utils import disable_torch_init
-from llava.mm_utils import process_images, tokenizer_image_token
+from llava.mm_utils import (
+    process_images,
+    tokenizer_image_token,
+    get_model_name_from_path,
+)
 
 from PIL import Image
 
@@ -53,15 +57,17 @@ def eval_model(args):
     # Model
     disable_torch_init()
 
-    model_name = args.model_name
     tokenizer = args.tokenizer
     model = args.model
     image_processor = args.image_processor
+    model_path = args.model_path
     qs = args.query
+
+    model_name = get_model_name_from_path(model_path)
 
     if model is None or tokenizer is None or image_processor is None:
         tokenizer, model, image_processor, context_len = load_pretrained_model(
-            args.model_path, args.model_base, args.model_name
+            model_path, args.model_base, args.model_name
         )
 
     image_token_se = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN
