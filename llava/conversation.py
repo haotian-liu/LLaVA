@@ -13,7 +13,7 @@ class SeparatorStyle(Enum):
     MPT = auto()
     PLAIN = auto()
     LLAMA_2 = auto()
-
+    biomistral =auto()
 
 @dataclasses.dataclass
 class Conversation:
