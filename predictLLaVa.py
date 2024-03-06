@@ -42,14 +42,14 @@ def start_processing():
         print("Please choose a directory first.")
         return
     global maxImg
-    maxImg = len([name for name in os.listdir(image_directory) if name.endswith(".jpg") or name.endswith(".png")])
+    maxImg = len([name for name in os.listdir(image_directory) if name.endswith(".jpg") or name.endswith(".png") or name.endswith(".jpeg")])
 
     # Create a separate thread for image processing
     def process_images_thread():
         outputs = ""
         curImg = 0
         for filename in os.listdir(image_directory):
-            if filename.endswith(".jpg") or filename.endswith(".png"):
+            if filename.endswith(".jpg") or filename.endswith(".png") or filename.endswith(".jpeg"):
                 curImg += 1
                 output_textbox.insert(tk.END, f"Processing image {curImg}/{maxImg}...\n")
                 print(f"\n---\n\n{filename}\n\n")
