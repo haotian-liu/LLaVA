@@ -20,7 +20,7 @@ import torch.nn as nn
 from torch.nn import CrossEntropyLoss
 
 from transformers import AutoConfig, AutoModelForCausalLM, \
-                         MixtralConfig, MixtralModel, MixtralForCausalLM \
+                         GemmaConfig, GemmaModel, GemmaForCausalLM
 
 from transformers.modeling_outputs import CausalLMOutputWithPast
 from transformers.generation.utils import GenerateOutput
@@ -28,23 +28,23 @@ from transformers.generation.utils import GenerateOutput
 from ..llava_arch import LlavaMetaModel, LlavaMetaForCausalLM
 
 
-class LlavaMixtralConfig(MixtralConfig):
-    model_type = "llava_mixtral"
+class LlavaGemmaConfig(GemmaConfig):
+    model_type = "llava_gemma"
 
 
-class LlavaMixtralModel(LlavaMetaModel, MixtralModel):
-    config_class = LlavaMixtralConfig
+class LlavaGemmaModel(LlavaMetaModel, GemmaModel):
+    config_class = LlavaGemmaConfig
 
-    def __init__(self, config: MixtralConfig):
-        super(LlavaMixtralModel, self).__init__(config)
+    def __init__(self, config: GemmaConfig):
+        super(LlavaGemmaModel, self).__init__(config)
 
 
-class LlavaMixtralForCausalLM(MixtralForCausalLM, LlavaMetaForCausalLM):
-    config_class = LlavaMixtralConfig
+class LlavaGemmaForCausalLM(GemmaForCausalLM, LlavaMetaForCausalLM):
+    config_class = LlavaGemmaConfig
 
     def __init__(self, config):
-        super(MixtralForCausalLM, self).__init__(config)
-        self.model = LlavaMixtralModel(config)
+        super(GemmaForCausalLM, self).__init__(config)
+        self.model = LlavaGemmaModel(config)
 
         self.lm_head = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
 
@@ -154,5 +154,5 @@ class LlavaMixtralForCausalLM(MixtralForCausalLM, LlavaMetaForCausalLM):
             inputs['image_sizes'] = image_sizes
         return inputs
 
-AutoConfig.register("llava_mixtral", LlavaMixtralConfig)
-AutoModelForCausalLM.register(LlavaMixtralConfig, LlavaMixtralForCausalLM)
+AutoConfig.register("llava_gemma", LlavaGemmaConfig)
+AutoModelForCausalLM.register(LlavaGemmaConfig, LlavaGemmaForCausalLM)
