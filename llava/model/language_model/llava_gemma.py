@@ -47,7 +47,7 @@ class LlavaGemmaForCausalLM(GemmaForCausalLM, LlavaMetaForCausalLM):
         self.model = LlavaGemmaModel(config)
 
         self.lm_head = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
-
+        
         # Initialize weights and apply final processing
         self.post_init()
 
@@ -68,6 +68,7 @@ class LlavaGemmaForCausalLM(GemmaForCausalLM, LlavaMetaForCausalLM):
         images: Optional[torch.FloatTensor] = None,
         image_sizes: Optional[List[List[int]]] = None,
         return_dict: Optional[bool] = None,
+        cache_position: Optional[torch.LongTensor] = None,
     ) -> Union[Tuple, CausalLMOutputWithPast]:
 
         if inputs_embeds is None:
@@ -98,7 +99,8 @@ class LlavaGemmaForCausalLM(GemmaForCausalLM, LlavaMetaForCausalLM):
             use_cache=use_cache,
             output_attentions=output_attentions,
             output_hidden_states=output_hidden_states,
-            return_dict=return_dict
+            return_dict=return_dict,
+            cache_position=cache_position
         )
 
     @torch.no_grad()
