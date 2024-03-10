@@ -17,7 +17,7 @@ MODEL_VERSION="llama-2-7b-chat"
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
     --lora_enable True \
-    --model_name_or_path ./checkpoints/$MODEL_VERSION \
+    --model_name_or_path liuhaotian/llava-llama-2-7b-chat-lightning-lora-preview \
     --version $PROMPT_VERSION \
     --data_path /home/akash/data/LLAVA_data.json \
     --image_folder /home/akash/data/ \
@@ -27,7 +27,7 @@ deepspeed llava/train/train_mem.py \
     --mm_use_im_start_end False \
     --mm_use_im_patch_token False \
     --bf16 True \
-    --output_dir liuhaotian/llava-llama-2-7b-chat-lightning-lora-preview
+    --output_dir ./checkpoints/llava-$MODEL_VERSION-finetune_lora \
     --num_train_epochs 1 \
     --per_device_train_batch_size 16 \
     --per_device_eval_batch_size 4 \
