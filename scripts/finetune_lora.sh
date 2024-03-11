@@ -22,8 +22,8 @@ deepspeed llava/train/train_mem.py \
     --data_path /home/akash/data/LLAVA_data.json \
     --image_folder /home/akash/data/ \
     --vision_tower openai/clip-vit-large-patch14 \
-    # --pretrain_mm_mlp_adapter ./checkpoints/llava-$MODEL_VERSION-pretrain/mm_projector.bin \
-    --mm_projector_type mlp2x_gelu \
+    --pretrain_mm_mlp_adapter /home/akash/llava-v1.5-7b \mm_projector.bin \
+    # --mm_projector_type mlp2x_gelu \  #added this from wandb blog, but was giving errors
     --mm_vision_select_layer -2 \
     --mm_use_im_start_end False \
     --mm_use_im_patch_token False \
