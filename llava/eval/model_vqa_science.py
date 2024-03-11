@@ -27,27 +27,46 @@ def get_chunk(lst, n, k):
 
 
 def eval_model(args):
-    # Model
     disable_torch_init()
+    # Getting the where the model is located and deriving the model name
     model_path = os.path.expanduser(args.model_path)
     model_name = get_model_name_from_path(model_path)
+
+    # Loading the model
     tokenizer, model, image_processor, context_len = load_pretrained_model(model_path, args.model_base, model_name)
 
+    # Loading the questions
     questions = json.load(open(os.path.expanduser(args.question_file), "r"))
     questions = get_chunk(questions, args.num_chunks, args.chunk_idx)
+
+    # Creating the answers file if it doesn't exist
     answers_file = os.path.expanduser(args.answers_file)
     os.makedirs(os.path.dirname(answers_file), exist_ok=True)
+
+    # Writing the answers to the answer file
     ans_file = open(answers_file, "w")
+
+    # For all the lines in the questions file
     for i, line in enumerate(tqdm(questions)):
+        # Get the question id and the question
         idx = line["id"]
+        # Get the question
         question = line['conversations'][0]
+
+        # Stripping question of the image tag
         qs = question['value'].replace('<image>', '').strip()
         cur_prompt = qs
 
+        # If the question has an image
         if 'image' in line:
+            # Get the loaction of the image file
             image_file = line["image"]
             image = Image.open(os.path.join(args.image_folder, image_file))
+
+            # Process the image according to the model's configuration
             image_tensor = process_images([image], image_processor, model.config)[0]
+
+            # Convert the image tensor to half precision and move it to the GPU
             images = image_tensor.unsqueeze(0).half().cuda()
             image_sizes = [image.size]
             if getattr(model.config, 'mm_use_im_start_end', False):
@@ -59,17 +78,21 @@ def eval_model(args):
             images = None
             image_sizes = None
 
+        # Add this to the end of the prompt, to try to control the model's output
         if args.single_pred_prompt:
             qs = qs + '\n' + "Answer with the option's letter from the given choices directly."
             cur_prompt = cur_prompt + '\n' + "Answer with the option's letter from the given choices directly."
 
+        # Determines what conv mode to use
         conv = conv_templates[args.conv_mode].copy()
         conv.append_message(conv.roles[0], qs)
         conv.append_message(conv.roles[1], None)
         prompt = conv.get_prompt()
 
+        # Tokenize the images and the prompt
         input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).cuda()
 
+        # Generate the answer
         with torch.inference_mode():
             output_ids = model.generate(
                 input_ids,
@@ -84,6 +107,8 @@ def eval_model(args):
         outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
 
         ans_id = shortuuid.uuid()
+
+        # Write the answer to the answer file
         ans_file.write(json.dumps({"question_id": idx,
                                    "prompt": cur_prompt,
                                    "text": outputs,
