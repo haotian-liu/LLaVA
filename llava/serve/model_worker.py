@@ -157,15 +157,15 @@ class ModelWorker:
 
         temperature = float(params.get("temperature", 1.0))
         top_p = float(params.get("top_p", 1.0))
+        top_k = int(params.get("top_k", 50))
         max_context_length = getattr(model.config, 'max_position_embeddings', 2048)
         max_new_tokens = min(int(params.get("max_new_tokens", 256)), 1024)
-        stop_str = params.get("stop", None)
+        repetition_penalty = float(params.get("repetition_penalty", 1.0))
+        stop_str = params.get("stop", "")
         do_sample = True if temperature > 0.001 else False
 
         input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).to(self.device)
-        keywords = [stop_str]
-        # stopping_criteria = KeywordsStoppingCriteria(keywords, tokenizer, input_ids)
-        streamer = TextIteratorStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True, timeout=15)
+        streamer = TextIteratorStreamer(tokenizer, skip_prompt=True, skip_special_tokens=False, timeout=15)
 
         max_new_tokens = min(max_new_tokens, max_context_length - input_ids.shape[-1] - num_image_tokens)
 
@@ -178,6 +178,8 @@ class ModelWorker:
             do_sample=do_sample,
             temperature=temperature,
             top_p=top_p,
+            top_k=top_k,
+            repetition_penalty=repetition_penalty,
             max_new_tokens=max_new_tokens,
             streamer=streamer,
             use_cache=True,
@@ -190,6 +192,9 @@ class ModelWorker:
             generated_text += new_text
             if generated_text.endswith(stop_str):
                 generated_text = generated_text[:-len(stop_str)]
+                yield json.dumps({"text": generated_text, "error_code": 0}).encode() + b"\0"
+                break
+
             yield json.dumps({"text": generated_text, "error_code": 0}).encode() + b"\0"
 
     def generate_stream_gate(self, params):
