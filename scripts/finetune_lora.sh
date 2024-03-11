@@ -22,7 +22,7 @@ deepspeed llava/train/train_mem.py \
     --data_path /home/akash/data/LLAVA_data.json \
     --image_folder /home/akash/data/ \
     --vision_tower openai/clip-vit-large-patch14 \
-    --pretrain_mm_mlp_adapter /home/akash/llava-v1.5-7b \mm_projector.bin \
+    --pretrain_mm_mlp_adapter /home/akash/llava-v1.5-7b\mm_projector.bin \
     --mm_vision_select_layer -2 \
     --mm_use_im_start_end False \
     --mm_use_im_patch_token False \
