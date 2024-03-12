@@ -25,3 +25,4 @@
 *.ipynb  text eol=lf
 *.json filter=lfs diff=lfs merge=lfs -text
 *.jsonl filter=lfs diff=lfs merge=lfs -text
+*.png filter=lfs diff=lfs merge=lfs -text
