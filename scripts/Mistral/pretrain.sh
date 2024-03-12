@@ -4,8 +4,8 @@ deepspeed ./llava/train/train.py \
   --deepspeed ./scripts/zero2.json \
   --model_name_or_path mistralai/Mistral-7B-v0.1 \
   --version plain \
-  --data_path ./playground/data/LLaVA-Pretrain/LLaVA-CC3M-Pretrain-595K.json \
-  --image_folder ./playground/data/LLaVA-Pretrain/images \
+  --data_path ./playground/data/train/pretrain/LLaVA-CC3M-Pretrain-595K.json \
+  --image_folder ./playground/data/train/pretrain/images \
   --vision_tower openai/clip-vit-large-patch14-336 \
   --mm_projector_type mlp2x_gelu \
   --tune_mm_mlp_adapter True \
