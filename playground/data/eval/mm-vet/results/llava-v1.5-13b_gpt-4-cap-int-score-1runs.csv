@@ -1,0 +1,2 @@
+,gen_rec_know,rec,spat_ocr,spat_math_ocr,spat_rec,ocr,math_ocr,rec_know,spat_rec_ocr_gen,gen_rec_ocr_know,spat_rec_ocr,rec_ocr,spat_ocr_know,spat_rec_know,spat_ocr_gen,spat_math_rec_ocr,total,std,runs
+llava-v1.5-13b,23.1,67.6,33.1,14.3,75.0,55.0,0.0,28.9,46.2,16.2,14.3,75.0,16.7,50.0,10.0,0.0,36.1,0.0,[36.1]
