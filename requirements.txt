@@ -1,0 +1,5 @@
+tkinter
+Pillow
+torch
+deep_translator
+llava
