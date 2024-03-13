@@ -33,3 +33,9 @@ ckpts*
 
 # Demo
 serve_images/
+
+# dev files
+weights
+training_data
+models/
+.cog
