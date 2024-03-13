@@ -14,6 +14,11 @@ from llava.mm_utils import tokenizer_image_token, process_images, get_model_name
 from PIL import Image
 import math
 
+from transformers import GenerationConfig
+
+
+
+
 
 def split_list(lst, n):
     """Split a list into n (roughly) equal-sized chunks"""
@@ -42,6 +47,12 @@ def eval_model(args):
     # Creating the answers file if it doesn't exist
     answers_file = os.path.expanduser(args.answers_file)
     os.makedirs(os.path.dirname(answers_file), exist_ok=True)
+
+    generation_config = GenerationConfig( from_model_config=True, 
+                            bos_token_id=1, 
+                            eos_token_id= 2,
+                            pad_token_id= 32001,
+                            transformers_version="4.36.2")
 
     # Writing the answers to the answer file
     ans_file = open(answers_file, "w")
@@ -91,16 +102,20 @@ def eval_model(args):
 
         # Tokenize the images and the prompt
         input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).cuda()
+        attention_mask = (input_ids != tokenizer.pad_token_id).long()
 
         # Generate the answer
         with torch.inference_mode():
+            model.config.pad_token_id = tokenizer.pad_token_id
             output_ids = model.generate(
                 input_ids,
+                attention_mask=attention_mask,
                 images=images,
                 image_sizes=image_sizes,
                 do_sample=True if args.temperature > 0 else False,
                 temperature=args.temperature,
-                max_new_tokens=1024,
+                max_new_tokens=10,
+                generation_config = generation_config,
                 use_cache=True,
             )
 
