@@ -38,7 +38,7 @@ def eval_model(args):
     model_name = get_model_name_from_path(model_path)
 
     # Loading the model
-    tokenizer, model, image_processor, context_len = load_pretrained_model(model_path, args.model_base, model_name, use_flash_attn=True)
+    tokenizer, model, image_processor, context_len = load_pretrained_model(model_path, args.model_base, model_name)
 
     # Loading the questions
     questions = json.load(open(os.path.expanduser(args.question_file), "r"))
