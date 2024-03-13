@@ -17,14 +17,14 @@ deepspeed llava/train/train-flash_attention_2.py \
   --group_by_modality_length True \
   --bf16 True \
   --output_dir ./checkpoints/llava-mistral-7b-lora-hand-picked \
-  --num_train_epochs 10 \
+  --num_train_epochs 5 \
   --per_device_train_batch_size 8 \
   --per_device_eval_batch_size 4 \
   --gradient_accumulation_steps 1 \
   --evaluation_strategy "no" \
   --save_strategy "epoch" \
   --save_steps 1 \
-  --save_total_limit 11 \
+  --save_total_limit 6 \
   --learning_rate 2e-5 \
   --weight_decay 0. \
   --warmup_ratio 0.03 \
