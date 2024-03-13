@@ -1,29 +1,30 @@
 #!/bin/bash
 
 deepspeed llava/train/train-flash_attention_2.py \
-  --deepspeed ./scripts/zero2.json \
-  --model_name_or_path mistralai/Mistral-7B-Instruct-v0.2 \
+  --lora_enable True --lora_r 128 --lora_alpha 256 --mm_projector_lr 2e-5 \
+  --deepspeed ./scripts/zero3.json \
+  --model_name_or_path liuhaotian/llava-v1.6-mistral-7b \
   --version plain \
-  --data_path ./playground/data/train/finetune \
-  --image_folder ./playground/data/train/pretrain/images \
+  --data_path ./playground/data/train/finetune/hand_picked/science_qa_finetune.json \
+  --image_folder ./playground/data/train/finetune/hand_picked/images \
   --vision_tower openai/clip-vit-large-patch14-336 \
   --mm_projector_type mlp2x_gelu \
-  --tune_mm_mlp_adapter True \
   --mm_vision_select_layer -2 \
   --mm_use_im_start_end False \
   --mm_use_im_patch_token False \
+  --image_aspect_ratio pad \
+  --group_by_modality_length True \
   --bf16 True \
-  --output_dir ./checkpoints/llava-mistral-7B-instruct-pretrain \
-  --cache_dir ./cache \
-  --num_train_epochs 1 \
-  --per_device_train_batch_size 32 \
+  --output_dir ./checkpoints/llava-mistral-7b-lora-hand-picked-2 \
+  --num_train_epochs 5 \
+  --per_device_train_batch_size 8 \
   --per_device_eval_batch_size 4 \
   --gradient_accumulation_steps 1 \
   --evaluation_strategy "no" \
-  --save_strategy "steps" \
-  --save_steps 24000 \
-  --save_total_limit 1 \
-  --learning_rate 1e-3 \
+  --save_strategy "epoch" \
+  --save_steps 1 \
+  --save_total_limit 6 \
+  --learning_rate 2e-5 \
   --weight_decay 0. \
   --warmup_ratio 0.03 \
   --lr_scheduler_type "cosine" \

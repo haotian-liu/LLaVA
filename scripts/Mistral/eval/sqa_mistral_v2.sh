@@ -1,14 +1,11 @@
-#!/bin/bash
-
 python -m llava.eval.model_vqa_science \
-    --model-path ./checkpoints/llava-mistral-7b-pretrain \
-    --model-base mistralai/Mistral-7B-v0.1 \
+    --model-path liuhaotian/llava-v1.6-mistral-7b \
     --question-file ./playground/data/eval/scienceqa/llava_test_CQM-A.json \
     --image-folder ./playground/data/eval/scienceqa/images/test \
     --answers-file ./playground/data/eval/scienceqa/answers/llava-mistral-7b-pretrain.jsonl \
     --single-pred-prompt \
-    --conv-mode mistral_instruct \
-    --temperature 0
+    --temperature 0 \
+    --conv-mode mistral_instruct
 
 python llava/eval/eval_science_qa.py \
     --base-dir ./playground/data/eval/scienceqa \
