@@ -1,16 +1,55 @@
 import subprocess
 import os
-from cog import BaseModel, Input, Path
 import shutil
 import tarfile
 import tempfile
-from typing import NamedTuple
+import zipfile
+import json
 
+
+from cog import BaseModel, Input, Path
 from llava.utils import disable_torch_init
 from file_utils import is_url, download_file, download_weights, REPLICATE_WEIGHTS_URL, DEFAULT_WEIGHTS
 
 # we don't use the huggingface hub cache, but we need to set this to a local folder
 os.environ["HUGGINGFACE_HUB_CACHE"] = os.getcwd() + "/models"
+
+def check_zip_contents(zip_path):
+    # Check if the ZIP file contains 'data.json' and a folder named 'images' in root
+    error_msgs = []
+    train_data_has_right_structure = True
+    try:
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            # List all contents of the zip file
+            zip_contents = zip_ref.namelist()
+
+            if "data.json" not in zip_contents:
+                wrong_locations = [item for item in zip_contents if "data.json" in item]
+                data_json_msg = f"{zip_path} does not contain a file named data.json in root. This file might be in the wrong location: {', '.join(wrong_locations)}"
+                error_msgs.append(data_json_msg)
+                train_data_has_right_structure = False
+
+            if "images/" not in zip_contents:
+                images_folder_msg = f"{zip_path} does not contain a folder named images in root."
+                error_msgs.append(images_folder_msg)
+                train_data_has_right_structure = False
+
+            if "data.json" in zip_contents:
+                # Read and load the content of 'data.json'
+                with zip_ref.open("data.json", 'r') as data_json_file:
+                    data_json_content = json.load(data_json_file)
+                for datapoint in data_json_content:
+                    img_filename = "images/" + datapoint.get('image')
+                    if not img_filename in zip_contents:
+                        missing_file_str = f"data.json refers to image {img_filename}, but this file is missing in {zip_path}"
+                        error_msgs.append(missing_file_str)
+                        train_data_has_right_structure = False
+    except zipfile.BadZipFile:
+        badzip_msg = f"File '{zip_path}' is not a valid ZIP file or is corrupted."
+        error_msgs.append(badzip_msg)
+        print(badzip_msg)
+        train_data_has_right_structure = False
+    return train_data_has_right_structure, error_msgs
 
 def run_training(
         image_folder: Path,
@@ -84,6 +123,11 @@ def train(
     learning_rate: float = Input(description="The learning rate during training", ge=1e-10, default=2e-4),
     model_max_length: int = Input(description="The maximum length (in number of tokens) for the inputs to the model.", ge=1, default=2048),
     ) -> TrainingOutput:
+    
+    # check the structure of the train_data zipfile
+    train_data_has_right_structure, errors = check_zip_contents(train_data)
+    if not train_data_has_right_structure:
+        raise ValueError(f"There was a problem with the training data in {train_data}:\n\n" + "\n".join(errors))
     
     # download base models
     for weight in DEFAULT_WEIGHTS:
