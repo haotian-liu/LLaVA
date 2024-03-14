@@ -3,12 +3,11 @@
 deepspeed llava/train/train-flash_attention_2.py \
   --lora_enable True --lora_r 128 --lora_alpha 256 --mm_projector_lr 2e-5 \
   --deepspeed ./scripts/zero3.json \
-  --model_name_or_path mistralai/Mistral-7B-v0.1 \
+  --model_name_or_path liuhaotian/llava-v1.6-mistral-7b \
   --version plain \
   --data_path ./playground/data/train/finetune/hand_picked/science_qa_finetune.json \
-  --image_folder ./playground/data/train/finetune/hand_picked/images \
+  --image_folder ./playground/data/train/finetune/images \
   --vision_tower openai/clip-vit-large-patch14-336 \
-  --pretrain_mm_mlp_adapter ./checkpoints/llava-mistral-7b-pretrain/mm_projector.bin \
   --mm_projector_type mlp2x_gelu \
   --mm_vision_select_layer -2 \
   --mm_use_im_start_end False \
@@ -24,7 +23,7 @@ deepspeed llava/train/train-flash_attention_2.py \
   --evaluation_strategy "no" \
   --save_strategy "epoch" \
   --save_steps 1 \
-  --save_total_limit 6 \
+  --save_total_limit 1 \
   --learning_rate 2e-5 \
   --weight_decay 0. \
   --warmup_ratio 0.03 \

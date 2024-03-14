@@ -29,11 +29,49 @@ def get_pred_idx(prediction, choices, options):
     """
     Get the index (e.g. 2) from the prediction (e.g. 'C')
     """
+    # Remove any newline characters from the prediction
+    prediction = prediction.replace('\n', '. ')
+    
+    # Check if the prediction is a single letter option
     if prediction in options[:len(choices)]:
         return options.index(prediction)
-    else:
-        return -1
-        return random.choice(range(len(choices)))
+    
+    # Check if the prediction starts with an option letter followed by a period and space
+    pattern = re.compile(r'^([A-E])\. ')
+    match = pattern.search(prediction)
+    if match:
+        option_letter = match.group(1)
+        if option_letter in options[:len(choices)]:
+            return options.index(option_letter)
+    
+    # Check if the prediction contains "The answer is [option]."
+    pattern = re.compile(r'The answer is ([A-E])\.')
+    match = pattern.search(prediction)
+    if match:
+        option_letter = match.group(1)
+        if option_letter in options[:len(choices)]:
+            return options.index(option_letter)
+    
+    # Check if the prediction contains "The answer is [option]"
+    pattern = re.compile(r'The answer is ([A-E])')
+    match = pattern.search(prediction)
+    if match:
+        option_letter = match.group(1)
+        if option_letter in options[:len(choices)]:
+            return options.index(option_letter)
+    
+    # If none of the patterns match, return -1 (or a random index if you prefer)
+    return -1
+    
+# def get_pred_idx(prediction, choices, options):
+#     """
+#     Get the index (e.g. 2) from the prediction (e.g. 'C')
+#     """
+#     if prediction in options[:len(choices)]:
+#         return options.index(prediction)
+#     else:
+#         return -1
+#         return random.choice(range(len(choices)))
 
 
 if __name__ == "__main__":
@@ -60,19 +98,33 @@ if __name__ == "__main__":
             pred_text = 'FAILED'
         else:
             pred = predictions[prob_id]
-            pred_text = pred['text']
-
-        if pred_text in args.options:
-            answer = pred_text
+            pred_text = pred['text'].replace('\n', '. ')  # Replace newlines with spaces
+        
+        # Check if the prediction text is a single letter option
+        if pred_text.strip() in args.options:
+            answer = pred_text.strip()
         elif len(pred_text) >= 3 and pred_text[0] in args.options and pred_text[1:3] == ". ":
+            # Check if the prediction text starts with an option letter followed by a period and space
             answer = pred_text[0]
-        else:
-            pattern = re.compile(r'The answer is ([A-Z]).')
-            res = pattern.findall(pred_text)
-            if len(res) == 1:
-                answer = res[0]  # 'A', 'B', ...
+        elif 'The answer is ' in pred_text:
+            # Check if the prediction text contains "The answer is [option]." or "The answer is [option]"
+            pattern = re.compile(r'The answer is ([A-E])\.')
+            match = pattern.search(pred_text)
+            if match:
+                option_letter = match.group(1)
+                if option_letter in args.options:
+                    answer = option_letter
             else:
-                answer = "FAILED"
+                pattern = re.compile(r'The answer is ([A-E])')
+                match = pattern.search(pred_text)
+                if match:
+                    option_letter = match.group(1)
+                    if option_letter in args.options:
+                        answer = option_letter
+                else:
+                    answer = "FAILED"
+        else:
+            answer = "FAILED"
 
         pred_idx = get_pred_idx(answer, prob['choices'], args.options)
 

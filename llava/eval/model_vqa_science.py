@@ -46,7 +46,14 @@ def eval_model(args):
 
     # Creating the answers file if it doesn't exist
     answers_file = os.path.expanduser(args.answers_file)
-    os.makedirs(os.path.dirname(answers_file), exist_ok=True)
+
+    directory = os.path.dirname(answers_file)
+
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+
+    # os.makedirs(os.path.dirname(answers_file), exist_ok=True)
 
     generation_config = GenerationConfig( from_model_config=True, 
                             bos_token_id=1, 
@@ -102,14 +109,14 @@ def eval_model(args):
 
         # Tokenize the images and the prompt
         input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).cuda()
-        attention_mask = (input_ids != tokenizer.pad_token_id).long()
+        # attention_mask = (input_ids != tokenizer.pad_token_id)
 
         # Generate the answer
         with torch.inference_mode():
             model.config.pad_token_id = tokenizer.pad_token_id
             output_ids = model.generate(
                 input_ids,
-                attention_mask=attention_mask,
+                # attention_mask=attention_mask,
                 images=images,
                 image_sizes=image_sizes,
                 do_sample=True if args.temperature > 0 else False,

@@ -6,7 +6,7 @@ deepspeed llava/train/train-flash_attention_2.py \
   --model_name_or_path liuhaotian/llava-v1.6-mistral-7b \
   --version plain \
   --data_path ./playground/data/train/finetune/l2_distance/science_qa_finetune.json \
-  --image_folder ./playground/data/train/finetune/l2_distance/images \
+  --image_folder ./playground/data/train/finetune/images \
   --vision_tower openai/clip-vit-large-patch14-336 \
   --mm_projector_type mlp2x_gelu \
   --mm_vision_select_layer -2 \
@@ -15,7 +15,7 @@ deepspeed llava/train/train-flash_attention_2.py \
   --image_aspect_ratio pad \
   --group_by_modality_length True \
   --bf16 True \
-  --output_dir ./checkpoints/llava-mistral-7b-l2-distance-2 \
+  --output_dir ./checkpoints/llava-mistral-7b-lora-l2-distance \
   --num_train_epochs 5 \
   --per_device_train_batch_size 8 \
   --per_device_eval_batch_size 4 \
@@ -23,7 +23,7 @@ deepspeed llava/train/train-flash_attention_2.py \
   --evaluation_strategy "no" \
   --save_strategy "epoch" \
   --save_steps 1 \
-  --save_total_limit 6 \
+  --save_total_limit 1 \
   --learning_rate 2e-5 \
   --weight_decay 0. \
   --warmup_ratio 0.03 \
