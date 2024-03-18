@@ -7,24 +7,14 @@ More info about LLaVA can be found below.
 - [CUDA 11.7](https://developer.nvidia.com/cuda-11-7-0-download-archive)
 
 ## Installation
-1. Clone this repository
-2. Create a virtual environment
+1. Clone this repository and navigate to Fluffyvision folder
 ```bash
-py -3.9 -m venv myenv
+git clone https://github.com/W-Jonas/Fluffyvision
+cd Fluffyvision
 ```
-3. Activate the virtual environment
-```bash
-myenv\Scripts\activate
-```
-4. Install the required packages
-```bash
-pip install -r requirements.txt
-```
-5. Run the application
-```bash
-python predictLLaVA.py
-```
+2. Run the setup-env.bat file to create a virtual environment and install the required packages
 
+3. Run the start-fluffy.bat file to start the application
 
 # 🌋 LLaVA: Large Language and Vision Assistant
 
