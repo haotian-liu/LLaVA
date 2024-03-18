@@ -24,7 +24,8 @@ model_path = "liuhaotian/llava-v1.6-mistral-7b"
 tokenizer, model, image_processor, context_len = load_pretrained_model(
     model_path=model_path,
     model_base=None,
-    model_name=get_model_name_from_path(model_path)
+    model_name=get_model_name_from_path(model_path),
+    load_4bit=True
 )
 
 instruction = ""
