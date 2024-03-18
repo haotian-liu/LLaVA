@@ -2,6 +2,10 @@
 Fluffyvision makes it easy to use LLaVA by integrating a GUI that lets you choose a directory along with an instruction and it will generate a response for each image in the directory.
 More info about LLaVA can be found below.
 
+## Requirements
+- [Python 3.9](https://www.python.org/downloads/release/python-390/)
+- [CUDA 11.7](https://developer.nvidia.com/cuda-11-7-0-download-archive)
+
 ## Installation
 1. Clone this repository
 2. Create a virtual environment
