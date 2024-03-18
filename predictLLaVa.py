@@ -28,6 +28,7 @@ tokenizer, model, image_processor, context_len = load_pretrained_model(
     load_4bit=True
 )
 
+
 instruction = ""
 
 # Define the query
