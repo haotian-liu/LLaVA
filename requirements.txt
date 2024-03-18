@@ -7,3 +7,6 @@ accelerate>=0.28.0
 torch==2.0.1+cu117
 torchvision==0.15.2+cu117
 torchaudio==2.0.2
+bitsandbytes-cuda117>=0.26.0.post2
+bitsandbytes-windows>=0.37.5
+bitsandbytes>=0.43.0
