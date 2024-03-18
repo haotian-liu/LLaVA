@@ -2,6 +2,25 @@
 Fluffyvision makes it easy to use LLaVA by integrating a GUI that lets you choose a directory along with an instruction and it will generate a response for each image in the directory.
 More info about LLaVA can be found below.
 
+## Installation
+1. Clone this repository
+2. Create a virtual environment
+```bash
+py -3.9 -m venv myenv
+```
+3. Activate the virtual environment
+```bash
+myenv\Scripts\activate
+```
+4. Install the required packages
+```bash
+pip install -r requirements.txt
+```
+5. Run the application
+```bash
+python predictLLaVA.py
+```
+
 # 🌋 LLaVA: Large Language and Vision Assistant
 
 *Visual instruction tuning towards large language and vision models with GPT-4 level capabilities.*

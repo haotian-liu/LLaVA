@@ -15,6 +15,10 @@ from deep_translator import GoogleTranslator
 
 warnings.filterwarnings("ignore")
 
+# Set the device
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f"Running on {device}")
+
 # Load the pretrained model
 model_path = "liuhaotian/llava-v1.6-mistral-7b"
 tokenizer, model, image_processor, context_len = load_pretrained_model(

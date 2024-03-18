@@ -1,5 +1,9 @@
-tkinter
-Pillow
-torch
-deep_translator
-llava
+--extra-index-url https://download.pytorch.org/whl/cu117
+Pillow>=8.3.2
+deep_translator>=1.4.4
+numpy>=1.25.0
+transformers>=4.38.2
+accelerate>=0.28.0
+torch==2.0.1+cu117
+torchvision==0.15.2+cu117
+torchaudio==2.0.2
