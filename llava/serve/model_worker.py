@@ -64,7 +64,7 @@ class ModelWorker:
         logger.info(f"Loading the model {self.model_name} on worker {worker_id} ...")
         self.tokenizer, self.model, self.image_processor, self.context_len = load_pretrained_model(
             model_path, model_base, self.model_name, load_8bit, load_4bit, device=self.device, use_flash_attn=use_flash_attn)
-        self.is_multimodal = 'llava' in self.model_name.lower()
+        self.is_multimodal = 'llava' in self.model_name.lower() or 'surav' in self.model_name.lower()
 
         if not no_register:
             self.register_to_controller()
@@ -127,6 +127,7 @@ class ModelWorker:
         ori_prompt = prompt
         images = params.get("images", None)
         num_image_tokens = 0
+        
         if images is not None and len(images) > 0 and self.is_multimodal:
             if len(images) > 0:
                 if len(images) != prompt.count(DEFAULT_IMAGE_TOKEN):
