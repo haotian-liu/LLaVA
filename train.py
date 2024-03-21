@@ -124,23 +124,6 @@ def train(
     model_max_length: int = Input(description="The maximum length (in number of tokens) for the inputs to the model.", ge=1, default=2048),
     ) -> TrainingOutput:
     
-    # check the structure of the train_data zipfile
-    train_data_has_right_structure, errors = check_zip_contents(train_data)
-    if not train_data_has_right_structure:
-        raise ValueError(f"There was a problem with the training data in {train_data}:\n\n" + "\n".join(errors))
-    
-    # download base models
-    for weight in DEFAULT_WEIGHTS:
-        download_weights(weight["src"], weight["dest"], weight["files"])
-    disable_torch_init()
-    
-    # Path to the weights file
-    weights_file = Path("my_weights.tar")
-
-    # Remove old output tar if it exists
-    if weights_file.exists():
-        weights_file.unlink()
-
     # Create a temporary directory to unzip train_data
     with tempfile.TemporaryDirectory() as tmp_dir_name:
         tmp_dir = Path(tmp_dir_name)
@@ -152,8 +135,24 @@ def train(
         else:
             local_train_data_path = Path(train_data)
 
+        # check the structure of the train_data zipfile
+        train_data_has_right_structure, errors = check_zip_contents(local_train_data_path)
+        if not train_data_has_right_structure:
+            raise ValueError(f"There was a problem with the training data in {train_data}:\n\n" + "\n".join(errors))
+
+        # download base models
+        for weight in DEFAULT_WEIGHTS:
+            download_weights(weight["src"], weight["dest"], weight["files"])
+        disable_torch_init()
+ 
+        # Path to the weights file
+        weights_file = Path("my_weights.tar")
+
+        # Remove old output tar if it exists
+        if weights_file.exists():
+            weights_file.unlink()
+
         # Unzip train_data into tmp_dir
-        # todo think about safety
         shutil.unpack_archive(str(local_train_data_path), tmp_dir)
 
         # Define paths to data_path, image_folder, and output_dir within tmp_dir
