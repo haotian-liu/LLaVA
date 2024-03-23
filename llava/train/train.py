@@ -16,7 +16,10 @@
 
 import os
 import sys
-sys.path.append('/content/LLaVA/llava/')
+try:
+    sys.path.append('/content/LLaVA/llava/')
+except:
+    pass
 import copy
 from dataclasses import dataclass, field
 import json
