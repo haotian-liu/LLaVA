@@ -14,20 +14,22 @@
 # MODEL_VERSION="llama-2-7b-chat"
 ################## LLaMA-2 ##################
 
-deepspeed llava/train/train_mem.py \
-    --deepspeed ./scripts/zero2.json \
-    --lora_enable True \
-    --model_name_or_path ./checkpoints/$MODEL_VERSION \
-    --version $PROMPT_VERSION \
-    --data_path ./playground/data/llava_instruct_80k.json \
-    --image_folder /path/to/coco/train2017 \
-    --vision_tower openai/clip-vit-large-patch14 \
-    --pretrain_mm_mlp_adapter ./checkpoints/llava-$MODEL_VERSION-pretrain/mm_projector.bin \
+!deepspeed LLaVA/llava/train/train_mem.py \
+    --lora_enable True --lora_r 128 --lora_alpha 256 --mm_projector_lr 2e-5 \
+    --deepspeed LLaVA/scripts/zero3.json \
+    --model_name_or_path liuhaotian/llava-v1.5-13b \
+    --version v1 \
+    --data_path LLaVA/playground/data/llava_v1_5_mix665k.json \
+    --image_folder LLaVA/playground/data \
+    --vision_tower openai/clip-vit-large-patch14-336 \
+    --mm_projector_type mlp2x_gelu \
     --mm_vision_select_layer -2 \
     --mm_use_im_start_end False \
     --mm_use_im_patch_token False \
+    --image_aspect_ratio pad \
+    --group_by_modality_length True \
     --bf16 True \
-    --output_dir ./checkpoints/llava-$MODEL_VERSION-finetune_lora \
+    --output_dir LLaVA/checkpoints/llava-v1.5-13b-task-lora \
     --num_train_epochs 1 \
     --per_device_train_batch_size 16 \
     --per_device_eval_batch_size 4 \
@@ -36,7 +38,7 @@ deepspeed llava/train/train_mem.py \
     --save_strategy "steps" \
     --save_steps 50000 \
     --save_total_limit 1 \
-    --learning_rate 2e-5 \
+    --learning_rate 2e-4 \
     --weight_decay 0. \
     --warmup_ratio 0.03 \
     --lr_scheduler_type "cosine" \
@@ -44,6 +46,6 @@ deepspeed llava/train/train_mem.py \
     --tf32 True \
     --model_max_length 2048 \
     --gradient_checkpointing True \
-    --lazy_preprocess True \
     --dataloader_num_workers 4 \
+    --lazy_preprocess True \
     --report_to wandb
