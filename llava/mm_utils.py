@@ -6,7 +6,11 @@ import math
 import ast
 
 import sys
-sys.path.append('/content/LLaVA/llava/')
+try:
+    sys.path.append('/content/LLaVA/llava/')
+except:
+    pass
+
 from transformers import StoppingCriteria
 from constants import IMAGE_TOKEN_INDEX
 
