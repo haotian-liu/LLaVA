@@ -25,6 +25,7 @@ from llava.constants import IGNORE_INDEX, IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_PATCH
 
 from llava.mm_utils import get_anyres_image_grid_shape
 
+from transformers.integrations import is_deepspeed_zero3_enabled
 
 class LlavaMetaModel:
 
@@ -94,7 +95,12 @@ class LlavaMetaModel:
             def get_w(weights, keyword):
                 return {k.split(keyword + '.')[1]: v for k, v in weights.items() if keyword in k}
 
-            self.mm_projector.load_state_dict(get_w(mm_projector_weights, 'mm_projector'))
+            if is_deepspeed_zero3_enabled():
+                import deepspeed
+                with deepspeed.zero.GatheredParameters(self.mm_projector.parameters(), modifier_rank=0):
+                    self.mm_projector.load_state_dict(get_w(mm_projector_weights, 'mm_projector'))
+            else:
+                self.mm_projector.load_state_dict(get_w(mm_projector_weights, 'mm_projector'))
 
 
 def unpad_image(tensor, original_size):
