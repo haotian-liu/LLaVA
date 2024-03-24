@@ -97,7 +97,8 @@ pip install flash-attn --no-build-isolation
 git pull
 pip install -e .
 
-# if you see some import errors when you upgrade, please try running the command below (without #)
+# if you see some import errors when you upgrade,
+# please try running the command below (without #)
 # pip install flash-attn --no-build-isolation --no-cache-dir
 ```
 
