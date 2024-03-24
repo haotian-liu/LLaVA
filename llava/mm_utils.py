@@ -5,9 +5,14 @@ import torch
 import math
 import ast
 
-from transformers import StoppingCriteria
-from llava.constants import IMAGE_TOKEN_INDEX
+import sys
+try:
+    sys.path.append('/content/LLaVA/llava/')
+except:
+    pass
 
+from transformers import StoppingCriteria
+from constants import IMAGE_TOKEN_INDEX
 
 def select_best_resolution(original_size, possible_resolutions):
     """
