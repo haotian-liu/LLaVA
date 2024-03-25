@@ -824,7 +824,7 @@ def train(attn_implementation=None):
                 **bnb_model_from_pretrained_args
             )
         else:
-            model = LlavaLlamaForCausalLM.from_pretrained(
+            model = LlavaQwen2ForCausalLM.from_pretrained(
                 model_args.model_name_or_path,
                 cache_dir=training_args.cache_dir,
                 attn_implementation=attn_implementation,
@@ -832,7 +832,7 @@ def train(attn_implementation=None):
                 **bnb_model_from_pretrained_args
             )
     else:
-        model = transformers.LlamaForCausalLM.from_pretrained(
+        model = transformers.Qwen2ForCausalLM.from_pretrained(
             model_args.model_name_or_path,
             cache_dir=training_args.cache_dir,
             attn_implementation=attn_implementation,
@@ -901,7 +901,10 @@ def train(attn_implementation=None):
     elif model_args.version == "v0.5":
         tokenizer.pad_token = tokenizer.unk_token
     else:
-        tokenizer.pad_token = tokenizer.unk_token
+        if tokenizer.unk_token:
+            tokenizer.pad_token = tokenizer.unk_token
+        else: # use qwen
+            tokenizer.legacy = False
         if model_args.version in conversation_lib.conv_templates:
             conversation_lib.default_conversation = conversation_lib.conv_templates[model_args.version]
         else:
