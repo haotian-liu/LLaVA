@@ -151,7 +151,7 @@ def add_text(state, text, image, image_process_mode, request: gr.Request):
     return (state, state.to_gradio_chatbot(), "", None) + (disable_btn,) * 5
 
 
-def http_bot(state, model_selector, temperature, top_p, max_new_tokens, request: gr.Request):
+def http_bot(state, model_selector, temperature, top_p, top_k, max_new_tokens, request: gr.Request):
     logger.info(f"http_bot. ip: {request.client.host}")
     start_tstamp = time.time()
     model_name = model_selector
@@ -166,13 +166,15 @@ def http_bot(state, model_selector, temperature, top_p, max_new_tokens, request:
         if "llava" in model_name.lower():
             if 'llama-2' in model_name.lower():
                 template_name = "llava_llama_2"
-            elif "mistral" in model_name.lower() or "mixtral" in model_name.lower():
+            elif "mistral" in model_name.lower() or "mix" in model_name.lower():
                 if 'orca' in model_name.lower():
                     template_name = "mistral_orca"
                 elif 'hermes' in model_name.lower():
                     template_name = "chatml_direct"
                 else:
                     template_name = "mistral_instruct"
+            elif "gem" in model_name.lower():
+                template_name = "gemma_instruct"
             elif 'llava-v1.6-34b' in model_name.lower():
                 template_name = "chatml_direct"
             elif "v1" in model_name.lower():
@@ -233,8 +235,10 @@ def http_bot(state, model_selector, temperature, top_p, max_new_tokens, request:
         "prompt": prompt,
         "temperature": float(temperature),
         "top_p": float(top_p),
+        "top_k": float(top_k),
+        "repetition_penalty": 1.0,
         "max_new_tokens": min(int(max_new_tokens), 1536),
-        "stop": state.sep if state.sep_style in [SeparatorStyle.SINGLE, SeparatorStyle.MPT] else state.sep2,
+        "stop": state.sep if state.sep_style in [SeparatorStyle.SINGLE, SeparatorStyle.MPT, SeparatorStyle.GEMMA] else state.sep2,
         "images": f'List of {len(state.get_images())} images: {all_image_hash}',
     }
     logger.info(f"==== request ====\n{pload}")
@@ -285,9 +289,12 @@ def http_bot(state, model_selector, temperature, top_p, max_new_tokens, request:
         }
         fout.write(json.dumps(data) + "\n")
 
+# title_markdown = ("""
+# # 🌋 LLaVA: Large Language and Vision Assistant
+# [[Project Page](https://llava-vl.github.io)] [[Code](https://github.com/haotian-liu/LLaVA)] [[Model](https://github.com/haotian-liu/LLaVA/blob/main/docs/MODEL_ZOO.md)] | 📚 [[LLaVA](https://arxiv.org/abs/2304.08485)] [[LLaVA-v1.5](https://arxiv.org/abs/2310.03744)] [[LLaVA-v1.6](https://llava-vl.github.io/blog/2024-01-30-llava-1-6/)]
+# """)
 title_markdown = ("""
-# 🌋 LLaVA: Large Language and Vision Assistant
-[[Project Page](https://llava-vl.github.io)] [[Code](https://github.com/haotian-liu/LLaVA)] [[Model](https://github.com/haotian-liu/LLaVA/blob/main/docs/MODEL_ZOO.md)] | 📚 [[LLaVA](https://arxiv.org/abs/2304.08485)] [[LLaVA-v1.5](https://arxiv.org/abs/2310.03744)] [[LLaVA-v1.6](https://llava-vl.github.io/blog/2024-01-30-llava-1-6/)]
+# URA x Vision: The new multimodal Large Language Models for Vietnamese
 """)
 
 tos_markdown = ("""
@@ -314,7 +321,7 @@ block_css = """
 
 def build_demo(embed_mode, cur_dir=None, concurrency_count=10):
     textbox = gr.Textbox(show_label=False, placeholder="Enter text and press ENTER", container=False)
-    with gr.Blocks(title="LLaVA", theme=gr.themes.Default(), css=block_css) as demo:
+    with gr.Blocks(title="URA x Vision", theme=gr.themes.Default(), css=block_css) as demo:
         state = gr.State()
 
         if not embed_mode:
@@ -345,8 +352,9 @@ def build_demo(embed_mode, cur_dir=None, concurrency_count=10):
 
                 with gr.Accordion("Parameters", open=False) as parameter_row:
                     temperature = gr.Slider(minimum=0.0, maximum=1.0, value=0.2, step=0.1, interactive=True, label="Temperature",)
-                    top_p = gr.Slider(minimum=0.0, maximum=1.0, value=0.7, step=0.1, interactive=True, label="Top P",)
-                    max_output_tokens = gr.Slider(minimum=0, maximum=1024, value=512, step=64, interactive=True, label="Max output tokens",)
+                    top_p = gr.Slider(minimum=0.0, maximum=1.0, value=1.0, step=0.05, interactive=False, label="Top P",)
+                    top_k = gr.Slider(minimum=1, maximum=50, value=50, step=1, interactive=False, label="Top K",)
+                    max_output_tokens = gr.Slider(minimum=0, maximum=2048, value=512, step=64, interactive=True, label="Max output tokens",)
 
             with gr.Column(scale=8):
                 chatbot = gr.Chatbot(
@@ -397,7 +405,7 @@ def build_demo(embed_mode, cur_dir=None, concurrency_count=10):
             [state, chatbot, textbox, imagebox] + btn_list
         ).then(
             http_bot,
-            [state, model_selector, temperature, top_p, max_output_tokens],
+            [state, model_selector, temperature, top_p, top_k, max_output_tokens],
             [state, chatbot] + btn_list,
             concurrency_limit=concurrency_count
         )
@@ -416,7 +424,7 @@ def build_demo(embed_mode, cur_dir=None, concurrency_count=10):
             queue=False
         ).then(
             http_bot,
-            [state, model_selector, temperature, top_p, max_output_tokens],
+            [state, model_selector, temperature, top_p, top_k, max_output_tokens],
             [state, chatbot] + btn_list,
             concurrency_limit=concurrency_count
         )
@@ -427,7 +435,7 @@ def build_demo(embed_mode, cur_dir=None, concurrency_count=10):
             [state, chatbot, textbox, imagebox] + btn_list
         ).then(
             http_bot,
-            [state, model_selector, temperature, top_p, max_output_tokens],
+            [state, model_selector, temperature, top_p, top_k, max_output_tokens],
             [state, chatbot] + btn_list,
             concurrency_limit=concurrency_count
         )
