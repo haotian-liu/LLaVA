@@ -16,7 +16,7 @@ conda create -n llava python=3.10 -y
 conda activate llava
 python -mpip install --upgrade pip  # enable PEP 660 support
 pip install -e .
-pip install torch==2.1.0 torchvision==0.16.0
+pip install torch==2.1.2 torchvision==0.16.2
 pip uninstall bitsandbytes
 ```
 
