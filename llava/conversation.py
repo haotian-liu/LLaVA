@@ -13,7 +13,7 @@ class SeparatorStyle(Enum):
     MPT = auto()
     PLAIN = auto()
     LLAMA_2 = auto()
-
+    biomistral =auto()
 
 @dataclasses.dataclass
 class Conversation:
@@ -357,7 +357,15 @@ conv_mistral_instruct = Conversation(
     sep="",
     sep2="</s>",
 )
-
+conv_biomistral = Conversation(
+    system="""<s> [INST] system Answer the questions.<s>""",
+    roles=("[INST]user\n", "[/INST]assistant\n"),
+    version="mistral",
+    messages=(),
+    offset=0,
+    sep_style=SeparatorStyle.biomistral,
+    sep="<s>",
+)
 conv_chatml_direct = Conversation(
     system="""<|im_start|>system
 Answer the questions.""",
@@ -379,7 +387,7 @@ conv_templates = {
     "mistral_instruct": conv_mistral_instruct,
     "chatml_direct": conv_chatml_direct,
     "mistral_direct": conv_chatml_direct,
-
+    "mistral_bio":conv_biomistral,
     "plain": conv_llava_plain,
     "v0_plain": conv_llava_plain,
     "llava_v0": conv_llava_v0,
