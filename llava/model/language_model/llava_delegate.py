@@ -35,6 +35,9 @@ class DelegatingLlavaModel(nn.Module, LlavaMetaModel):
             config, trust_remote_code=True, **kwargs
         )
 
+    def embed_tokens(self, x):
+        return self.lm.embed_tokens(x)
+
 
 class DelegatingLlavaForCausalLM(nn.Module, LlavaMetaForCausalLM):
 
@@ -56,6 +59,14 @@ class DelegatingLlavaForCausalLM(nn.Module, LlavaMetaForCausalLM):
 
     def get_input_embeddings(self):
         return self.model.lm.get_input_embeddings()
+
+    def get_output_embeddings(self):
+        return self.model.lm.get_output_embeddings()
+
+    def requires_grad_(self, requires_grad: bool = True):
+        self.model.vision_tower.requires_grad_(requires_grad)
+        self.model.mm_projector.requires_grad_(requires_grad)
+        self.model.lm.requires_grad_(requires_grad)
 
     def forward(
         self,
