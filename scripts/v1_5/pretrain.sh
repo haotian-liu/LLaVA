@@ -1,20 +1,21 @@
 #!/bin/bash
 
 lm=$1            # lmsys/vicuna-13b-v1.5
-data_path=$2     # ./playground/data/LLaVA-Pretrain/blip_laion_cc_sbu_558k.json
-image_folder=$3  # ./playground/data/LLaVA-Pretrain/images
-output_dir=$4    # ./checkpoints/llava-v1.5-13b-pretrain
+version=$2       # plain (or baichuan-2_)
+data_path=$3     # ./playground/data/LLaVA-Pretrain/blip_laion_cc_sbu_558k.json
+image_folder=$4  # ./playground/data/LLaVA-Pretrain/images
+output_dir=$5    # ./checkpoints/llava-v1.5-13b-pretrain
 
 # this script assumes you're running with 4 40GB A100 GPUs
-# (pre-training should take < 16 hours as it took ~3.5 w/ 8 80GB A100s)
+# (pre-training takes around ~11 hours with this configuration)
 
 # TODO: specify and support a new version for LM specific conversation
 # styling and system messages (needs to be implemented in conversation.py)
 
-deepspeed llava/train/train_mem.py \
+deepspeed llava/train/train.py \
     --deepspeed ./scripts/zero2.json \
     --model_name_or_path $lm \
-    --version plain \
+    --version $version \
     --data_path $data_path \
     --image_folder $image_folder \
     --vision_tower openai/clip-vit-large-patch14-336 \
