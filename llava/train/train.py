@@ -903,7 +903,7 @@ def train(attn_implementation=None):
                 **bnb_model_from_pretrained_args, **kwargs
             )
             model = DelegatingLlavaForCausalLM(
-                config, **kwargs
+                config, training_args.device, **kwargs
             )
         else:
             model = LlavaLlamaForCausalLM.from_pretrained(

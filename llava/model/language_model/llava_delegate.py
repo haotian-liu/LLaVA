@@ -36,15 +36,16 @@ class DelegatingLlavaModel(nn.Module, LlavaMetaModel):
         )
 
     def embed_tokens(self, x):
-        return self.lm.embed_tokens(x)
+        return self.lm.get_input_embeddings()(x)
 
 
 class DelegatingLlavaForCausalLM(nn.Module, LlavaMetaForCausalLM):
 
-    def __init__(self, config, **kwargs):
+    def __init__(self, config, device, **kwargs):
         super().__init__()
 
         self.config = config
+        self.device = device
 
         self.model = DelegatingLlavaModel(config, **kwargs)
         self.lm_head = nn.Linear(
@@ -107,7 +108,7 @@ class DelegatingLlavaForCausalLM(nn.Module, LlavaMetaForCausalLM):
                 image_sizes
             )
 
-        self.model.lm(
+        return self.model.lm(
             input_ids=input_ids,
             attention_mask=attention_mask,
             position_ids=position_ids,
@@ -153,7 +154,7 @@ class DelegatingLlavaForCausalLM(nn.Module, LlavaMetaForCausalLM):
         else:
             inputs_embeds = self.get_model().embed_tokens(inputs)
 
-        self.model.lm.generate(
+        return self.model.lm.generate(
             position_ids=position_ids,
             attention_mask=attention_mask,
             inputs_embeds=inputs_embeds,
