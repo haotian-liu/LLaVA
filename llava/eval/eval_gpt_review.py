@@ -3,17 +3,21 @@ import json
 import os
 
 import openai
+from openai import OpenAI
 import tqdm
 import ray
 import time
 
 NUM_SECONDS_TO_SLEEP = 3
+api_key = "Your API Key"
+client = OpenAI(api_key=api_key)
+
 
 @ray.remote(num_cpus=4)
 def get_eval(content: str, max_tokens: int):
     while True:
         try:
-            response = openai.ChatCompletion.create(
+            response = client.chat.completions.create(
                 model='gpt-4',
                 messages=[{
                     'role': 'system',
@@ -33,7 +37,7 @@ def get_eval(content: str, max_tokens: int):
         time.sleep(NUM_SECONDS_TO_SLEEP)
 
     print('success!')
-    return response['choices'][0]['message']['content']
+    return response.choices[0].message.content
 
 
 def parse_score(review):
