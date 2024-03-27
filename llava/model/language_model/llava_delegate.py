@@ -68,6 +68,11 @@ class DelegatingLlavaForCausalLM(nn.Module, LlavaMetaForCausalLM):
         self.model.mm_projector.requires_grad_(requires_grad)
         self.model.lm.requires_grad_(requires_grad)
 
+    def gradient_checkpointing_enable(self, gradient_checkpointing_kwargs):
+        self.model.lm.gradient_checkpointing_enable(
+            gradient_checkpointing_kwargs=gradient_checkpointing_kwargs
+        )
+
     def forward(
         self,
         input_ids: torch.LongTensor = None,
