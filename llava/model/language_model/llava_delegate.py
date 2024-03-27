@@ -49,10 +49,13 @@ class DelegatingLlavaForCausalLM(nn.Module, LlavaMetaForCausalLM):
         )
 
         # Initialize weights and apply final processing
-        self.post_init()
+        self.model.lm.post_init()
 
     def get_model(self):
         return self.model
+
+    def get_input_embeddings(self):
+        return self.model.lm.get_input_embeddings()
 
     def forward(
         self,
@@ -145,7 +148,7 @@ class DelegatingLlavaForCausalLM(nn.Module, LlavaMetaForCausalLM):
                                       inputs_embeds=None, **kwargs):
         images = kwargs.pop("images", None)
         image_sizes = kwargs.pop("image_sizes", None)
-        inputs = self.model.lm..prepare_inputs_for_generation(
+        inputs = self.model.lm.prepare_inputs_for_generation(
             input_ids, past_key_values=past_key_values, inputs_embeds=inputs_embeds, **kwargs
         )
         if images is not None:

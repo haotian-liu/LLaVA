@@ -27,6 +27,8 @@ import torch
 import transformers
 import tokenizers
 
+from transformers import AutoConfig
+
 from llava.constants import IGNORE_INDEX, IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
 from torch.utils.data import Dataset
 from llava.train.llava_trainer import LLaVATrainer
@@ -897,7 +899,7 @@ def train(attn_implementation=None):
                 "torch_dtype": (torch.bfloat16 if training_args.bf16 else None)
             }
             config = AutoConfig.from_pretrained(
-                model_args.model_name_or_path,
+                model_args.model_name_or_path, trust_remote_code=True,
                 **bnb_model_from_pretrained_args, **kwargs
             )
             model = DelegatingLlavaForCausalLM(
