@@ -561,6 +561,14 @@ def preprocess_mpt(
 
     if has_image:
         input_ids = torch.stack([tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt') for prompt in conversations], dim=0)
+    else:
+        input_ids = tokenizer(
+            conversations,
+            return_tensors="pt",
+            padding="longest",
+            max_length=tokenizer.model_max_length,
+            truncation=True,
+        ).input_ids
         
     targets = input_ids.clone()
     assert conv.sep_style == conversation_lib.SeparatorStyle.MPT
