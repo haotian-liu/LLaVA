@@ -17,8 +17,6 @@ from llava.mm_utils import (
     get_model_name_from_path,
 )
 
-from PIL import Image
-
 import requests
 from PIL import Image
 from io import BytesIO
