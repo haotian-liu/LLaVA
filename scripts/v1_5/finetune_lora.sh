@@ -1,14 +1,23 @@
 #!/bin/bash
 
+lm=$1            # lmsys/vicuna-13b-v1.5
+projector=$2     # ./checkpoints/llava-v1.5-13b-pretrain/mm_projector.bin
+data_path=$2     # ./playground/data/LLaVA-Pretrain/blip_laion_cc_sbu_558k.json
+image_folder=$3  # ./playground/data/LLaVA-Pretrain/images
+output_dir=$4    # ./checkpoints/llava-v1.5-13b-pretrain
+
+# this script assumes you're running with 4 40GB A100 GPUs
+# (pre-training should take < 16 hours as it took ~3.5 w/ 8 80GB A100s)
+
 deepspeed llava/train/train_mem.py \
     --lora_enable True --lora_r 128 --lora_alpha 256 --mm_projector_lr 2e-5 \
     --deepspeed ./scripts/zero3.json \
-    --model_name_or_path lmsys/vicuna-13b-v1.5 \
+    --model_name_or_path $lm \
     --version v1 \
-    --data_path ./playground/data/llava_v1_5_mix665k.json \
-    --image_folder ./playground/data \
+    --data_path $data_path \
+    --image_folder $image_folder \
     --vision_tower openai/clip-vit-large-patch14-336 \
-    --pretrain_mm_mlp_adapter ./checkpoints/llava-v1.5-13b-pretrain/mm_projector.bin \
+    --pretrain_mm_mlp_adapter $projector \
     --mm_projector_type mlp2x_gelu \
     --mm_vision_select_layer -2 \
     --mm_use_im_start_end False \
@@ -16,11 +25,11 @@ deepspeed llava/train/train_mem.py \
     --image_aspect_ratio pad \
     --group_by_modality_length True \
     --bf16 True \
-    --output_dir ./checkpoints/llava-v1.5-13b-lora \
+    --output_dir $output_dir \
     --num_train_epochs 1 \
     --per_device_train_batch_size 16 \
     --per_device_eval_batch_size 4 \
-    --gradient_accumulation_steps 1 \
+    --gradient_accumulation_steps 2 \
     --evaluation_strategy "no" \
     --save_strategy "steps" \
     --save_steps 50000 \
