@@ -28,6 +28,9 @@ class TestBaichuan(unittest.TestCase):
     #       1) no system message
     #       2) user / assistant ids with no colons after
 
+    # https://huggingface.co/baichuan-inc/Baichuan2-7B-Chat/blob/main/tokenizer_config.json
+    #   does not add <bos> or <eos> tokens...
+
     # https://raw.githubusercontent.com/baichuan-inc/Baichuan2/main/fine-tune/data/belle_chat_ramdon_10k.json
     #   seems to suggest the Baichuan model expects user / assistant messages to end with a space and a newline
 
