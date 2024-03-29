@@ -153,5 +153,5 @@ class LlavaBaichuanForCausalLM(BaichuanForCausalLM, LlavaMetaForCausalLM):
             inputs['image_sizes'] = image_sizes
         return inputs
 
-AutoConfig.register("llava_baichaun", LlavaBaichuanConfig)
+AutoConfig.register("llava_baichuan", LlavaBaichuanConfig)
 AutoModelForCausalLM.register(LlavaBaichuanConfig, LlavaBaichuanForCausalLM)
