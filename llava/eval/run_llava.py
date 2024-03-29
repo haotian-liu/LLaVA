@@ -79,6 +79,8 @@ def eval_model(args):
         conv_mode = "llava_v1"
     elif "mpt" in model_name.lower():
         conv_mode = "mpt"
+    elif "baichuan" in model_name.lower():
+        conv_mode = "baichuan_2_chat"
     else:
         conv_mode = "llava_v0"
 

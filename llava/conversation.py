@@ -13,6 +13,7 @@ class SeparatorStyle(Enum):
     MPT = auto()
     PLAIN = auto()
     LLAMA_2 = auto()
+    BAICHUAN_2_CHAT = auto()
 
 
 @dataclasses.dataclass
@@ -70,6 +71,20 @@ class Conversation:
                     ret += role + message + self.sep
                 else:
                     ret += role
+        elif self.sep_style == SeparatorStyle.BAICHUAN_2_CHAT:
+            ret = []
+            for role, message in messages:
+                if message:
+                    if type(message) is tuple:
+                        message, _, _ = message
+                    ret.extend(
+                        [role, message.strip()]
+                    )
+                    if role == self.roles[1]:
+                        ret.append(self.sep2)
+                else:
+                    ret += role
+            ret = "".join(ret)
         elif self.sep_style == SeparatorStyle.LLAMA_2:
             wrap_sys = lambda msg: f"<<SYS>>\n{msg}\n<</SYS>>\n\n" if len(msg) > 0 else msg
             wrap_inst = lambda msg: f"[INST] {msg} [/INST]"
@@ -288,6 +303,17 @@ A conversation between a user and an LLM-based AI assistant. The assistant gives
     sep="<|im_end|>",
 )
 
+conv_baichuan_2_chat = Conversation(
+    system="",
+    roles=("<reserved_106>", "<reserved_107>"),
+    version="baichuan_2_chat",
+    messages=(),
+    offset=0,
+    sep_style=SeparatorStyle.BAICHUAN_2_CHAT,
+    sep="",
+    sep2="</s>"
+)
+
 conv_llava_plain = Conversation(
     system="",
     roles=("", ""),
@@ -376,6 +402,7 @@ conv_templates = {
     "v1": conv_vicuna_v1,
     "vicuna_v1": conv_vicuna_v1,
     "llama_2": conv_llama_2,
+    "baichuan_2_chat": conv_baichuan_2_chat,
     "mistral_instruct": conv_mistral_instruct,
     "chatml_direct": conv_chatml_direct,
     "mistral_direct": conv_chatml_direct,

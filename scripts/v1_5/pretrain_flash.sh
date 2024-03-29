@@ -12,7 +12,7 @@ output_dir=$5    # ./checkpoints/llava-v1.5-13b-pretrain
 # TODO: specify and support a new version for LM specific conversation
 # styling and system messages (needs to be implemented in conversation.py)
 
-deepspeed llava/train/train.py \
+deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
     --model_name_or_path $lm \
     --version $version \
