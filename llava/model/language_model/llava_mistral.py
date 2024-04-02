@@ -17,9 +17,10 @@ from typing import List, Optional, Tuple, Union
 
 import torch
 import torch.nn as nn
+from torch.nn import CrossEntropyLoss
 
 from transformers import AutoConfig, AutoModelForCausalLM, \
-                         LlamaConfig, LlamaModel, LlamaForCausalLM
+                         MistralConfig, MistralModel, MistralForCausalLM
 
 from transformers.modeling_outputs import CausalLMOutputWithPast
 from transformers.generation.utils import GenerateOutput
@@ -27,25 +28,24 @@ from transformers.generation.utils import GenerateOutput
 from ..llava_arch import LlavaMetaModel, LlavaMetaForCausalLM
 
 
-class LlavaConfig(LlamaConfig):
-    model_type = "llava_llama"
+class LlavaMistralConfig(MistralConfig):
+    model_type = "llava_mistral"
 
 
-class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
-    config_class = LlavaConfig
+class LlavaMistralModel(LlavaMetaModel, MistralModel):
+    config_class = LlavaMistralConfig
 
-    def __init__(self, config: LlamaConfig):
-        super(LlavaLlamaModel, self).__init__(config)
+    def __init__(self, config: MistralConfig):
+        super(LlavaMistralModel, self).__init__(config)
 
 
-class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
-    config_class = LlavaConfig
+class LlavaMistralForCausalLM(MistralForCausalLM, LlavaMetaForCausalLM):
+    config_class = LlavaMistralConfig
 
     def __init__(self, config):
-        super(LlamaForCausalLM, self).__init__(config)
-        self.model = LlavaLlamaModel(config)
-        self.pretraining_tp = config.pretraining_tp
-        self.vocab_size = config.vocab_size
+        super(MistralForCausalLM, self).__init__(config)
+        self.model = LlavaMistralModel(config)
+
         self.lm_head = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
 
         # Initialize weights and apply final processing
@@ -154,5 +154,5 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
             inputs['image_sizes'] = image_sizes
         return inputs
 
-AutoConfig.register("llava_llama", LlavaConfig)
-AutoModelForCausalLM.register(LlavaConfig, LlavaLlamaForCausalLM)
+AutoConfig.register("llava_mistral", LlavaMistralConfig)
+AutoModelForCausalLM.register(LlavaMistralConfig, LlavaMistralForCausalLM)

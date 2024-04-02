@@ -16,12 +16,18 @@ class CLIPVisionTower(nn.Module):
 
         if not delay_load:
             self.load_model()
+        elif getattr(args, 'unfreeze_mm_vision_tower', False):
+            self.load_model()
         else:
             self.cfg_only = CLIPVisionConfig.from_pretrained(self.vision_tower_name)
 
-    def load_model(self):
+    def load_model(self, device_map=None):
+        if self.is_loaded:
+            print('{} is already loaded, `load_model` called again, skipping.'.format(self.vision_tower_name))
+            return
+
         self.image_processor = CLIPImageProcessor.from_pretrained(self.vision_tower_name)
-        self.vision_tower = CLIPVisionModel.from_pretrained(self.vision_tower_name)
+        self.vision_tower = CLIPVisionModel.from_pretrained(self.vision_tower_name, device_map=device_map)
         self.vision_tower.requires_grad_(False)
 
         self.is_loaded = True
@@ -72,6 +78,10 @@ class CLIPVisionTower(nn.Module):
     @property
     def hidden_size(self):
         return self.config.hidden_size
+
+    @property
+    def num_patches_per_side(self):
+        return self.config.image_size // self.config.patch_size
 
     @property
     def num_patches(self):

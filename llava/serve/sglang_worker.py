@@ -3,6 +3,7 @@ A model worker executes the model.
 """
 import argparse
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 import json
 import time
 import threading
@@ -11,18 +12,18 @@ import uuid
 from fastapi import FastAPI, Request, BackgroundTasks
 from fastapi.responses import StreamingResponse
 import requests
-import torch
+import re
 import uvicorn
 from functools import partial
 
 from llava.constants import WORKER_HEART_BEAT_INTERVAL
 from llava.utils import (build_logger, server_error_msg,
     pretty_print_semaphore)
-from llava.model.builder import load_pretrained_model
-from llava.mm_utils import process_images, load_image_from_base64, tokenizer_image_token
-from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
-from transformers import TextIteratorStreamer
-from threading import Thread
+from llava.mm_utils import process_images, load_image_from_base64, tokenizer_image_token, expand2square
+from llava.constants import DEFAULT_IMAGE_TOKEN
+
+import sglang as sgl
+from sglang.backend.runtime_endpoint import RuntimeEndpoint
 
 
 GB = 1 << 30
@@ -35,20 +36,33 @@ model_semaphore = None
 
 
 def heart_beat_worker(controller):
-
     while True:
         time.sleep(WORKER_HEART_BEAT_INTERVAL)
         controller.send_heart_beat()
 
 
+@sgl.function
+def pipeline(s, prompt, max_tokens):
+    for p in prompt:
+        if type(p) is str:
+            s += p
+        else:
+            s += sgl.image(p)
+    s += sgl.gen("response", max_tokens=max_tokens)
+
+
 class ModelWorker:
-    def __init__(self, controller_addr, worker_addr,
-                 worker_id, no_register,
-                 model_path, model_base, model_name,
-                 load_8bit, load_4bit, device, use_flash_attn=False):
+    def __init__(self, controller_addr, worker_addr, sgl_endpoint,
+                 worker_id, no_register, model_name):
         self.controller_addr = controller_addr
         self.worker_addr = worker_addr
         self.worker_id = worker_id
+
+        # Select backend
+        backend = RuntimeEndpoint(sgl_endpoint)
+        sgl.set_default_backend(backend)
+        model_path = backend.model_info["model_path"]
+
         if model_path.endswith("/"):
             model_path = model_path[:-1]
         if model_name is None:
@@ -60,11 +74,7 @@ class ModelWorker:
         else:
             self.model_name = model_name
 
-        self.device = device
-        logger.info(f"Loading the model {self.model_name} on worker {worker_id} ...")
-        self.tokenizer, self.model, self.image_processor, self.context_len = load_pretrained_model(
-            model_path, model_base, self.model_name, load_8bit, load_4bit, device=self.device, use_flash_attn=use_flash_attn)
-        self.is_multimodal = 'llava' in self.model_name.lower()
+        logger.info(f"Loading the SGLANG model {self.model_name} on worker {worker_id} ...")
 
         if not no_register:
             self.register_to_controller()
@@ -119,92 +129,52 @@ class ModelWorker:
             "queue_length": self.get_queue_length(),
         }
 
-    @torch.inference_mode()
-    def generate_stream(self, params):
-        tokenizer, model, image_processor = self.tokenizer, self.model, self.image_processor
-
-        prompt = params["prompt"]
-        ori_prompt = prompt
+    async def generate_stream(self, params):
+        ori_prompt = prompt = params["prompt"]
         images = params.get("images", None)
-        num_image_tokens = 0
-        if images is not None and len(images) > 0 and self.is_multimodal:
+        if images is not None and len(images) > 0:
             if len(images) > 0:
                 if len(images) != prompt.count(DEFAULT_IMAGE_TOKEN):
                     raise ValueError("Number of images does not match number of <image> tokens in prompt")
 
                 images = [load_image_from_base64(image) for image in images]
-                image_sizes = [image.size for image in images]
-                images = process_images(images, image_processor, model.config)
 
-                if type(images) is list:
-                    images = [image.to(self.model.device, dtype=torch.float16) for image in images]
-                else:
-                    images = images.to(self.model.device, dtype=torch.float16)
-
-                replace_token = DEFAULT_IMAGE_TOKEN
-                if getattr(self.model.config, 'mm_use_im_start_end', False):
-                    replace_token = DEFAULT_IM_START_TOKEN + replace_token + DEFAULT_IM_END_TOKEN
-                prompt = prompt.replace(DEFAULT_IMAGE_TOKEN, replace_token)
-
-                num_image_tokens = prompt.count(replace_token) * model.get_vision_tower().num_patches
-            else:
-                images = None
-                image_sizes = None
-            image_args = {"images": images, "image_sizes": image_sizes}
+                # FIXME: for image-start/end token
+                # replace_token = DEFAULT_IMAGE_TOKEN
+                # if getattr(self.model.config, 'mm_use_im_start_end', False):
+                #     replace_token = DEFAULT_IM_START_TOKEN + replace_token + DEFAULT_IM_END_TOKEN
+                # prompt = prompt.replace(DEFAULT_IMAGE_TOKEN, replace_token)
+                prompt = prompt.replace(' ' + DEFAULT_IMAGE_TOKEN + '\n', DEFAULT_IMAGE_TOKEN)
+                prompt_split = prompt.split(DEFAULT_IMAGE_TOKEN)
+                prompt = []
+                for i in range(len(prompt_split)):
+                    prompt.append(prompt_split[i])
+                    if i < len(images):
+                        prompt.append(images[i])
         else:
-            images = None
-            image_args = {}
+            prompt = [prompt]
 
         temperature = float(params.get("temperature", 1.0))
         top_p = float(params.get("top_p", 1.0))
-        max_context_length = getattr(model.config, 'max_position_embeddings', 2048)
+        # max_context_length = getattr(model.config, 'max_position_embeddings', 2048)
         max_new_tokens = min(int(params.get("max_new_tokens", 256)), 1024)
         stop_str = params.get("stop", None)
-        do_sample = True if temperature > 0.001 else False
+        stop_str = [stop_str] if stop_str is not None else None
 
-        input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).to(self.device)
-        keywords = [stop_str]
-        # stopping_criteria = KeywordsStoppingCriteria(keywords, tokenizer, input_ids)
-        streamer = TextIteratorStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True, timeout=15)
-
-        max_new_tokens = min(max_new_tokens, max_context_length - input_ids.shape[-1] - num_image_tokens)
-
-        if max_new_tokens < 1:
-            yield json.dumps({"text": ori_prompt + "Exceeds max token length. Please start a new conversation, thanks.", "error_code": 0}).encode() + b"\0"
-            return
-
-        thread = Thread(target=model.generate, kwargs=dict(
-            inputs=input_ids,
-            do_sample=do_sample,
-            temperature=temperature,
-            top_p=top_p,
-            max_new_tokens=max_new_tokens,
-            streamer=streamer,
-            use_cache=True,
-            **image_args
-        ))
-        thread.start()
+        print({'prompt': prompt, 'max_new_tokens': max_new_tokens, 'temperature': temperature, 'top_p': top_p})
+        state = pipeline.run(prompt, max_new_tokens, temperature=temperature, top_p=top_p, stream=True)
 
         generated_text = ori_prompt
-        for new_text in streamer:
-            generated_text += new_text
-            if generated_text.endswith(stop_str):
-                generated_text = generated_text[:-len(stop_str)]
+        async for text_outputs in state.text_async_iter(var_name="response"):
+            generated_text += text_outputs
             yield json.dumps({"text": generated_text, "error_code": 0}).encode() + b"\0"
 
-    def generate_stream_gate(self, params):
+    async def generate_stream_gate(self, params):
         try:
-            for x in self.generate_stream(params):
+            async for x in self.generate_stream(params):
                 yield x
         except ValueError as e:
             print("Caught ValueError:", e)
-            ret = {
-                "text": server_error_msg,
-                "error_code": 1,
-            }
-            yield json.dumps(ret).encode() + b"\0"
-        except torch.cuda.CudaError as e:
-            print("Caught torch.cuda.CudaError:", e)
             ret = {
                 "text": server_error_msg,
                 "error_code": 1,
@@ -257,32 +227,18 @@ if __name__ == "__main__":
         default="http://localhost:21002")
     parser.add_argument("--controller-address", type=str,
         default="http://localhost:21001")
-    parser.add_argument("--model-path", type=str, default="facebook/opt-350m")
-    parser.add_argument("--model-base", type=str, default=None)
     parser.add_argument("--model-name", type=str)
-    parser.add_argument("--device", type=str, default="cuda")
-    parser.add_argument("--multi-modal", action="store_true", help="Multimodal mode is automatically detected with model name, please make sure `llava` is included in the model path.")
+    parser.add_argument("--sgl-endpoint", type=str)
     parser.add_argument("--limit-model-concurrency", type=int, default=5)
     parser.add_argument("--stream-interval", type=int, default=1)
     parser.add_argument("--no-register", action="store_true")
-    parser.add_argument("--load-8bit", action="store_true")
-    parser.add_argument("--load-4bit", action="store_true")
-    parser.add_argument("--use-flash-attn", action="store_true")
     args = parser.parse_args()
     logger.info(f"args: {args}")
 
-    if args.multi_modal:
-        logger.warning("Multimodal mode is automatically detected with model name, please make sure `llava` is included in the model path.")
-
     worker = ModelWorker(args.controller_address,
                          args.worker_address,
+                         args.sgl_endpoint,
                          worker_id,
                          args.no_register,
-                         args.model_path,
-                         args.model_base,
-                         args.model_name,
-                         args.load_8bit,
-                         args.load_4bit,
-                         args.device,
-                         use_flash_attn=args.use_flash_attn)
+                         args.model_name)
     uvicorn.run(app, host=args.host, port=args.port, log_level="info")

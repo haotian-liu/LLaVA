@@ -1,6 +1,9 @@
 import dataclasses
 from enum import auto, Enum
 from typing import List, Tuple
+import base64
+from io import BytesIO
+from PIL import Image
 
 
 class SeparatorStyle(Enum):
@@ -68,7 +71,7 @@ class Conversation:
                 else:
                     ret += role
         elif self.sep_style == SeparatorStyle.LLAMA_2:
-            wrap_sys = lambda msg: f"<<SYS>>\n{msg}\n<</SYS>>\n\n"
+            wrap_sys = lambda msg: f"<<SYS>>\n{msg}\n<</SYS>>\n\n" if len(msg) > 0 else msg
             wrap_inst = lambda msg: f"[INST] {msg} [/INST]"
             ret = ""
 
@@ -106,54 +109,54 @@ class Conversation:
     def append_message(self, role, message):
         self.messages.append([role, message])
 
+    def process_image(self, image, image_process_mode, return_pil=False, image_format='PNG', max_len=1344, min_len=672):
+        if image_process_mode == "Pad":
+            def expand2square(pil_img, background_color=(122, 116, 104)):
+                width, height = pil_img.size
+                if width == height:
+                    return pil_img
+                elif width > height:
+                    result = Image.new(pil_img.mode, (width, width), background_color)
+                    result.paste(pil_img, (0, (width - height) // 2))
+                    return result
+                else:
+                    result = Image.new(pil_img.mode, (height, height), background_color)
+                    result.paste(pil_img, ((height - width) // 2, 0))
+                    return result
+            image = expand2square(image)
+        elif image_process_mode in ["Default", "Crop"]:
+            pass
+        elif image_process_mode == "Resize":
+            image = image.resize((336, 336))
+        else:
+            raise ValueError(f"Invalid image_process_mode: {image_process_mode}")
+        if max(image.size) > max_len:
+            max_hw, min_hw = max(image.size), min(image.size)
+            aspect_ratio = max_hw / min_hw
+            shortest_edge = int(min(max_len / aspect_ratio, min_len, min_hw))
+            longest_edge = int(shortest_edge * aspect_ratio)
+            W, H = image.size
+            if H > W:
+                H, W = longest_edge, shortest_edge
+            else:
+                H, W = shortest_edge, longest_edge
+            image = image.resize((W, H))
+        if return_pil:
+            return image
+        else:
+            buffered = BytesIO()
+            image.save(buffered, format=image_format)
+            img_b64_str = base64.b64encode(buffered.getvalue()).decode()
+            return img_b64_str
+
     def get_images(self, return_pil=False):
         images = []
         for i, (role, msg) in enumerate(self.messages[self.offset:]):
             if i % 2 == 0:
                 if type(msg) is tuple:
-                    import base64
-                    from io import BytesIO
-                    from PIL import Image
                     msg, image, image_process_mode = msg
-                    if image_process_mode == "Pad":
-                        def expand2square(pil_img, background_color=(122, 116, 104)):
-                            width, height = pil_img.size
-                            if width == height:
-                                return pil_img
-                            elif width > height:
-                                result = Image.new(pil_img.mode, (width, width), background_color)
-                                result.paste(pil_img, (0, (width - height) // 2))
-                                return result
-                            else:
-                                result = Image.new(pil_img.mode, (height, height), background_color)
-                                result.paste(pil_img, ((height - width) // 2, 0))
-                                return result
-                        image = expand2square(image)
-                    elif image_process_mode in ["Default", "Crop"]:
-                        pass
-                    elif image_process_mode == "Resize":
-                        image = image.resize((336, 336))
-                    else:
-                        raise ValueError(f"Invalid image_process_mode: {image_process_mode}")
-                    max_hw, min_hw = max(image.size), min(image.size)
-                    aspect_ratio = max_hw / min_hw
-                    max_len, min_len = 800, 400
-                    shortest_edge = int(min(max_len / aspect_ratio, min_len, min_hw))
-                    longest_edge = int(shortest_edge * aspect_ratio)
-                    W, H = image.size
-                    if longest_edge != max(image.size):
-                        if H > W:
-                            H, W = longest_edge, shortest_edge
-                        else:
-                            H, W = shortest_edge, longest_edge
-                        image = image.resize((W, H))
-                    if return_pil:
-                        images.append(image)
-                    else:
-                        buffered = BytesIO()
-                        image.save(buffered, format="PNG")
-                        img_b64_str = base64.b64encode(buffered.getvalue()).decode()
-                        images.append(img_b64_str)
+                    image = self.process_image(image, image_process_mode, return_pil=return_pil)
+                    images.append(image)
         return images
 
     def to_gradio_chatbot(self):
@@ -161,24 +164,11 @@ class Conversation:
         for i, (role, msg) in enumerate(self.messages[self.offset:]):
             if i % 2 == 0:
                 if type(msg) is tuple:
-                    import base64
-                    from io import BytesIO
                     msg, image, image_process_mode = msg
-                    max_hw, min_hw = max(image.size), min(image.size)
-                    aspect_ratio = max_hw / min_hw
-                    max_len, min_len = 800, 400
-                    shortest_edge = int(min(max_len / aspect_ratio, min_len, min_hw))
-                    longest_edge = int(shortest_edge * aspect_ratio)
-                    W, H = image.size
-                    if H > W:
-                        H, W = longest_edge, shortest_edge
-                    else:
-                        H, W = shortest_edge, longest_edge
-                    image = image.resize((W, H))
-                    buffered = BytesIO()
-                    image.save(buffered, format="JPEG")
-                    img_b64_str = base64.b64encode(buffered.getvalue()).decode()
-                    img_str = f'<img src="data:image/png;base64,{img_b64_str}" alt="user upload image" />'
+                    img_b64_str = self.process_image(
+                        image, "Default", return_pil=False,
+                        image_format='JPEG')
+                    img_str = f'<img src="data:image/jpeg;base64,{img_b64_str}" alt="user upload image" />'
                     msg = img_str + msg.replace('<image>', '').strip()
                     ret.append([msg, None])
                 else:
@@ -357,6 +347,28 @@ conv_llava_v1_mmtag = Conversation(
     version="v1_mmtag",
 )
 
+conv_mistral_instruct = Conversation(
+    system="",
+    roles=("USER", "ASSISTANT"),
+    version="llama_v2",
+    messages=(),
+    offset=0,
+    sep_style=SeparatorStyle.LLAMA_2,
+    sep="",
+    sep2="</s>",
+)
+
+conv_chatml_direct = Conversation(
+    system="""<|im_start|>system
+Answer the questions.""",
+    roles=("<|im_start|>user\n", "<|im_start|>assistant\n"),
+    version="mpt",
+    messages=(),
+    offset=0,
+    sep_style=SeparatorStyle.MPT,
+    sep="<|im_end|>",
+)
+
 default_conversation = conv_vicuna_v1
 conv_templates = {
     "default": conv_vicuna_v0,
@@ -364,6 +376,9 @@ conv_templates = {
     "v1": conv_vicuna_v1,
     "vicuna_v1": conv_vicuna_v1,
     "llama_2": conv_llama_2,
+    "mistral_instruct": conv_mistral_instruct,
+    "chatml_direct": conv_chatml_direct,
+    "mistral_direct": conv_chatml_direct,
 
     "plain": conv_llava_plain,
     "v0_plain": conv_llava_plain,
