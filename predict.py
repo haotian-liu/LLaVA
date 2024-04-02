@@ -17,7 +17,7 @@ from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN
 from llava.conversation import conv_templates, SeparatorStyle
 from llava.model.builder import load_pretrained_model
 from llava.utils import disable_torch_init
-from llava.mm_utils import tokenizer_image_token, KeywordsStoppingCriteria
+from llava.mm_utils import tokenizer_image_token
 from file_utils import is_url, download_weights, download_json, DEFAULT_WEIGHTS
 
 # we don't use the huggingface hub cache, but we need to set this to a local folder
@@ -53,11 +53,11 @@ class Predictor(BasePredictor):
             custom_weights_file = tarfile.open(download_location)
             custom_weights_file.extractall(path=custom_weights_dir)
 
-            self.tokenizer, self.model, self.image_processor, self.context_len = load_pretrained_model(custom_weights_dir, model_name="llava-v1.5-13b-custom-lora", model_base="liuhaotian/llava-v1.5-13b", load_8bit=False, load_4bit=False)
+            self.tokenizer, self.model, self.image_processor, self.context_len = load_pretrained_model(custom_weights_dir, model_name="llava-v1.5-13b-custom-lora", model_base="liuhaotian/llava-v1.5-13b", load_8bit=False, load_4bit=False, device_map="cuda")
 
         else:
             print(f"Loading base LLaVA model...")
-            self.tokenizer, self.model, self.image_processor, self.context_len = load_pretrained_model("liuhaotian/llava-v1.5-13b", model_name="llava-v1.5-13b", model_base=None, load_8bit=False, load_4bit=False)
+            self.tokenizer, self.model, self.image_processor, self.context_len = load_pretrained_model("liuhaotian/llava-v1.5-13b", model_name="llava-v1.5-13b", model_base=None, load_8bit=False, load_4bit=False, device_map="cuda")
 
     def predict(
         self,
@@ -73,6 +73,7 @@ class Predictor(BasePredictor):
         conv = conv_templates[conv_mode].copy()
     
         image_data = load_image(str(image))
+        image_size = image_data.size
         image_tensor = self.image_processor.preprocess(image_data, return_tensors='pt')['pixel_values'].half().cuda()
     
         # loop start
@@ -93,6 +94,7 @@ class Predictor(BasePredictor):
             thread = Thread(target=self.model.generate, kwargs=dict(
                 inputs=input_ids,
                 images=image_tensor,
+                image_sizes=[image_size],
                 do_sample=True,
                 temperature=temperature,
                 top_p=top_p,
