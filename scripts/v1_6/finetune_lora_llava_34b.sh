@@ -5,8 +5,8 @@ deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero3.json \
     --model_name_or_path liuhaotian/llava-v1.6-34b \
     --version chatml_direct_ft \
-    --data_path combined_data.json \
-    --image_folder random_images \
+    --data_path transformed_data.json \
+    --image_folder train_images \
     --vision_tower openai/clip-vit-large-patch14-336 \
     --mm_projector_type mlp2x_gelu \
     --mm_vision_select_layer -2 \
@@ -15,8 +15,8 @@ deepspeed llava/train/train_mem.py \
     --mm_patch_merge_type spatial_unpad \
     --image_aspect_ratio anyres \
     --group_by_modality_length False \
-    --bf16 False \
-    --fp16 True \
+    --bf16 True \
+    --fp16 False \
     --output_dir ./llava-lora-34b \
     --num_train_epochs 1 \
     --per_device_train_batch_size 4 \
@@ -24,7 +24,7 @@ deepspeed llava/train/train_mem.py \
     --gradient_accumulation_steps 1 \
     --evaluation_strategy "no" \
     --save_strategy "steps" \
-    --save_steps 450 \
+    --save_steps 250 \
     --save_total_limit 5 \
     --learning_rate 2e-5 \
     --weight_decay 0. \
