@@ -33,7 +33,7 @@ from llava.train.llava_trainer import LLaVATrainer
 
 from llava import conversation as conversation_lib
 from llava.model import *
-from llava.mm_utils import tokenizer_image_token, process_anyres_image
+from llava.mm_utils import tokenizer_image_token, train_process_images
 
 from PIL import Image
 
@@ -762,7 +762,7 @@ class LazySupervisedDataset(Dataset):
                 image = expand2square(image, tuple(int(x*255) for x in processor.image_mean))
                 image = processor.preprocess(image, return_tensors='pt')['pixel_values'][0]
             elif self.data_args.image_aspect_ratio == 'anyres':
-                image = process_anyres_image(image, processor, self.model_config)
+                image = train_process_images(image, processor, self.model_config)
             else:
                 image = processor.preprocess(image, return_tensors='pt')['pixel_values'][0]
             sources = preprocess_multimodal(
