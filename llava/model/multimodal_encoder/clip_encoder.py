@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 
 from transformers import CLIPVisionModel, CLIPImageProcessor, CLIPVisionConfig
-from s2wrapper import forward as multiscale_forward
 
 
 class CLIPVisionTower(nn.Module):
@@ -100,6 +99,12 @@ class CLIPVisionTowerS2(CLIPVisionTower):
         self.s2_split_size = self.s2_scales[0]
         self.s2_image_size = self.s2_scales[-1]
 
+        try:
+            from s2wrapper import forward as multiscale_forward
+        except ImportError:
+            raise ImportError('Package s2wrapper not found! Please install by running: \npip install git+https://github.com/bfshi/scaling_on_scales.git')
+        self.multiscale_forward = multiscale_forward
+
         # change resize/crop size in preprocessing to the largest image size in s2_scale
         if not delay_load or getattr(args, 'unfreeze_mm_vision_tower', False):
             self.image_processor.size['shortest_edge'] = self.s2_image_size
@@ -130,10 +135,10 @@ class CLIPVisionTowerS2(CLIPVisionTower):
         if type(images) is list:
             image_features = []
             for image in images:
-                image_feature = multiscale_forward(self.forward_feature, image.unsqueeze(0), img_sizes=self.s2_scales, max_split_size=self.s2_split_size)
+                image_feature = self.multiscale_forward(self.forward_feature, image.unsqueeze(0), img_sizes=self.s2_scales, max_split_size=self.s2_split_size)
                 image_features.append(image_feature)
         else:
-            image_features = multiscale_forward(self.forward_feature, images, img_sizes=self.s2_scales, max_split_size=self.s2_split_size)
+            image_features = self.multiscale_forward(self.forward_feature, images, img_sizes=self.s2_scales, max_split_size=self.s2_split_size)
 
         return image_features
 
