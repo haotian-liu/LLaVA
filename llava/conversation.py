@@ -133,7 +133,7 @@ class Conversation:
         if max(image.size) > max_len:
             max_hw, min_hw = max(image.size), min(image.size)
             aspect_ratio = max_hw / min_hw
-            shortest_edge = int(min(max_len / aspect_ratio, min_len, min_hw))
+            shortest_edge = int(max_len / aspect_ratio)
             longest_edge = int(shortest_edge * aspect_ratio)
             W, H = image.size
             if H > W:
