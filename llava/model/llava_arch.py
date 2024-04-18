@@ -103,7 +103,7 @@ def unpad_image(tensor, original_size):
 
     Args:
     tensor (torch.Tensor): The image tensor, assumed to be in CxHxW format.
-    original_size (tuple): The original size of the image (height, width).
+    original_size (tuple): The original size of PIL image (width, height).
 
     Returns:
     torch.Tensor: The unpadded image tensor.
