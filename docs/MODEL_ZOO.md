@@ -37,7 +37,7 @@ Base model: Vicuna v1.5. Training logs: [wandb](https://api.wandb.ai/links/lht/6
 
 ## LLaVA-v1
 
-*Note: We recommend using the most capable LLaVA-v1.5 series above for the best performance.*
+*Note: We recommend using the most capable LLaVA-v1.6 series above for the best performance.*
 
 | Base LLM | Vision Encoder | Pretrain Data | Pretraining schedule | Finetuning Data | Finetuning schedule | LLaVA-Bench-Conv | LLaVA-Bench-Detail | LLaVA-Bench-Complex | LLaVA-Bench-Overall | Download |
 |----------|----------------|---------------|----------------------|-----------------|--------------------|------------------|--------------------|---------------------|---------------------|---------------------|
@@ -48,7 +48,7 @@ Base model: Vicuna v1.5. Training logs: [wandb](https://api.wandb.ai/links/lht/6
 
 ## Projector weights
 
-These are projector weights we have pretrained. You can use these projector weights for visual instruction tuning. They are just pretrained on image-text pairs and are NOT instruction-tuned, which means they do NOT follow instructions as well as our official models and can output repetitive, lengthy, and garbled outputs. If you want to have nice conversations with LLaVA, use the checkpoints above (LLaVA v1.5).
+These are projector weights we have pretrained. You can use these projector weights for visual instruction tuning. They are just pretrained on image-text pairs and are NOT instruction-tuned, which means they do NOT follow instructions as well as our official models and can output repetitive, lengthy, and garbled outputs. If you want to have nice conversations with LLaVA, use the checkpoints above (LLaVA v1.6).
 
 NOTE: These projector weights are only compatible with `llava>=1.0.0`. Please check out the latest codebase if your local code version is below v1.0.0.
 
