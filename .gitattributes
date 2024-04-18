@@ -1,9 +1,7 @@
 # https://git-scm.com/docs/gitattributes
-
 # Set the default behavior, in case people don't have core.autocrlf set.
 # https://git-scm.com/docs/gitattributes#_end_of_line_conversion
 * text=auto
-
 # common python attributes, taken from https://github.com/alexkaratarakis/gitattributes/blob/710900479a2bedeec7003d381719521ffbb18bf8/Python.gitattributes
 # Source files
 # ============
@@ -14,7 +12,6 @@
 *.pyx    text diff=python
 *.pyz    text diff=python
 *.pyi    text diff=python
-
 # Binary files
 # ============
 *.db     binary
@@ -24,6 +21,7 @@
 *.pyc    binary export-ignore
 *.pyo    binary export-ignore
 *.pyd    binary
-
 # Jupyter notebook
 *.ipynb  text eol=lf
+llava_data_r1.zip filter=lfs diff=lfs merge=lfs -text
+*.zip filter=lfs diff=lfs merge=lfs -text
