@@ -107,6 +107,7 @@ class CLIPVisionTowerS2(CLIPVisionTower):
 
         # change resize/crop size in preprocessing to the largest image size in s2_scale
         if not delay_load or getattr(args, 'unfreeze_mm_vision_tower', False):
+            self.load_model()
             self.image_processor.size['shortest_edge'] = self.s2_image_size
             self.image_processor.crop_size['height'] = self.image_processor.crop_size['width'] = self.s2_image_size
 
