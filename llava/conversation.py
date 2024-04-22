@@ -13,6 +13,7 @@ class SeparatorStyle(Enum):
     MPT = auto()
     PLAIN = auto()
     LLAMA_2 = auto()
+    LLAMA_3 = auto()
 
 
 @dataclasses.dataclass
@@ -91,6 +92,36 @@ class Conversation:
                 else:
                     ret += ""
             ret = ret.lstrip(self.sep)
+        elif self.sep_style == SeparatorStyle.LLAMA_3:
+            wrap_sys = lambda msg: f"""<|start_header_id|>system<|end_header_id|>
+
+{msg}<|eot_id|>"""
+            wrap_inst = lambda msg: f"""<|start_header_id|>user<|end_header_id|>
+
+{msg}<|eot_id|>"""
+            wrap_resp = lambda msg: f"""<|start_header_id|>assistant<|end_header_id|>
+
+{msg}<|eot_id|>"""
+            ret = "<|begin_of_text|>"
+
+            for i, (role, message) in enumerate(messages):
+                if i == 0:
+                    assert message, "first message should not be none"
+                    assert role == self.roles[0], "first message should come from user"
+                if message:
+                    if type(message) is tuple:
+                        message, _, _ = message
+                    if i == 0:
+                        ret += wrap_sys(self.system)
+                    if i % 2 == 0:
+                        message = wrap_inst(message)
+                        ret += message
+                    else:
+                        message = wrap_resp(message)
+                        ret += message
+                else:
+                    ret += ""
+            ret += "<|start_header_id|>assistant<|end_header_id|>\n\n"
         elif self.sep_style == SeparatorStyle.PLAIN:
             seps = [self.sep, self.sep2]
             ret = self.system
@@ -264,6 +295,19 @@ If a question does not make any sense, or is not factually coherent, explain why
     sep2="</s>",
 )
 
+conv_llama_3 = Conversation(
+    system="""You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe.  Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.
+
+If a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.""",
+    roles=("USER", "ASSISTANT"),
+    version="llama_v3",
+    messages=(),
+    offset=0,
+    sep_style=SeparatorStyle.LLAMA_3,
+    sep="",
+    sep2="",
+)
+
 conv_llava_llama_2 = Conversation(
     system="You are a helpful language and vision assistant. "
            "You are able to understand the visual content that the user provides, "
@@ -376,6 +420,7 @@ conv_templates = {
     "v1": conv_vicuna_v1,
     "vicuna_v1": conv_vicuna_v1,
     "llama_2": conv_llama_2,
+    "llama_3": conv_llama_3,
     "mistral_instruct": conv_mistral_instruct,
     "chatml_direct": conv_chatml_direct,
     "mistral_direct": conv_chatml_direct,
