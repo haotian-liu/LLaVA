@@ -8,12 +8,15 @@ import shortuuid
 from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
 from llava.conversation import conv_templates, SeparatorStyle
 from llava.model.builder import load_pretrained_model
-from llava.utils import disable_torch_init
+from llava.utils import disable_torch_init, is_npu_available
 from llava.mm_utils import tokenizer_image_token, process_images, get_model_name_from_path
 
 from PIL import Image
 import math
 
+if is_npu_available():
+    import torch_npu
+    from torch_npu.contrib import transfer_to_npu
 
 def split_list(lst, n):
     """Split a list into n (roughly) equal-sized chunks"""
@@ -48,7 +51,7 @@ def eval_model(args):
             image_file = line["image"]
             image = Image.open(os.path.join(args.image_folder, image_file))
             image_tensor = process_images([image], image_processor, model.config)[0]
-            images = image_tensor.unsqueeze(0).half().cuda()
+            images = image_tensor.unsqueeze(0).half().to(device="npu" if is_npu_available() else "cuda")
             image_sizes = [image.size]
             if getattr(model.config, 'mm_use_im_start_end', False):
                 qs = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN + '\n' + qs
@@ -68,7 +71,7 @@ def eval_model(args):
         conv.append_message(conv.roles[1], None)
         prompt = conv.get_prompt()
 
-        input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).cuda()
+        input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).to(device="npu" if is_npu_available() else "cuda")
 
         with torch.inference_mode():
             output_ids = model.generate(

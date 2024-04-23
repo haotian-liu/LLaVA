@@ -7,8 +7,11 @@ from tqdm import tqdm
 import shortuuid
 
 from llava.conversation import default_conversation
-from llava.utils import disable_torch_init
+from llava.utils import disable_torch_init, is_npu_available
 
+if is_npu_available():
+    import torch_npu
+    from torch_npu.contrib import transfer_to_npu
 
 @torch.inference_mode()
 def eval_model(model_name, questions_file, answers_file):
@@ -17,7 +20,8 @@ def eval_model(model_name, questions_file, answers_file):
     model_name = os.path.expanduser(model_name)
     tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
     model = AutoModelForCausalLM.from_pretrained(model_name,
-        torch_dtype=torch.float16).cuda()
+        torch_dtype=torch.float16).to("npu" if is_npu_available() else "cuda")
+
 
 
     ques_file = open(os.path.expanduser(questions_file), "r")
@@ -30,7 +34,7 @@ def eval_model(model_name, questions_file, answers_file):
         conv.append_message(conv.roles[0], qs)
         prompt = conv.get_prompt()
         inputs = tokenizer([prompt])
-        input_ids = torch.as_tensor(inputs.input_ids).cuda()
+        input_ids = torch.as_tensor(inputs.input_ids).to("npu" if is_npu_available() else "cuda")
         output_ids = model.generate(
             input_ids,
             do_sample=True,
