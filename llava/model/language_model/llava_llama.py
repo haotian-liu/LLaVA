@@ -69,6 +69,33 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
         image_sizes: Optional[List[List[int]]] = None,
         return_dict: Optional[bool] = None,
     ) -> Union[Tuple, CausalLMOutputWithPast]:
+        
+        
+        def get_embedding_index2(x):
+            distance = torch.norm(self.get_model().embed_tokens.weight - x, dim=1)
+            results = torch.argmin(distance).item()
+            return results
+        
+            if len(results[0])==len(x):
+                return None
+            else:
+                return results[0][0]
+                
+        import pdb; pdb.set_trace()
+        
+        all_indices2 = torch.Tensor(list(map(get_embedding_index2, inputs_embeds[0])))
+            # print(all_indices2, 'here!!!')
+            
+        from transformers import AutoTokenizer
+        tokenizer = AutoTokenizer.from_pretrained('lmsys/vicuna-7b-v1.5', use_fast=False)
+        
+        # print(tokenizer.decode(all_indices))
+        
+        # print(tokenizer.decode(normal_indices))
+        print(tokenizer.decode(all_indices2))
+        assert 0
+        
+        import pdb; pdb.set_trace()
 
         if inputs_embeds is None:
             (
@@ -87,6 +114,8 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
                 images,
                 image_sizes
             )
+            
+        
 
         return super().forward(
             input_ids=input_ids,
