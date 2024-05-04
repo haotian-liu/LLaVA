@@ -454,6 +454,7 @@ If you find LLaVA useful for your research and applications, please cite using t
 - [Instruction Tuning with GPT-4](https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM)
 - [LLaVA-Med: Training a Large Language-and-Vision Assistant for Biomedicine in One Day](https://github.com/microsoft/LLaVA-Med)
 - [Otter: In-Context Multi-Modal Instruction Tuning](https://github.com/Luodian/Otter)
+- [SoM-LLaVA: Empowering LLaVA with Set-of-Mark Prompting and Improved Visual Reasoning Ability.](https://github.com/zzxslp/SoM-LLaVA)
 
 For future project ideas, please check out:
 - [SEEM: Segment Everything Everywhere All at Once](https://github.com/UX-Decoder/Segment-Everything-Everywhere-All-At-Once)
