@@ -80,9 +80,7 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
                 return None
             else:
                 return results[0][0]
-                
-        import pdb; pdb.set_trace()
-        
+                        
         all_indices2 = torch.Tensor(list(map(get_embedding_index2, inputs_embeds[0])))
             # print(all_indices2, 'here!!!')
             
@@ -92,10 +90,12 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
         # print(tokenizer.decode(all_indices))
         
         # print(tokenizer.decode(normal_indices))
+        print()
         print(tokenizer.decode(all_indices2))
+        print()
+        
         assert 0
         
-        import pdb; pdb.set_trace()
 
         if inputs_embeds is None:
             (
