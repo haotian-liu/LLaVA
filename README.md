@@ -212,6 +212,14 @@ pip install "sglang[all]"
 
 You'll first launch a SGLang backend worker which will execute the models on GPUs. Remember the `--port` you've set and you'll use that later.
 
+For llava-v1.6-mistral-7b only:
+
+1. Run `git lfs install`
+2. Run `git clone https://huggingface.co/liuhaotian/llava-v1.6-mistral-7b`
+3. Make the patches following this PR: https://huggingface.co/liuhaotian/llava-v1.6-mistral-7b/discussions/2/files.
+4. Specify the folder name (default will be llava-v1.6-mistral-7b) as the `--model-path` instead and remove --tokenizer-path. Else, the model will not load using SGLang serving.
+5. Example: `CUDA_VISIBLE_DEVICES=0 python3 -m sglang.launch_server --model-path llava-v1.6-mistral-7b --port 30000`
+
 ```Shell
 # Single GPU
 CUDA_VISIBLE_DEVICES=0 python3 -m sglang.launch_server --model-path liuhaotian/llava-v1.5-7b --tokenizer-path llava-hf/llava-1.5-7b-hf --port 30000
