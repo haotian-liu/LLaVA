@@ -8,13 +8,16 @@ import shortuuid
 from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
 from llava.conversation import conv_templates, SeparatorStyle
 from llava.model.builder import load_pretrained_model
-from llava.utils import disable_torch_init
+from llava.utils import disable_torch_init, is_npu_available
 from llava.mm_utils import tokenizer_image_token, process_images, get_model_name_from_path
 from torch.utils.data import Dataset, DataLoader
 
 from PIL import Image
 import math
 
+if is_npu_available():
+    import torch_npu
+    from torch_npu.contrib import transfer_to_npu
 
 def split_list(lst, n):
     """Split a list into n (roughly) equal-sized chunks"""
@@ -99,12 +102,12 @@ def eval_model(args):
         idx = line["question_id"]
         cur_prompt = line["text"]
 
-        input_ids = input_ids.to(device='cuda', non_blocking=True)
+        input_ids = input_ids.to(device="npu" if is_npu_available() else "cuda", non_blocking=True)
 
         with torch.inference_mode():
             output_ids = model.generate(
                 input_ids,
-                images=image_tensor.to(dtype=torch.float16, device='cuda', non_blocking=True),
+                images=image_tensor.to(dtype=torch.float16, device="npu" if is_npu_available() else "cuda",non_blocking=True),
                 image_sizes=image_sizes,
                 do_sample=True if args.temperature > 0 else False,
                 temperature=args.temperature,

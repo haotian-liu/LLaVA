@@ -74,6 +74,8 @@
 
 If you are not using Linux, do *NOT* proceed, see instructions for [macOS](https://github.com/haotian-liu/LLaVA/blob/main/docs/macOS.md) and [Windows](https://github.com/haotian-liu/LLaVA/blob/main/docs/Windows.md).
 
+If you are using Ascend NPU, see instructions for [AscendNPU support](docs/AscendNPU_Support.md).
+
 1. Clone this repository and navigate to LLaVA folder
 ```bash
 git clone https://github.com/haotian-liu/LLaVA.git
@@ -183,7 +185,7 @@ flowchart BT
     subgraph Demo Connections
         direction BT
         c<-->gws
-        
+
         mw7b<-->c
         mw13b<-->c
         lsglw13b<-->c
@@ -434,14 +436,14 @@ If you find LLaVA useful for your research and applications, please cite using t
 }
 
 @misc{liu2023improvedllava,
-      title={Improved Baselines with Visual Instruction Tuning}, 
+      title={Improved Baselines with Visual Instruction Tuning},
       author={Liu, Haotian and Li, Chunyuan and Li, Yuheng and Lee, Yong Jae},
       publisher={arXiv:2310.03744},
       year={2023},
 }
 
 @misc{liu2023llava,
-      title={Visual Instruction Tuning}, 
+      title={Visual Instruction Tuning},
       author={Liu, Haotian and Li, Chunyuan and Wu, Qingyang and Lee, Yong Jae},
       publisher={NeurIPS},
       year={2023},
