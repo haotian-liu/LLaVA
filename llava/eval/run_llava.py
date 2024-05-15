@@ -110,6 +110,8 @@ def eval_model(args):
         .unsqueeze(0)
         .cuda()
     )
+    if args.batch:
+        input_ids = torch.cat([input_ids for _ in images]).cuda()
 
     with torch.inference_mode():
         output_ids = model.generate(
@@ -124,8 +126,12 @@ def eval_model(args):
             use_cache=True,
         )
 
-    outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
-    print(outputs)
+    outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)
+    if args.batch:
+        for i, image_file in enumerate(image_files):
+            print(image_file, outputs[i].strip())
+    else:
+        print(outputs[0].strip())
 
 
 if __name__ == "__main__":
@@ -140,6 +146,7 @@ if __name__ == "__main__":
     parser.add_argument("--top_p", type=float, default=None)
     parser.add_argument("--num_beams", type=int, default=1)
     parser.add_argument("--max_new_tokens", type=int, default=512)
+    parser.add_argument("--batch", action='store_true', default=False, help='batch inference or not.')
     args = parser.parse_args()
 
     eval_model(args)
