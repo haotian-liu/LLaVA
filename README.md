@@ -149,6 +149,23 @@ args = type('Args', (), {
 
 eval_model(args)
 ```
+
+You can use `get_model_and_processor` combined with `run_for_outputs` to avoid duplicated loading model
+
+```
+from types import SimpleNamespace
+
+model_path = "liuhaotian/llava-v1.5-7b"
+prompt = "What are the things I should be cautious about when I visit here?"
+image_file = "https://llava-vl.github.io/static/images/view.jpg"
+
+model, image_processor, tokenizer, p_conv_mode = get_model_and_processor(model_path)
+cfig = {"model": model, "image_processor": image_processor, "tokenizer": tokenizer, "p_conv_mode": p_conv_mode}
+
+args = SimpleNamespace(query=prompt, image_file=image_file, 
+                        sep=",", temperature=0, top_p=None, num_beams=1, max_new_tokens=512)
+run_for_outputs(cfig, args)
+```
 </details>
 
 ## LLaVA Weights
