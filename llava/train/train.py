@@ -584,7 +584,91 @@ def preprocess_mpt(
         labels=targets,
     )
 
+def preprocess_gemma(
+     sources: List[List[Dict[str, str]]],
+     tokenizer: transformers.PreTrainedTokenizer,
+     has_image: bool = False
+ ) -> Dict:
+    conv: conversation_lib.Conversation = conversation_lib.default_conversation.copy()
+    roles: Dict[str, str] = {"human": conv.roles[0], "gpt": conv.roles[1]}
+    
+    # Apply prompt templates
+    conversations: List[str] = []
+    for i, source in enumerate(sources):
+        if roles[source[0]["from"]] != conv.roles[0]:
+            # Skip the first one if it is not from human
+            source: List[Dict[str, str]] = source[1:]
+    
+        conv.messages = []
+        for j, sentence in enumerate(source):
+            role: str = roles[sentence["from"]]
+            assert role == conv.roles[j % 2], f"{i}"
+            conv.append_message(role, sentence["value"])
+        conversations.append(conv.get_prompt())
+    
+    # Tokenize conversations
+    if has_image:
+        input_ids: torch.Tensor = torch.stack([tokenizer_image_token(prompt, tokenizer, return_tensors='pt') for prompt in conversations], dim=0)
+    else:
+        input_ids: torch.Tensor = tokenizer(
+            conversations,
+            return_tensors="pt",
+            padding="longest",
+            max_length=tokenizer.model_max_length,
+            truncation=True,
+        ).input_ids
+    
+    targets: torch.Tensor = input_ids.clone()
+    assert conv.sep_style == conversation_lib.SeparatorStyle.GEMMA
+    
+    # Mask target
+    sep: str = conv.sep + conv.roles[1]
+    for conversation, target in zip(conversations, targets):
+        total_len: int = int(target.ne(tokenizer.pad_token_id).sum())
+        
+        rounds: List[str] = conversation.split(conv.sep)
+        re_rounds = []
+        for conv_idx in range(0, len(rounds), 2):
+            re_rounds.append(conv.sep.join(rounds[conv_idx:conv_idx+2]))
+        
+        cur_len = 1 # Ignore <bos>
+        target[:cur_len] = IGNORE_INDEX
+        for i, rou in enumerate(re_rounds):
+            if rou == "": 
+                break
+                
+            parts = rou.split(sep)
+            if len(parts) != 2:
+                break
+            parts[0] += sep # Re-append sep because split on this
+                             # Now "".join(parts)==rou
+            
+            if has_image:
+                 round_len = len(tokenizer_image_token(rou, tokenizer)) - 1 # Ignore <bos>
+                 instruction_len = len(tokenizer_image_token(parts[0], tokenizer)) - 1 # Ignore <bos>
+            else:
+                round_len = len(tokenizer(rou).input_ids) - 1 # Ignore <bos>
+                instruction_len = len(tokenizer(parts[0]).input_ids) - 1 # Ignore <bos>
 
+            round_len += 2 # sep: <end_of_turn>\n takes 2 tokens
+            target[cur_len : cur_len + instruction_len] = IGNORE_INDEX
+            cur_len += round_len
+         
+        target[cur_len:] = IGNORE_INDEX
+        
+        if cur_len < tokenizer.model_max_length:
+            if cur_len != total_len:
+                target[:] = IGNORE_INDEX
+                print(
+                    f"warning: tokenization mismatch: {cur_len} vs. {total_len}."
+                    f" (ignored)"
+                )
+
+    return dict(
+        input_ids=input_ids,
+        labels=targets,
+    )
+    
 def preprocess_plain(
     sources: Sequence[str],
     tokenizer: transformers.PreTrainedTokenizer,
@@ -627,6 +711,8 @@ def preprocess(
         return preprocess_v1(sources, tokenizer, has_image=has_image)
     if conversation_lib.default_conversation.version == "mpt":
         return preprocess_mpt(sources, tokenizer, has_image=has_image)
+    if conversation_lib.default_conversation.version == "gemma":
+        return preprocess_gemma(sources, tokenizer, has_image=has_image)
     # add end signal and concatenate together
     conversations = []
     for source in sources:
@@ -821,6 +907,30 @@ def train(attn_implementation=None):
                 model_args.model_name_or_path,
                 config=config,
                 cache_dir=training_args.cache_dir,
+                **bnb_model_from_pretrained_args
+            )
+        elif 'mis' in model_args.model_name_or_path.lower():
+            model = LlavaMistralForCausalLM.from_pretrained(
+                model_args.model_name_or_path,
+                cache_dir=training_args.cache_dir,
+                attn_implementation=attn_implementation,
+                torch_dtype=(torch.bfloat16 if training_args.bf16 else None),
+                **bnb_model_from_pretrained_args
+            )
+        elif 'mix' in model_args.model_name_or_path.lower():
+            model = LlavaMixtralForCausalLM.from_pretrained(
+                model_args.model_name_or_path,
+                cache_dir=training_args.cache_dir,
+                attn_implementation=attn_implementation,
+                torch_dtype=(torch.bfloat16 if training_args.bf16 else None),
+                **bnb_model_from_pretrained_args
+            )
+        elif 'gem' in model_args.model_name_or_path.lower():
+            model = LlavaGemmaForCausalLM.from_pretrained(
+                model_args.model_name_or_path,
+                cache_dir=training_args.cache_dir,
+                attn_implementation=attn_implementation,
+                torch_dtype=(torch.bfloat16 if training_args.bf16 else None),
                 **bnb_model_from_pretrained_args
             )
         else:
