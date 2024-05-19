@@ -164,6 +164,8 @@ To launch a Gradio demo locally, please run the following commands one by one. I
 flowchart BT
     %% Declare Nodes
     gws("Gradio (UI Server)")
+    openai("OpenAI (OpenAI API Server)")
+
     c("Controller (API Server):<br/>PORT: 10000")
     mw7b("Model Worker:<br/>llava-v1.5-7b<br/>PORT: 40000")
     mw13b("Model Worker:<br/>llava-v1.5-13b<br/>PORT: 40001")
@@ -183,6 +185,8 @@ flowchart BT
     subgraph Demo Connections
         direction BT
         c<-->gws
+        c<-->openai
+
         
         mw7b<-->c
         mw13b<-->c
@@ -282,6 +286,64 @@ python -m llava.serve.cli \
 ```
 
 <img src="images/demo_cli.gif" width="70%">
+
+## OpenAI OpenAI-Compatible APIs
+The following OpenAI-Compatible APIs are implemented mostly based on [FastChat openai_api_server](https://github.com/lm-sys/FastChat/blob/main/docs/openai_api.md)
+
+It supported:
+- Vision Chat Completions. (Reference: https://platform.openai.com/docs/guides/vision)
+
+Launch the RESTful API server:
+```bash
+python3 -m llava.serve.openai_api_server --host localhost --port 8000
+```
+
+Usage with OpenAI Python SDK:
+
+The goal of `openai_api_server.py` is to implement a fully OpenAI-compatible API server, so the models can be used directly with [openai-python](https://github.com/openai/openai-python) library.
+
+First, install openai-python:
+```bash
+pip install --upgrade openai
+```
+
+Then, interact with model vicuna:
+```python
+from openai import OpenAI
+
+api_key = ""
+
+# Controller endpoint
+base_url = "http://localhost:8000/api/v1"
+
+
+client = OpenAI(
+    api_key=api_key,
+    base_url=base_url
+)
+
+response = client.chat.completions.create(
+  model="llava-v1.5-7b",
+  messages=[
+    {
+      "role": "user",
+      "content": [
+        {"type": "text", "text": "What’s in this image?"},
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Gfp-wisconsin-madison-the-nature-boardwalk.jpg/2560px-Gfp-wisconsin-madison-the-nature-boardwalk.jpg",
+          },
+        },
+      ],
+    }
+  ],
+  max_tokens=300,
+  stream=False
+)
+
+print(response.choices[0])
+```
 
 ## Train
 
