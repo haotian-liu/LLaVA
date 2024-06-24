@@ -3,7 +3,7 @@ Fluffyvision makes it easy to use LLaVA by integrating a GUI that lets you choos
 More info about LLaVA can be found below.
 
 ## Requirements
-- [Python 3.9](https://www.python.org/downloads/release/python-390/)
+- [Python 3.9 64Bit](https://www.python.org/ftp/python/3.9.0/python-3.9.0-amd64.exe) <- Download correct version
 - [CUDA 11.7](https://developer.nvidia.com/cuda-11-7-0-download-archive)
 
 ## Installation
