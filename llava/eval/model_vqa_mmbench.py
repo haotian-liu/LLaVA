@@ -41,6 +41,7 @@ def is_none(value):
         return True
     return False
 
+
 def get_options(row, options):
     parsed_options = []
     for option in options:
@@ -124,20 +125,21 @@ def eval_model(args):
 
             ans_id = shortuuid.uuid()
             ans_file.write(json.dumps({"question_id": idx,
-                                    "round_id": round_idx,
-                                    "prompt": cur_prompt,
-                                    "text": outputs,
-                                    "options": options,
-                                    "option_char": cur_option_char,
-                                    "answer_id": ans_id,
-                                    "model_id": model_name,
-                                    "metadata": {}}) + "\n")
+                                       "round_id": round_idx,
+                                       "prompt": cur_prompt,
+                                       "text": outputs,
+                                       "options": options,
+                                       "option_char": cur_option_char,
+                                       "answer_id": ans_id,
+                                       "model_id": model_name,
+                                       "metadata": {}}) + "\n")
             ans_file.flush()
 
             # rotate options
             options = options[1:] + options[:1]
             cur_option_char = cur_option_char[1:] + cur_option_char[:1]
     ans_file.close()
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

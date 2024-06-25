@@ -125,6 +125,7 @@ def eval_model(args):
         # ans_file.flush()
     ans_file.close()
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model-path", type=str, default="facebook/opt-350m")

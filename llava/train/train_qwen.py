@@ -417,6 +417,7 @@ def preprocess_qwen_2(
     tokenizer: transformers.PreTrainedTokenizer,
     has_image: bool = False
 ) -> Dict:
+    # print('-----preprocess_qwen_2-------')
     conv = conversation_lib.default_conversation.copy()
     roles = {"human": conv.roles[0], "gpt": conv.roles[1]}
 
@@ -716,16 +717,22 @@ def preprocess(
     3. Tokenize the concatenated conversation;
     4. Make a deepcopy as the target. Mask human words with IGNORE_INDEX.
     """
+    # print("conversation:",conversation_lib.default_conversation.version)
+    # conversation_lib.default_conversation.version == "qwen_v2"
+
     if conversation_lib.default_conversation.sep_style == conversation_lib.SeparatorStyle.PLAIN:
         return preprocess_plain(sources, tokenizer)
     if conversation_lib.default_conversation.sep_style == conversation_lib.SeparatorStyle.LLAMA_2:
         return preprocess_llama_2(sources, tokenizer, has_image=has_image)
     if conversation_lib.default_conversation.version.startswith("v1"):
+        # print('--v1--')
         return preprocess_v1(sources, tokenizer, has_image=has_image)
     if conversation_lib.default_conversation.version == "mpt":
+        # print('--mpt--')
         return preprocess_mpt(sources, tokenizer, has_image=has_image)
     # fix: add qwen2
     if conversation_lib.default_conversation.version.startswith("qwen_v2"):
+        # print('--qwen_v2--')
         return preprocess_qwen_2(sources, tokenizer, has_image=has_image)
     # add end signal and concatenate together
     conversations = []
@@ -925,7 +932,7 @@ def train(attn_implementation=None):
                 **bnb_model_from_pretrained_args
             )
         else:
-            model = LlavaLlamaForCausalLM.from_pretrained(
+            model = LlavaQwen2ForCausalLM.from_pretrained(
                 model_args.model_name_or_path,
                 cache_dir=training_args.cache_dir,
                 attn_implementation=attn_implementation,
@@ -933,7 +940,7 @@ def train(attn_implementation=None):
                 **bnb_model_from_pretrained_args
             )
     else:
-        model = transformers.LlamaForCausalLM.from_pretrained(
+        model = transformers.Qwen2ForCausalLM.from_pretrained(
             model_args.model_name_or_path,
             cache_dir=training_args.cache_dir,
             attn_implementation=attn_implementation,
@@ -1002,8 +1009,12 @@ def train(attn_implementation=None):
     elif model_args.version == "v0.5":
         tokenizer.pad_token = tokenizer.unk_token
     else:
-        tokenizer.pad_token = tokenizer.unk_token
+        if tokenizer.unk_token:
+            tokenizer.pad_token = tokenizer.unk_token
+        else:  # use qwen
+            tokenizer.legacy = False
         if model_args.version in conversation_lib.conv_templates:
+            # print('version:', model_args.version)
             conversation_lib.default_conversation = conversation_lib.conv_templates[model_args.version]
         else:
             conversation_lib.default_conversation = conversation_lib.conv_templates["vicuna_v1"]

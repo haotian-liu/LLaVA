@@ -82,7 +82,7 @@ def main(args):
             else:
                 inp = DEFAULT_IMAGE_TOKEN + '\n' + inp
             image = None
-        
+
         conv.append_message(conv.roles[0], inp)
         conv.append_message(conv.roles[1], None)
         prompt = conv.get_prompt()

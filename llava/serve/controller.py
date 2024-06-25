@@ -132,14 +132,14 @@ class Controller:
             worker_speeds = worker_speeds / norm
             if True:  # Directly return address
                 pt = np.random.choice(np.arange(len(worker_names)),
-                    p=worker_speeds)
+                                      p=worker_speeds)
                 worker_name = worker_names[pt]
                 return worker_name
 
             # Check status before returning
             while True:
                 pt = np.random.choice(np.arange(len(worker_names)),
-                    p=worker_speeds)
+                                      p=worker_speeds)
                 worker_name = worker_names[pt]
 
                 if self.get_worker_status(worker_name):
@@ -202,7 +202,7 @@ class Controller:
 
         try:
             response = requests.post(worker_addr + "/worker_generate_stream",
-                json=params, stream=True, timeout=5)
+                                     json=params, stream=True, timeout=5)
             for chunk in response.iter_lines(decode_unicode=False, delimiter=b"\0"):
                 if chunk:
                     yield chunk + b"\0"
@@ -214,9 +214,9 @@ class Controller:
             }
             yield json.dumps(ret).encode() + b"\0"
 
-
     # Let the controller act as a worker to achieve hierarchical
     # management. This can be used to connect isolated sub networks.
+
     def worker_api_get_status(self):
         model_names = set()
         speed = 0
