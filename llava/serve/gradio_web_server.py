@@ -8,10 +8,10 @@ import gradio as gr
 import requests
 
 from llava.conversation import (default_conversation, conv_templates,
-                                   SeparatorStyle)
+                                SeparatorStyle)
 from llava.constants import LOGDIR
 from llava.utils import (build_logger, server_error_msg,
-    violates_moderation, moderation_msg)
+                         violates_moderation, moderation_msg)
 import hashlib
 
 
@@ -205,7 +205,7 @@ def http_bot(state, model_selector, temperature, top_p, max_new_tokens, request:
     # Query worker address
     controller_url = args.controller_url
     ret = requests.post(controller_url + "/get_worker_address",
-            json={"model": model_name})
+                        json={"model": model_name})
     worker_addr = ret.json()["address"]
     logger.info(f"model_name: {model_name}, worker_addr: {worker_addr}")
 
@@ -247,7 +247,7 @@ def http_bot(state, model_selector, temperature, top_p, max_new_tokens, request:
     try:
         # Stream output
         response = requests.post(worker_addr + "/worker_generate_stream",
-            headers=headers, json=pload, stream=True, timeout=10)
+                                 headers=headers, json=pload, stream=True, timeout=10)
         for chunk in response.iter_lines(decode_unicode=False, delimiter=b"\0"):
             if chunk:
                 data = json.loads(chunk.decode())
@@ -285,6 +285,7 @@ def http_bot(state, model_selector, temperature, top_p, max_new_tokens, request:
         }
         fout.write(json.dumps(data) + "\n")
 
+
 title_markdown = ("""
 # 🌋 LLaVA: Large Language and Vision Assistant
 [[Project Page](https://llava-vl.github.io)] [[Code](https://github.com/haotian-liu/LLaVA)] [[Model](https://github.com/haotian-liu/LLaVA/blob/main/docs/MODEL_ZOO.md)] | 📚 [[LLaVA](https://arxiv.org/abs/2304.08485)] [[LLaVA-v1.5](https://arxiv.org/abs/2310.03744)] [[LLaVA-v1.6](https://llava-vl.github.io/blog/2024-01-30-llava-1-6/)]
@@ -311,6 +312,7 @@ block_css = """
 }
 
 """
+
 
 def build_demo(embed_mode, cur_dir=None, concurrency_count=10):
     textbox = gr.Textbox(show_label=False, placeholder="Enter text and press ENTER", container=False)
@@ -364,7 +366,7 @@ def build_demo(embed_mode, cur_dir=None, concurrency_count=10):
                     upvote_btn = gr.Button(value="👍  Upvote", interactive=False)
                     downvote_btn = gr.Button(value="👎  Downvote", interactive=False)
                     flag_btn = gr.Button(value="⚠️  Flag", interactive=False)
-                    #stop_btn = gr.Button(value="⏹️  Stop Generation", interactive=False)
+                    # stop_btn = gr.Button(value="⏹️  Stop Generation", interactive=False)
                     regenerate_btn = gr.Button(value="🔄  Regenerate", interactive=False)
                     clear_btn = gr.Button(value="🗑️  Clear", interactive=False)
 
@@ -459,7 +461,7 @@ if __name__ == "__main__":
     parser.add_argument("--controller-url", type=str, default="http://localhost:21001")
     parser.add_argument("--concurrency-count", type=int, default=16)
     parser.add_argument("--model-list-mode", type=str, default="once",
-        choices=["once", "reload"])
+                        choices=["once", "reload"])
     parser.add_argument("--share", action="store_true")
     parser.add_argument("--moderate", action="store_true")
     parser.add_argument("--embed", action="store_true")

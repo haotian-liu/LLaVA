@@ -18,7 +18,7 @@ def main():
         print(f"Models: {models}")
 
         ret = requests.post(controller_addr + "/get_worker_address",
-            json={"model": args.model_name})
+                            json={"model": args.model_name})
         worker_addr = ret.json()["address"]
         print(f"worker_addr: {worker_addr}")
 
@@ -38,7 +38,7 @@ def main():
         "stop": conv.sep,
     }
     response = requests.post(worker_addr + "/worker_generate_stream", headers=headers,
-            json=pload, stream=True)
+                             json=pload, stream=True)
 
     print(prompt.replace(conv.sep, "\n"), end="")
     for chunk in response.iter_lines(chunk_size=8192, decode_unicode=False, delimiter=b"\0"):
@@ -55,8 +55,7 @@ if __name__ == "__main__":
     parser.add_argument("--worker-address", type=str)
     parser.add_argument("--model-name", type=str, default="facebook/opt-350m")
     parser.add_argument("--max-new-tokens", type=int, default=32)
-    parser.add_argument("--message", type=str, default=
-        "Tell me a story with more than 1000 words.")
+    parser.add_argument("--message", type=str, default="Tell me a story with more than 1000 words.")
     args = parser.parse_args()
 
     main()

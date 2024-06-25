@@ -18,7 +18,7 @@ from functools import partial
 
 from llava.constants import WORKER_HEART_BEAT_INTERVAL
 from llava.utils import (build_logger, server_error_msg,
-    pretty_print_semaphore)
+                         pretty_print_semaphore)
 from llava.mm_utils import process_images, load_image_from_base64, tokenizer_image_token, expand2square
 from llava.constants import DEFAULT_IMAGE_TOKEN
 
@@ -224,9 +224,9 @@ if __name__ == "__main__":
     parser.add_argument("--host", type=str, default="localhost")
     parser.add_argument("--port", type=int, default=21002)
     parser.add_argument("--worker-address", type=str,
-        default="http://localhost:21002")
+                        default="http://localhost:21002")
     parser.add_argument("--controller-address", type=str,
-        default="http://localhost:21001")
+                        default="http://localhost:21001")
     parser.add_argument("--model-name", type=str)
     parser.add_argument("--sgl-endpoint", type=str)
     parser.add_argument("--limit-model-concurrency", type=int, default=5)

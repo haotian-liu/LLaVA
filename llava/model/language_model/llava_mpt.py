@@ -18,7 +18,7 @@ from typing import Optional, Tuple
 import torch
 
 from transformers import AutoConfig, AutoModelForCausalLM, \
-                         MptConfig, MptForCausalLM, MptModel
+    MptConfig, MptForCausalLM, MptModel
 from llava.model.llava_arch import LlavaMetaModel, LlavaMetaForCausalLM
 
 
@@ -32,7 +32,7 @@ class LlavaMptModel(LlavaMetaModel, MptModel):
     def __init__(self, config: MptConfig):
         config.hidden_size = config.d_model
         super(LlavaMptModel, self).__init__(config)
-    
+
     def embed_tokens(self, x):
         return self.wte(x)
 
@@ -58,20 +58,20 @@ class LlavaMptForCausalLM(MptForCausalLM, LlavaMetaForCausalLM):
             module.gradient_checkpointing = value
 
     def forward(
-        self,
-        input_ids: Optional[torch.LongTensor] = None,
-        past_key_values: Optional[Tuple[Tuple[torch.Tensor, torch.Tensor], ...]] = None,
-        attention_mask: Optional[torch.Tensor] = None,
-        inputs_embeds: Optional[torch.Tensor] = None,
-        labels: Optional[torch.Tensor] = None,
-        use_cache: Optional[bool] = None,
-        output_attentions: Optional[bool] = None,
-        output_hidden_states: Optional[bool] = None,
-        return_dict: Optional[bool] = None,
-        images=None):
+            self,
+            input_ids: Optional[torch.LongTensor] = None,
+            past_key_values: Optional[Tuple[Tuple[torch.Tensor, torch.Tensor], ...]] = None,
+            attention_mask: Optional[torch.Tensor] = None,
+            inputs_embeds: Optional[torch.Tensor] = None,
+            labels: Optional[torch.Tensor] = None,
+            use_cache: Optional[bool] = None,
+            output_attentions: Optional[bool] = None,
+            output_hidden_states: Optional[bool] = None,
+            return_dict: Optional[bool] = None,
+            images=None):
 
         input_ids, attention_mask, past_key_values, inputs_embeds, labels = self.prepare_inputs_labels_for_multimodal(input_ids, attention_mask, past_key_values, labels, images)
-        
+
         return super().forward(
             input_ids,
             past_key_values=past_key_values,

@@ -13,6 +13,8 @@ class SeparatorStyle(Enum):
     MPT = auto()
     PLAIN = auto()
     LLAMA_2 = auto()
+    QWEN_2 = auto()  # fix: add qwen2
+    CHATML = auto()
 
 
 @dataclasses.dataclass
@@ -51,6 +53,27 @@ class Conversation:
                     ret += role + ": " + message + self.sep
                 else:
                     ret += role + ":"
+        elif self.sep_style == SeparatorStyle.QWEN_2:  # fix: add qwen2
+            seps = [self.sep, self.sep2]
+            ret = self.system + seps[0]
+            for i, (role, message) in enumerate(messages):
+                if message:
+                    if type(message) is tuple:
+                        message, _, _ = message
+                    ret += role + ": " + message + seps[i % 2]
+                else:
+                    ret += role + ":"
+        elif self.sep_style == SeparatorStyle.CHATML:
+            ret = "" if self.system == "" else self.system + self.sep + "\n"
+            for role, message in messages:
+                if message:
+                    if type(message) is tuple:
+                        message, images = message
+                        message = "<image>" * len(images) + message
+                    ret += role + "\n" + message + self.sep + "\n"
+                else:
+                    ret += role + "\n"
+            return ret
         elif self.sep_style == SeparatorStyle.TWO:
             seps = [self.sep, self.sep2]
             ret = self.system + seps[0]
@@ -71,8 +94,8 @@ class Conversation:
                 else:
                     ret += role
         elif self.sep_style == SeparatorStyle.LLAMA_2:
-            wrap_sys = lambda msg: f"<<SYS>>\n{msg}\n<</SYS>>\n\n" if len(msg) > 0 else msg
-            wrap_inst = lambda msg: f"[INST] {msg} [/INST]"
+            def wrap_sys(msg): return f"<<SYS>>\n{msg}\n<</SYS>>\n\n" if len(msg) > 0 else msg
+            def wrap_inst(msg): return f"[INST] {msg} [/INST]"
             ret = ""
 
             for i, (role, message) in enumerate(messages):
@@ -82,7 +105,8 @@ class Conversation:
                 if message:
                     if type(message) is tuple:
                         message, _, _ = message
-                    if i == 0: message = wrap_sys(self.system) + message
+                    if i == 0:
+                        message = wrap_sys(self.system) + message
                     if i % 2 == 0:
                         message = wrap_inst(message)
                         ret += self.sep + message
@@ -369,12 +393,38 @@ Answer the questions.""",
     sep="<|im_end|>",
 )
 
-default_conversation = conv_vicuna_v1
+
+# fix: add qwen2
+conv_qwen_2 = Conversation(
+    system="A chat between a curious user and an artificial intelligence assistant. "
+    "The assistant gives helpful, detailed, and polite answers to the user's questions.",
+    roles=("USER", "ASSISTANT"),
+    version="qwen_v2",
+    messages=(),
+    offset=0,
+    sep_style=SeparatorStyle.QWEN_2,
+    sep=" ",
+    sep2="<|endoftext|>",
+)
+
+# conv_qwen_2 = Conversation(
+#     system="""<|im_start|>system
+# You are a helpful assistant.""",
+#     roles=("<|im_start|>user", "<|im_start|>assistant"),
+#     version="qwen_v2",
+#     messages=[],
+#     offset=0,
+#     sep_style=SeparatorStyle.CHATML,
+#     sep="<|im_end|>",
+# )
+
+default_conversation = conv_qwen_2
 conv_templates = {
-    "default": conv_vicuna_v0,
+    "default": conv_qwen_2,
     "v0": conv_vicuna_v0,
     "v1": conv_vicuna_v1,
     "vicuna_v1": conv_vicuna_v1,
+    "qwen_2": conv_qwen_2,
     "llama_2": conv_llama_2,
     "mistral_instruct": conv_mistral_instruct,
     "chatml_direct": conv_chatml_direct,
@@ -391,6 +441,5 @@ conv_templates = {
     "mpt": conv_mpt,
 }
 
-
 if __name__ == "__main__":
-    print(default_conversation.get_prompt())
+    print("conversation:", default_conversation.get_prompt())
