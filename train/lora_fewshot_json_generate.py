@@ -44,7 +44,7 @@ def collect_samples(base_dir, task, question_template, label_mapping):
     return samples
 
 def main():
-    fewshot_base_dir = "/home/users/ntu/chih0001/scratch/data/fewshot"
+    fewshot_base_dir = "/home/users/ntu/chih0001/scratch/data/fewshot/10shot" # change here
 
     distraction_dir = os.path.join(fewshot_base_dir, "SAM-DD")
     emotion_dir = os.path.join(fewshot_base_dir, "FED")
@@ -71,7 +71,7 @@ def main():
     samples.extend(collect_samples(emotion_dir, "emotion", emotion_question, emotion_labels))
     samples.extend(collect_samples(drowsiness_dir, "drowsiness", drowsiness_question, drowsiness_labels))
 
-    output_path = "/home/users/ntu/chih0001/scratch/VLM/LLaVA/train/lora_fewshot.json"
+    output_path = "/home/users/ntu/chih0001/scratch/VLM/LLaVA/train/lora_10shot.json" # change
     with open(output_path, 'w') as f:
         json.dump(samples, f, indent=4)
 

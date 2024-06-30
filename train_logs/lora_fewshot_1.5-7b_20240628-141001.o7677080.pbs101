@@ -1,0 +1,122 @@
+[2024-06-28 14:10:28,758] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[93m [WARNING] [0m async_io requires the dev libaio .so object and headers but these were not found.
+[93m [WARNING] [0m async_io: please install the libaio-devel package with yum
+[93m [WARNING] [0m If libaio is already installed (perhaps from source), try setting the CFLAGS and LDFLAGS environment variables to where it can be found.
+[93m [WARNING] [0m Please specify the CUTLASS repo directory as environment variable $CUTLASS_PATH
+[93m [WARNING] [0m sparse_attn requires a torch version >= 1.5 and < 2.0 but detected 2.1
+[93m [WARNING] [0m using untested triton version (2.1.0), only 1.0.0 is known to be compatible
+[2024-06-28 14:10:35,346] [WARNING] [runner.py:202:fetch_hostfile] Unable to find hostfile, will proceed with training with local resources only.
+Detected CUDA_VISIBLE_DEVICES=0,1: setting --include=localhost:0,1
+[2024-06-28 14:10:35,346] [INFO] [runner.py:568:main] cmd = /home/users/ntu/chih0001/anaconda3/envs/llava-test/bin/python3.10 -u -m deepspeed.launcher.launch --world_info=eyJsb2NhbGhvc3QiOiBbMCwgMV19 --master_addr=127.0.0.1 --master_port=29500 --enable_each_rank_log=None llava/train/train_mem.py --lora_enable True --lora_r 128 --lora_alpha 256 --mm_projector_lr 2e-5 --deepspeed ./scripts/zero3.json --model_name_or_path /home/users/ntu/chih0001/scratch/model/llava-v1.5-7b --version v1 --data_path /home/users/ntu/chih0001/scratch/VLM/LLaVA/train/lora_fewshot.json --image_folder ./playground/data --vision_tower /home/users/ntu/chih0001/scratch/model/clip-vit-large-patch14-336 --mm_projector_type mlp2x_gelu --mm_vision_select_layer -2 --mm_use_im_start_end False --mm_use_im_patch_token False --image_aspect_ratio pad --group_by_modality_length True --bf16 True --output_dir /home/users/ntu/chih0001/scratch/model/lora/globalBS/llava-v1.5-7b-DSLLM-lora_fewshot --num_train_epochs 1 --per_device_train_batch_size 32 --per_device_eval_batch_size 4 --gradient_accumulation_steps 2 --evaluation_strategy no --save_strategy steps --save_steps 50000 --save_total_limit 1 --learning_rate 2e-4 --weight_decay 0. --warmup_ratio 0.03 --lr_scheduler_type cosine --logging_steps 1 --tf32 True --model_max_length 2048 --gradient_checkpointing True --dataloader_num_workers 4 --lazy_preprocess True --report_to wandb
+[2024-06-28 14:10:39,629] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[93m [WARNING] [0m async_io requires the dev libaio .so object and headers but these were not found.
+[93m [WARNING] [0m async_io: please install the libaio-devel package with yum
+[93m [WARNING] [0m If libaio is already installed (perhaps from source), try setting the CFLAGS and LDFLAGS environment variables to where it can be found.
+[93m [WARNING] [0m Please specify the CUTLASS repo directory as environment variable $CUTLASS_PATH
+[93m [WARNING] [0m sparse_attn requires a torch version >= 1.5 and < 2.0 but detected 2.1
+[93m [WARNING] [0m using untested triton version (2.1.0), only 1.0.0 is known to be compatible
+[2024-06-28 14:10:41,840] [INFO] [launch.py:145:main] WORLD INFO DICT: {'localhost': [0, 1]}
+[2024-06-28 14:10:41,841] [INFO] [launch.py:151:main] nnodes=1, num_local_procs=2, node_rank=0
+[2024-06-28 14:10:41,841] [INFO] [launch.py:162:main] global_rank_mapping=defaultdict(<class 'list'>, {'localhost': [0, 1]})
+[2024-06-28 14:10:41,841] [INFO] [launch.py:163:main] dist_world_size=2
+[2024-06-28 14:10:41,841] [INFO] [launch.py:165:main] Setting CUDA_VISIBLE_DEVICES=0,1
+[2024-06-28 14:10:41,841] [INFO] [launch.py:253:main] process 1804086 spawned with command: ['/home/users/ntu/chih0001/anaconda3/envs/llava-test/bin/python3.10', '-u', 'llava/train/train_mem.py', '--local_rank=0', '--lora_enable', 'True', '--lora_r', '128', '--lora_alpha', '256', '--mm_projector_lr', '2e-5', '--deepspeed', './scripts/zero3.json', '--model_name_or_path', '/home/users/ntu/chih0001/scratch/model/llava-v1.5-7b', '--version', 'v1', '--data_path', '/home/users/ntu/chih0001/scratch/VLM/LLaVA/train/lora_fewshot.json', '--image_folder', './playground/data', '--vision_tower', '/home/users/ntu/chih0001/scratch/model/clip-vit-large-patch14-336', '--mm_projector_type', 'mlp2x_gelu', '--mm_vision_select_layer', '-2', '--mm_use_im_start_end', 'False', '--mm_use_im_patch_token', 'False', '--image_aspect_ratio', 'pad', '--group_by_modality_length', 'True', '--bf16', 'True', '--output_dir', '/home/users/ntu/chih0001/scratch/model/lora/globalBS/llava-v1.5-7b-DSLLM-lora_fewshot', '--num_train_epochs', '1', '--per_device_train_batch_size', '32', '--per_device_eval_batch_size', '4', '--gradient_accumulation_steps', '2', '--evaluation_strategy', 'no', '--save_strategy', 'steps', '--save_steps', '50000', '--save_total_limit', '1', '--learning_rate', '2e-4', '--weight_decay', '0.', '--warmup_ratio', '0.03', '--lr_scheduler_type', 'cosine', '--logging_steps', '1', '--tf32', 'True', '--model_max_length', '2048', '--gradient_checkpointing', 'True', '--dataloader_num_workers', '4', '--lazy_preprocess', 'True', '--report_to', 'wandb']
+[2024-06-28 14:10:41,842] [INFO] [launch.py:253:main] process 1804087 spawned with command: ['/home/users/ntu/chih0001/anaconda3/envs/llava-test/bin/python3.10', '-u', 'llava/train/train_mem.py', '--local_rank=1', '--lora_enable', 'True', '--lora_r', '128', '--lora_alpha', '256', '--mm_projector_lr', '2e-5', '--deepspeed', './scripts/zero3.json', '--model_name_or_path', '/home/users/ntu/chih0001/scratch/model/llava-v1.5-7b', '--version', 'v1', '--data_path', '/home/users/ntu/chih0001/scratch/VLM/LLaVA/train/lora_fewshot.json', '--image_folder', './playground/data', '--vision_tower', '/home/users/ntu/chih0001/scratch/model/clip-vit-large-patch14-336', '--mm_projector_type', 'mlp2x_gelu', '--mm_vision_select_layer', '-2', '--mm_use_im_start_end', 'False', '--mm_use_im_patch_token', 'False', '--image_aspect_ratio', 'pad', '--group_by_modality_length', 'True', '--bf16', 'True', '--output_dir', '/home/users/ntu/chih0001/scratch/model/lora/globalBS/llava-v1.5-7b-DSLLM-lora_fewshot', '--num_train_epochs', '1', '--per_device_train_batch_size', '32', '--per_device_eval_batch_size', '4', '--gradient_accumulation_steps', '2', '--evaluation_strategy', 'no', '--save_strategy', 'steps', '--save_steps', '50000', '--save_total_limit', '1', '--learning_rate', '2e-4', '--weight_decay', '0.', '--warmup_ratio', '0.03', '--lr_scheduler_type', 'cosine', '--logging_steps', '1', '--tf32', 'True', '--model_max_length', '2048', '--gradient_checkpointing', 'True', '--dataloader_num_workers', '4', '--lazy_preprocess', 'True', '--report_to', 'wandb']
+[2024-06-28 14:11:04,364] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[2024-06-28 14:11:04,364] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[93m [WARNING] [0m async_io requires the dev libaio .so object and headers but these were not found.
+[93m [WARNING] [0m async_io requires the dev libaio .so object and headers but these were not found.
+[93m [WARNING] [0m async_io: please install the libaio-devel package with yum
+[93m [WARNING] [0m If libaio is already installed (perhaps from source), try setting the CFLAGS and LDFLAGS environment variables to where it can be found.
+[93m [WARNING] [0m Please specify the CUTLASS repo directory as environment variable $CUTLASS_PATH
+[93m [WARNING] [0m async_io: please install the libaio-devel package with yum
+[93m [WARNING] [0m If libaio is already installed (perhaps from source), try setting the CFLAGS and LDFLAGS environment variables to where it can be found.
+[93m [WARNING] [0m Please specify the CUTLASS repo directory as environment variable $CUTLASS_PATH
+[93m [WARNING] [0m sparse_attn requires a torch version >= 1.5 and < 2.0 but detected 2.1
+[93m [WARNING] [0m using untested triton version (2.1.0), only 1.0.0 is known to be compatible
+[93m [WARNING] [0m sparse_attn requires a torch version >= 1.5 and < 2.0 but detected 2.1
+[93m [WARNING] [0m using untested triton version (2.1.0), only 1.0.0 is known to be compatible
+[2024-06-28 14:11:06,825] [INFO] [comm.py:637:init_distributed] cdb=None
+[2024-06-28 14:11:06,825] [INFO] [comm.py:637:init_distributed] cdb=None
+[2024-06-28 14:11:06,825] [INFO] [comm.py:668:init_distributed] Initializing TorchBackend in DeepSpeed with backend nccl
+You are using a model of type llava to instantiate a model of type llava_llama. This is not supported for all configurations of models and can yield errors.
+You are attempting to use Flash Attention 2.0 with a model not initialized on GPU. Make sure to move the model to GPU after initializing it on CPU with `model.to('cuda')`.
+You are using a model of type llava to instantiate a model of type llava_llama. This is not supported for all configurations of models and can yield errors.
+You are attempting to use Flash Attention 2.0 with a model not initialized on GPU. Make sure to move the model to GPU after initializing it on CPU with `model.to('cuda')`.
+[2024-06-28 14:11:11,679] [INFO] [partition_parameters.py:345:__exit__] finished initializing model - num_params = 295, num_elems = 6.76B
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/_utils.py:831: UserWarning: TypedStorage is deprecated. It will be removed in the future and UntypedStorage will be the only storage class. This should only matter to you if you are using storages directly.  To access UntypedStorage directly, use tensor.untyped_storage() instead of tensor.storage()
+  return self.fget.__get__(instance, owner)()
+/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/_utils.py:831: UserWarning: TypedStorage is deprecated. It will be removed in the future and UntypedStorage will be the only storage class. This should only matter to you if you are using storages directly.  To access UntypedStorage directly, use tensor.untyped_storage() instead of tensor.storage()
+  return self.fget.__get__(instance, owner)()
+Loading checkpoint shards:  50%|█████     | 1/2 [00:12<00:12, 12.89s/it]Loading checkpoint shards:  50%|█████     | 1/2 [00:15<00:15, 15.73s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:18<00:00,  8.73s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:18<00:00,  9.35s/it]
+Loading checkpoint shards: 100%|██████████| 2/2 [00:18<00:00,  8.32s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:18<00:00,  9.43s/it]
+Adding LoRA adapters...
+[2024-06-28 14:11:41,896] [INFO] [partition_parameters.py:345:__exit__] finished initializing model - num_params = 686, num_elems = 7.06B
+Formatting inputs...Skip in lazy mode
+Detected kernel version 4.18.0, which is below the recommended minimum of 5.5.0; this can cause the process to hang. It is recommended to upgrade the kernel to the minimum version or higher.
+Parameter Offload: Total persistent parameters: 599040 in 312 params
+wandb: Currently logged in as: haozhuangchi. Use `wandb login --relogin` to force relogin
+wandb: wandb version 0.17.3 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.16.6
+wandb: Run data is saved locally in /scratch/users/ntu/chih0001/VLM/LLaVA/wandb/run-20240628_141151-alf6c6bm
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run misunderstood-spaceship-38
+wandb: ⭐️ View project at https://wandb.ai/haozhuangchi/huggingface
+wandb: 🚀 View run at https://wandb.ai/haozhuangchi/huggingface/runs/alf6c6bm
+  0%|          | 0/13 [00:00<?, ?it/s]/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/utils/checkpoint.py:429: UserWarning: torch.utils.checkpoint: please pass in use_reentrant=True or use_reentrant=False explicitly. The default value of use_reentrant will be updated to be False in the future. To maintain current behavior, pass use_reentrant=True. It is recommended that you use use_reentrant=False. Refer to docs for more details on the differences between the two variants.
+  warnings.warn(
+/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/utils/checkpoint.py:61: UserWarning: None of the inputs have requires_grad=True. Gradients will be None
+  warnings.warn(
+/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/utils/checkpoint.py:429: UserWarning: torch.utils.checkpoint: please pass in use_reentrant=True or use_reentrant=False explicitly. The default value of use_reentrant will be updated to be False in the future. To maintain current behavior, pass use_reentrant=True. It is recommended that you use use_reentrant=False. Refer to docs for more details on the differences between the two variants.
+  warnings.warn(
+/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/utils/checkpoint.py:61: UserWarning: None of the inputs have requires_grad=True. Gradients will be None
+  warnings.warn(
+  8%|▊         | 1/13 [00:23<04:40, 23.41s/it]                                              {'loss': 3.1586, 'learning_rate': 0.0002, 'epoch': 0.07}
+  8%|▊         | 1/13 [00:23<04:40, 23.41s/it] 15%|█▌        | 2/13 [00:38<03:26, 18.81s/it]                                              {'loss': 3.114, 'learning_rate': 0.00019659258262890683, 'epoch': 0.15}
+ 15%|█▌        | 2/13 [00:38<03:26, 18.81s/it] 23%|██▎       | 3/13 [00:54<02:53, 17.39s/it]                                              {'loss': 1.1923, 'learning_rate': 0.00018660254037844388, 'epoch': 0.22}
+ 23%|██▎       | 3/13 [00:54<02:53, 17.39s/it] 31%|███       | 4/13 [01:10<02:30, 16.72s/it]                                              {'loss': 0.4875, 'learning_rate': 0.00017071067811865476, 'epoch': 0.3}
+ 31%|███       | 4/13 [01:10<02:30, 16.72s/it] 38%|███▊      | 5/13 [01:26<02:10, 16.35s/it]                                              {'loss': 0.266, 'learning_rate': 0.00015000000000000001, 'epoch': 0.37}
+ 38%|███▊      | 5/13 [01:26<02:10, 16.35s/it] 46%|████▌     | 6/13 [01:41<01:52, 16.14s/it]                                              {'loss': 0.2297, 'learning_rate': 0.00012588190451025207, 'epoch': 0.44}
+ 46%|████▌     | 6/13 [01:41<01:52, 16.14s/it] 54%|█████▍    | 7/13 [01:57<01:35, 16.00s/it]                                              {'loss': 0.1848, 'learning_rate': 0.0001, 'epoch': 0.52}
+ 54%|█████▍    | 7/13 [01:57<01:35, 16.00s/it] 62%|██████▏   | 8/13 [02:13<01:19, 15.91s/it]                                              {'loss': 0.189, 'learning_rate': 7.411809548974792e-05, 'epoch': 0.59}
+ 62%|██████▏   | 8/13 [02:13<01:19, 15.91s/it] 69%|██████▉   | 9/13 [02:28<01:03, 15.85s/it]                                              {'loss': 0.1556, 'learning_rate': 5.000000000000002e-05, 'epoch': 0.67}
+ 69%|██████▉   | 9/13 [02:28<01:03, 15.85s/it] 77%|███████▋  | 10/13 [02:44<00:47, 15.81s/it]                                               {'loss': 0.1476, 'learning_rate': 2.9289321881345254e-05, 'epoch': 0.74}
+ 77%|███████▋  | 10/13 [02:44<00:47, 15.81s/it] 85%|████████▍ | 11/13 [03:00<00:31, 15.78s/it]                                               {'loss': 0.1338, 'learning_rate': 1.339745962155613e-05, 'epoch': 0.81}
+ 85%|████████▍ | 11/13 [03:00<00:31, 15.78s/it] 92%|█████████▏| 12/13 [03:16<00:15, 15.75s/it]                                               {'loss': 0.136, 'learning_rate': 3.40741737109318e-06, 'epoch': 0.89}
+ 92%|█████████▏| 12/13 [03:16<00:15, 15.75s/it]100%|██████████| 13/13 [03:31<00:00, 15.73s/it]                                               {'loss': 0.1557, 'learning_rate': 0.0, 'epoch': 0.96}
+100%|██████████| 13/13 [03:31<00:00, 15.73s/it]                                               {'train_runtime': 225.6663, 'train_samples_per_second': 7.617, 'train_steps_per_second': 0.058, 'train_loss': 0.7346679912163661, 'epoch': 0.96}
+100%|██████████| 13/13 [03:31<00:00, 15.73s/it]100%|██████████| 13/13 [03:31<00:00, 16.29s/it]
+Some non-default generation parameters are set in the model config. These should go into a GenerationConfig file (https://huggingface.co/docs/transformers/generation_strategies#save-a-custom-decoding-strategy-with-your-model) instead. This warning will be raised to an exception in v4.41.
+Non-default generation parameters: {'max_length': 4096}
+/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/peft/utils/save_and_load.py:154: UserWarning: Could not find a config file in /home/users/ntu/chih0001/scratch/model/llava-v1.5-7b - will assume that the vocabulary was not modified.
+  warnings.warn(
+wandb: - 0.016 MB of 0.016 MB uploadedwandb: \ 0.016 MB of 0.016 MB uploadedwandb: | 0.016 MB of 0.016 MB uploadedwandb: / 0.016 MB of 0.016 MB uploadedwandb: - 0.016 MB of 0.016 MB uploadedwandb: \ 0.016 MB of 0.016 MB uploadedwandb: | 0.043 MB of 0.061 MB uploadedwandb: / 0.043 MB of 0.063 MB uploadedwandb: - 0.063 MB of 0.063 MB uploadedwandb: \ 0.063 MB of 0.063 MB uploadedwandb: 
+wandb: Run history:
+wandb:                    train/epoch ▁▂▂▃▃▄▅▅▆▆▇▇██
+wandb:              train/global_step ▁▂▂▃▃▄▅▅▆▆▇▇██
+wandb:            train/learning_rate ███▇▆▅▅▄▃▂▁▁▁
+wandb:                     train/loss ██▃▂▁▁▁▁▁▁▁▁▁
+wandb:               train/total_flos ▁
+wandb:               train/train_loss ▁
+wandb:            train/train_runtime ▁
+wandb: train/train_samples_per_second ▁
+wandb:   train/train_steps_per_second ▁
+wandb: 
+wandb: Run summary:
+wandb:                    train/epoch 0.96
+wandb:              train/global_step 13
+wandb:            train/learning_rate 0.0
+wandb:                     train/loss 0.1557
+wandb:               train/total_flos 4323832233984.0
+wandb:               train/train_loss 0.73467
+wandb:            train/train_runtime 225.6663
+wandb: train/train_samples_per_second 7.617
+wandb:   train/train_steps_per_second 0.058
+wandb: 
+wandb: 🚀 View run misunderstood-spaceship-38 at: https://wandb.ai/haozhuangchi/huggingface/runs/alf6c6bm
+wandb: ⭐️ View project at: https://wandb.ai/haozhuangchi/huggingface
+wandb: Synced 6 W&B file(s), 0 media file(s), 2 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20240628_141151-alf6c6bm/logs
+[2024-06-28 14:15:49,167] [INFO] [launch.py:348:main] Process 1804087 exits successfully.
+[2024-06-28 14:15:51,169] [INFO] [launch.py:348:main] Process 1804086 exits successfully.
