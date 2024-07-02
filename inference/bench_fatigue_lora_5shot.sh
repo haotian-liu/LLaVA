@@ -4,7 +4,7 @@
 #PBS -l select=1:ngpus=2:ncpus=16
 
 ### Specify amount of time required
-#PBS -l walltime=20:00:00
+#PBS -l walltime=48:00:00
 
 ### Specify project code
 #PBS -P 12002486
