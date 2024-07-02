@@ -130,7 +130,18 @@ class LengthGroupedSampler(Sampler):
         return iter(indices)
 
 
-class LLaVATrainer(Trainer):
+class LLaVATrainer(Trainer): # 这个直接继承了trainer类的loss的方法，直接来自Transformer包。直接在这重写computeloss方法就可以自定义。
+
+    # 通过这里修改写一个自己loss顶替掉Trainer类的loss。
+    # def compute_loss(self, model, inputs, return_outputs=False):
+    #     labels = inputs.pop("labels")
+    #     # forward pass
+    #     outputs = model(**inputs)
+    #     logits = outputs.get("logits")
+    #     # compute custom loss (suppose one has 3 labels with different weights)
+    #     loss_fct = nn.CrossEntropyLoss(weight=torch.tensor([1.0, 2.0, 3.0], device=model.device))
+    #     loss = loss_fct(logits.view(-1, self.model.config.num_labels), labels.view(-1))
+    #     return (loss, outputs) if return_outputs else loss
 
     def _get_train_sampler(self) -> Optional[torch.utils.data.Sampler]:
         if self.train_dataset is None or not has_length(self.train_dataset):

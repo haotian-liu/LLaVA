@@ -1,0 +1,207 @@
+[2024-04-29 00:48:20,178] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[93m [WARNING] [0m async_io requires the dev libaio .so object and headers but these were not found.
+[93m [WARNING] [0m async_io: please install the libaio-devel package with yum
+[93m [WARNING] [0m If libaio is already installed (perhaps from source), try setting the CFLAGS and LDFLAGS environment variables to where it can be found.
+[93m [WARNING] [0m Please specify the CUTLASS repo directory as environment variable $CUTLASS_PATH
+[93m [WARNING] [0m sparse_attn requires a torch version >= 1.5 and < 2.0 but detected 2.1
+[93m [WARNING] [0m using untested triton version (2.1.0), only 1.0.0 is known to be compatible
+[2024-04-29 00:48:22,281] [WARNING] [runner.py:202:fetch_hostfile] Unable to find hostfile, will proceed with training with local resources only.
+Detected CUDA_VISIBLE_DEVICES=0,1,2,3: setting --include=localhost:0,1,2,3
+[2024-04-29 00:48:22,282] [INFO] [runner.py:568:main] cmd = /home/users/ntu/chih0001/anaconda3/envs/llava-test/bin/python3.10 -u -m deepspeed.launcher.launch --world_info=eyJsb2NhbGhvc3QiOiBbMCwgMSwgMiwgM119 --master_addr=127.0.0.1 --master_port=29500 --enable_each_rank_log=None llava/train/train_mem.py --deepspeed ./scripts/zero3.json --model_name_or_path /home/users/ntu/chih0001/scratch/model/llava-v1.6-vicuna-7b --version v1 --data_path /home/users/ntu/chih0001/scratch/VLM/LLaVA/train/lora.json --image_folder ./playground/data --vision_tower /home/users/ntu/chih0001/scratch/model/clip-vit-large-patch14-336 --mm_projector_type mlp2x_gelu --mm_vision_select_layer -2 --mm_use_im_start_end False --mm_use_im_patch_token False --image_aspect_ratio pad --group_by_modality_length True --bf16 True --output_dir /home/users/ntu/chih0001/scratch/model/finetune/llava-v1.6-vicuna-7b-DSLLM-finetune --num_train_epochs 1 --per_device_train_batch_size 32 --per_device_eval_batch_size 4 --gradient_accumulation_steps 2 --evaluation_strategy no --save_strategy steps --save_steps 50000 --save_total_limit 1 --learning_rate 2e-5 --weight_decay 0. --warmup_ratio 0.03 --lr_scheduler_type cosine --logging_steps 1 --tf32 True --model_max_length 2048 --gradient_checkpointing True --dataloader_num_workers 4 --lazy_preprocess True --report_to wandb
+[2024-04-29 00:48:26,669] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[93m [WARNING] [0m async_io requires the dev libaio .so object and headers but these were not found.
+[93m [WARNING] [0m async_io: please install the libaio-devel package with yum
+[93m [WARNING] [0m If libaio is already installed (perhaps from source), try setting the CFLAGS and LDFLAGS environment variables to where it can be found.
+[93m [WARNING] [0m Please specify the CUTLASS repo directory as environment variable $CUTLASS_PATH
+[93m [WARNING] [0m sparse_attn requires a torch version >= 1.5 and < 2.0 but detected 2.1
+[93m [WARNING] [0m using untested triton version (2.1.0), only 1.0.0 is known to be compatible
+[2024-04-29 00:48:29,061] [INFO] [launch.py:145:main] WORLD INFO DICT: {'localhost': [0, 1, 2, 3]}
+[2024-04-29 00:48:29,061] [INFO] [launch.py:151:main] nnodes=1, num_local_procs=4, node_rank=0
+[2024-04-29 00:48:29,061] [INFO] [launch.py:162:main] global_rank_mapping=defaultdict(<class 'list'>, {'localhost': [0, 1, 2, 3]})
+[2024-04-29 00:48:29,061] [INFO] [launch.py:163:main] dist_world_size=4
+[2024-04-29 00:48:29,061] [INFO] [launch.py:165:main] Setting CUDA_VISIBLE_DEVICES=0,1,2,3
+[2024-04-29 00:48:29,062] [INFO] [launch.py:253:main] process 1752377 spawned with command: ['/home/users/ntu/chih0001/anaconda3/envs/llava-test/bin/python3.10', '-u', 'llava/train/train_mem.py', '--local_rank=0', '--deepspeed', './scripts/zero3.json', '--model_name_or_path', '/home/users/ntu/chih0001/scratch/model/llava-v1.6-vicuna-7b', '--version', 'v1', '--data_path', '/home/users/ntu/chih0001/scratch/VLM/LLaVA/train/lora.json', '--image_folder', './playground/data', '--vision_tower', '/home/users/ntu/chih0001/scratch/model/clip-vit-large-patch14-336', '--mm_projector_type', 'mlp2x_gelu', '--mm_vision_select_layer', '-2', '--mm_use_im_start_end', 'False', '--mm_use_im_patch_token', 'False', '--image_aspect_ratio', 'pad', '--group_by_modality_length', 'True', '--bf16', 'True', '--output_dir', '/home/users/ntu/chih0001/scratch/model/finetune/llava-v1.6-vicuna-7b-DSLLM-finetune', '--num_train_epochs', '1', '--per_device_train_batch_size', '32', '--per_device_eval_batch_size', '4', '--gradient_accumulation_steps', '2', '--evaluation_strategy', 'no', '--save_strategy', 'steps', '--save_steps', '50000', '--save_total_limit', '1', '--learning_rate', '2e-5', '--weight_decay', '0.', '--warmup_ratio', '0.03', '--lr_scheduler_type', 'cosine', '--logging_steps', '1', '--tf32', 'True', '--model_max_length', '2048', '--gradient_checkpointing', 'True', '--dataloader_num_workers', '4', '--lazy_preprocess', 'True', '--report_to', 'wandb']
+[2024-04-29 00:48:29,063] [INFO] [launch.py:253:main] process 1752378 spawned with command: ['/home/users/ntu/chih0001/anaconda3/envs/llava-test/bin/python3.10', '-u', 'llava/train/train_mem.py', '--local_rank=1', '--deepspeed', './scripts/zero3.json', '--model_name_or_path', '/home/users/ntu/chih0001/scratch/model/llava-v1.6-vicuna-7b', '--version', 'v1', '--data_path', '/home/users/ntu/chih0001/scratch/VLM/LLaVA/train/lora.json', '--image_folder', './playground/data', '--vision_tower', '/home/users/ntu/chih0001/scratch/model/clip-vit-large-patch14-336', '--mm_projector_type', 'mlp2x_gelu', '--mm_vision_select_layer', '-2', '--mm_use_im_start_end', 'False', '--mm_use_im_patch_token', 'False', '--image_aspect_ratio', 'pad', '--group_by_modality_length', 'True', '--bf16', 'True', '--output_dir', '/home/users/ntu/chih0001/scratch/model/finetune/llava-v1.6-vicuna-7b-DSLLM-finetune', '--num_train_epochs', '1', '--per_device_train_batch_size', '32', '--per_device_eval_batch_size', '4', '--gradient_accumulation_steps', '2', '--evaluation_strategy', 'no', '--save_strategy', 'steps', '--save_steps', '50000', '--save_total_limit', '1', '--learning_rate', '2e-5', '--weight_decay', '0.', '--warmup_ratio', '0.03', '--lr_scheduler_type', 'cosine', '--logging_steps', '1', '--tf32', 'True', '--model_max_length', '2048', '--gradient_checkpointing', 'True', '--dataloader_num_workers', '4', '--lazy_preprocess', 'True', '--report_to', 'wandb']
+[2024-04-29 00:48:29,063] [INFO] [launch.py:253:main] process 1752379 spawned with command: ['/home/users/ntu/chih0001/anaconda3/envs/llava-test/bin/python3.10', '-u', 'llava/train/train_mem.py', '--local_rank=2', '--deepspeed', './scripts/zero3.json', '--model_name_or_path', '/home/users/ntu/chih0001/scratch/model/llava-v1.6-vicuna-7b', '--version', 'v1', '--data_path', '/home/users/ntu/chih0001/scratch/VLM/LLaVA/train/lora.json', '--image_folder', './playground/data', '--vision_tower', '/home/users/ntu/chih0001/scratch/model/clip-vit-large-patch14-336', '--mm_projector_type', 'mlp2x_gelu', '--mm_vision_select_layer', '-2', '--mm_use_im_start_end', 'False', '--mm_use_im_patch_token', 'False', '--image_aspect_ratio', 'pad', '--group_by_modality_length', 'True', '--bf16', 'True', '--output_dir', '/home/users/ntu/chih0001/scratch/model/finetune/llava-v1.6-vicuna-7b-DSLLM-finetune', '--num_train_epochs', '1', '--per_device_train_batch_size', '32', '--per_device_eval_batch_size', '4', '--gradient_accumulation_steps', '2', '--evaluation_strategy', 'no', '--save_strategy', 'steps', '--save_steps', '50000', '--save_total_limit', '1', '--learning_rate', '2e-5', '--weight_decay', '0.', '--warmup_ratio', '0.03', '--lr_scheduler_type', 'cosine', '--logging_steps', '1', '--tf32', 'True', '--model_max_length', '2048', '--gradient_checkpointing', 'True', '--dataloader_num_workers', '4', '--lazy_preprocess', 'True', '--report_to', 'wandb']
+[2024-04-29 00:48:29,064] [INFO] [launch.py:253:main] process 1752380 spawned with command: ['/home/users/ntu/chih0001/anaconda3/envs/llava-test/bin/python3.10', '-u', 'llava/train/train_mem.py', '--local_rank=3', '--deepspeed', './scripts/zero3.json', '--model_name_or_path', '/home/users/ntu/chih0001/scratch/model/llava-v1.6-vicuna-7b', '--version', 'v1', '--data_path', '/home/users/ntu/chih0001/scratch/VLM/LLaVA/train/lora.json', '--image_folder', './playground/data', '--vision_tower', '/home/users/ntu/chih0001/scratch/model/clip-vit-large-patch14-336', '--mm_projector_type', 'mlp2x_gelu', '--mm_vision_select_layer', '-2', '--mm_use_im_start_end', 'False', '--mm_use_im_patch_token', 'False', '--image_aspect_ratio', 'pad', '--group_by_modality_length', 'True', '--bf16', 'True', '--output_dir', '/home/users/ntu/chih0001/scratch/model/finetune/llava-v1.6-vicuna-7b-DSLLM-finetune', '--num_train_epochs', '1', '--per_device_train_batch_size', '32', '--per_device_eval_batch_size', '4', '--gradient_accumulation_steps', '2', '--evaluation_strategy', 'no', '--save_strategy', 'steps', '--save_steps', '50000', '--save_total_limit', '1', '--learning_rate', '2e-5', '--weight_decay', '0.', '--warmup_ratio', '0.03', '--lr_scheduler_type', 'cosine', '--logging_steps', '1', '--tf32', 'True', '--model_max_length', '2048', '--gradient_checkpointing', 'True', '--dataloader_num_workers', '4', '--lazy_preprocess', 'True', '--report_to', 'wandb']
+[2024-04-29 00:48:38,323] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[2024-04-29 00:48:38,323] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[2024-04-29 00:48:38,323] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[2024-04-29 00:48:38,324] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[93m [WARNING] [0m async_io requires the dev libaio .so object and headers but these were not found.
+[93m [WARNING] [0m async_io requires the dev libaio .so object and headers but these were not found.[93m [WARNING] [0m async_io requires the dev libaio .so object and headers but these were not found.
+
+[93m [WARNING] [0m async_io requires the dev libaio .so object and headers but these were not found.
+[93m [WARNING] [0m async_io: please install the libaio-devel package with yum
+[93m [WARNING] [0m If libaio is already installed (perhaps from source), try setting the CFLAGS and LDFLAGS environment variables to where it can be found.
+[93m [WARNING] [0m Please specify the CUTLASS repo directory as environment variable $CUTLASS_PATH[93m [WARNING] [0m async_io: please install the libaio-devel package with yum[93m [WARNING] [0m async_io: please install the libaio-devel package with yum
+
+[93m [WARNING] [0m async_io: please install the libaio-devel package with yum
+
+[93m [WARNING] [0m If libaio is already installed (perhaps from source), try setting the CFLAGS and LDFLAGS environment variables to where it can be found.[93m [WARNING] [0m If libaio is already installed (perhaps from source), try setting the CFLAGS and LDFLAGS environment variables to where it can be found.
+
+[93m [WARNING] [0m If libaio is already installed (perhaps from source), try setting the CFLAGS and LDFLAGS environment variables to where it can be found.
+[93m [WARNING] [0m Please specify the CUTLASS repo directory as environment variable $CUTLASS_PATH[93m [WARNING] [0m Please specify the CUTLASS repo directory as environment variable $CUTLASS_PATH
+[93m [WARNING] [0m Please specify the CUTLASS repo directory as environment variable $CUTLASS_PATH
+
+[93m [WARNING] [0m sparse_attn requires a torch version >= 1.5 and < 2.0 but detected 2.1
+[93m [WARNING] [0m using untested triton version (2.1.0), only 1.0.0 is known to be compatible
+[93m [WARNING] [0m sparse_attn requires a torch version >= 1.5 and < 2.0 but detected 2.1
+[93m [WARNING] [0m using untested triton version (2.1.0), only 1.0.0 is known to be compatible
+[93m [WARNING] [0m sparse_attn requires a torch version >= 1.5 and < 2.0 but detected 2.1
+[93m [WARNING] [0m using untested triton version (2.1.0), only 1.0.0 is known to be compatible
+[93m [WARNING] [0m sparse_attn requires a torch version >= 1.5 and < 2.0 but detected 2.1
+[93m [WARNING] [0m using untested triton version (2.1.0), only 1.0.0 is known to be compatible
+[2024-04-29 00:48:39,667] [INFO] [comm.py:637:init_distributed] cdb=None
+[2024-04-29 00:48:39,667] [INFO] [comm.py:637:init_distributed] cdb=None
+[2024-04-29 00:48:39,667] [INFO] [comm.py:637:init_distributed] cdb=None
+[2024-04-29 00:48:39,668] [INFO] [comm.py:668:init_distributed] Initializing TorchBackend in DeepSpeed with backend nccl
+[2024-04-29 00:48:39,668] [INFO] [comm.py:637:init_distributed] cdb=None
+You are using a model of type llava to instantiate a model of type llava_llama. This is not supported for all configurations of models and can yield errors.
+You are using a model of type llava to instantiate a model of type llava_llama. This is not supported for all configurations of models and can yield errors.
+You are attempting to use Flash Attention 2.0 with a model not initialized on GPU. Make sure to move the model to GPU after initializing it on CPU with `model.to('cuda')`.
+You are attempting to use Flash Attention 2.0 with a model not initialized on GPU. Make sure to move the model to GPU after initializing it on CPU with `model.to('cuda')`.
+You are using a model of type llava to instantiate a model of type llava_llama. This is not supported for all configurations of models and can yield errors.
+You are attempting to use Flash Attention 2.0 with a model not initialized on GPU. Make sure to move the model to GPU after initializing it on CPU with `model.to('cuda')`.
+You are using a model of type llava to instantiate a model of type llava_llama. This is not supported for all configurations of models and can yield errors.
+You are attempting to use Flash Attention 2.0 with a model not initialized on GPU. Make sure to move the model to GPU after initializing it on CPU with `model.to('cuda')`.
+/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/_utils.py:831: UserWarning: TypedStorage is deprecated. It will be removed in the future and UntypedStorage will be the only storage class. This should only matter to you if you are using storages directly.  To access UntypedStorage directly, use tensor.untyped_storage() instead of tensor.storage()
+  return self.fget.__get__(instance, owner)()
+/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/_utils.py:831: UserWarning: TypedStorage is deprecated. It will be removed in the future and UntypedStorage will be the only storage class. This should only matter to you if you are using storages directly.  To access UntypedStorage directly, use tensor.untyped_storage() instead of tensor.storage()
+  return self.fget.__get__(instance, owner)()
+/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/_utils.py:831: UserWarning: TypedStorage is deprecated. It will be removed in the future and UntypedStorage will be the only storage class. This should only matter to you if you are using storages directly.  To access UntypedStorage directly, use tensor.untyped_storage() instead of tensor.storage()
+  return self.fget.__get__(instance, owner)()
+/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/_utils.py:831: UserWarning: TypedStorage is deprecated. It will be removed in the future and UntypedStorage will be the only storage class. This should only matter to you if you are using storages directly.  To access UntypedStorage directly, use tensor.untyped_storage() instead of tensor.storage()
+  return self.fget.__get__(instance, owner)()
+[2024-04-29 00:48:53,500] [INFO] [partition_parameters.py:345:__exit__] finished initializing model - num_params = 687, num_elems = 7.06B
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards:  33%|███▎      | 1/3 [00:01<00:02,  1.26s/it]Loading checkpoint shards:  33%|███▎      | 1/3 [00:01<00:02,  1.27s/it]Loading checkpoint shards:  33%|███▎      | 1/3 [00:01<00:02,  1.27s/it]Loading checkpoint shards:  67%|██████▋   | 2/3 [00:03<00:01,  1.67s/it]Loading checkpoint shards:  67%|██████▋   | 2/3 [00:03<00:01,  1.68s/it]Loading checkpoint shards:  67%|██████▋   | 2/3 [00:03<00:01,  1.68s/it]Loading checkpoint shards:  33%|███▎      | 1/3 [00:04<00:09,  4.74s/it]Loading checkpoint shards:  67%|██████▋   | 2/3 [00:07<00:03,  3.82s/it]Loading checkpoint shards: 100%|██████████| 3/3 [00:12<00:00,  5.27s/it]Loading checkpoint shards: 100%|██████████| 3/3 [00:12<00:00,  4.26s/it]
+Loading checkpoint shards: 100%|██████████| 3/3 [00:12<00:00,  5.27s/it]Loading checkpoint shards: 100%|██████████| 3/3 [00:12<00:00,  4.26s/it]
+Loading checkpoint shards: 100%|██████████| 3/3 [00:12<00:00,  5.27s/it]Loading checkpoint shards: 100%|██████████| 3/3 [00:12<00:00,  4.26s/it]
+openai/clip-vit-large-patch14-336 is already loaded, `load_model` called again, skipping.
+openai/clip-vit-large-patch14-336 is already loaded, `load_model` called again, skipping.
+openai/clip-vit-large-patch14-336 is already loaded, `load_model` called again, skipping.
+Loading checkpoint shards: 100%|██████████| 3/3 [00:13<00:00,  4.45s/it]Loading checkpoint shards: 100%|██████████| 3/3 [00:13<00:00,  4.37s/it]
+openai/clip-vit-large-patch14-336 is already loaded, `load_model` called again, skipping.
+Formatting inputs...Skip in lazy mode
+Detected kernel version 4.18.0, which is below the recommended minimum of 5.5.0; this can cause the process to hang. It is recommended to upgrade the kernel to the minimum version or higher.
+Parameter Offload: Total persistent parameters: 603136 in 313 params
+wandb: Currently logged in as: haozhuangchi. Use `wandb login --relogin` to force relogin
+wandb: Tracking run with wandb version 0.16.6
+wandb: Run data is saved locally in /scratch/users/ntu/chih0001/VLM/LLaVA/wandb/run-20240429_004912-ijpwyq20
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run chocolate-darkness-29
+wandb: ⭐️ View project at https://wandb.ai/haozhuangchi/huggingface
+wandb: 🚀 View run at https://wandb.ai/haozhuangchi/huggingface/runs/ijpwyq20
+  0%|          | 0/329 [00:00<?, ?it/s]/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/utils/checkpoint.py:429: UserWarning: torch.utils.checkpoint: please pass in use_reentrant=True or use_reentrant=False explicitly. The default value of use_reentrant will be updated to be False in the future. To maintain current behavior, pass use_reentrant=True. It is recommended that you use use_reentrant=False. Refer to docs for more details on the differences between the two variants.
+  warnings.warn(
+/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/utils/checkpoint.py:61: UserWarning: None of the inputs have requires_grad=True. Gradients will be None
+  warnings.warn(
+/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/utils/checkpoint.py:429: UserWarning: torch.utils.checkpoint: please pass in use_reentrant=True or use_reentrant=False explicitly. The default value of use_reentrant will be updated to be False in the future. To maintain current behavior, pass use_reentrant=True. It is recommended that you use use_reentrant=False. Refer to docs for more details on the differences between the two variants.
+  warnings.warn(
+/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/utils/checkpoint.py:61: UserWarning: None of the inputs have requires_grad=True. Gradients will be None
+  warnings.warn(
+/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/utils/checkpoint.py:429: UserWarning: torch.utils.checkpoint: please pass in use_reentrant=True or use_reentrant=False explicitly. The default value of use_reentrant will be updated to be False in the future. To maintain current behavior, pass use_reentrant=True. It is recommended that you use use_reentrant=False. Refer to docs for more details on the differences between the two variants.
+  warnings.warn(
+/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/utils/checkpoint.py:61: UserWarning: None of the inputs have requires_grad=True. Gradients will be None
+  warnings.warn(
+/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/utils/checkpoint.py:429: UserWarning: torch.utils.checkpoint: please pass in use_reentrant=True or use_reentrant=False explicitly. The default value of use_reentrant will be updated to be False in the future. To maintain current behavior, pass use_reentrant=True. It is recommended that you use use_reentrant=False. Refer to docs for more details on the differences between the two variants.
+  warnings.warn(
+/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/utils/checkpoint.py:61: UserWarning: None of the inputs have requires_grad=True. Gradients will be None
+  warnings.warn(
+[2024-04-29 00:49:44,255] [WARNING] [stage3.py:2069:step] 3 pytorch allocator cache flushes since last step. this happens when there is high memory pressure and is detrimental to performance. if this is happening frequently consider adjusting settings to reduce memory consumption. If you are unable to make the cache flushes go away consider adding get_accelerator().empty_cache() calls in your training loop to ensure that all ranks flush their caches at the same time
+  0%|          | 1/329 [00:27<2:29:18, 27.31s/it]                                                 {'loss': 3.945, 'learning_rate': 2.0000000000000003e-06, 'epoch': 0.0}
+  0%|          | 1/329 [00:27<2:29:18, 27.31s/it]Traceback (most recent call last):
+  File "/scratch/users/ntu/chih0001/VLM/LLaVA/llava/train/train_mem.py", line 4, in <module>
+    train(attn_implementation="flash_attention_2")
+  File "/scratch/users/ntu/chih0001/VLM/LLaVA/llava/train/train.py", line 969, in train
+    trainer.train()
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/transformers/trainer.py", line 1539, in train
+    return inner_training_loop(
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/transformers/trainer.py", line 1869, in _inner_training_loop
+    tr_loss_step = self.training_step(model, inputs)
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/transformers/trainer.py", line 2772, in training_step
+    loss = self.compute_loss(model, inputs)
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/transformers/trainer.py", line 2795, in compute_loss
+    outputs = model(**inputs)
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/deepspeed/utils/nvtx.py", line 15, in wrapped_fn
+    ret_val = func(*args, **kwargs)
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/deepspeed/runtime/engine.py", line 1855, in forward
+    loss = self.module(*inputs, **kwargs)
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1568, in _call_impl
+    result = forward_call(*args, **kwargs)
+  File "/scratch/users/ntu/chih0001/VLM/LLaVA/llava/model/language_model/llava_llama.py", line 91, in forward
+    return super().forward(
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/transformers/models/llama/modeling_llama.py", line 1183, in forward
+    outputs = self.model(
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1568, in _call_impl
+    result = forward_call(*args, **kwargs)
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/transformers/models/llama/modeling_llama.py", line 1060, in forward
+    layer_outputs = self._gradient_checkpointing_func(
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/_compile.py", line 24, in inner
+    return torch._dynamo.disable(fn, recursive)(*args, **kwargs)
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/_dynamo/eval_frame.py", line 328, in _fn
+    return fn(*args, **kwargs)
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/_dynamo/external_utils.py", line 17, in inner
+    return fn(*args, **kwargs)
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/utils/checkpoint.py", line 451, in checkpoint
+    return CheckpointFunction.apply(function, preserve, *args)
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/autograd/function.py", line 539, in apply
+    return super().apply(*args, **kwargs)  # type: ignore[misc]
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/utils/checkpoint.py", line 230, in forward
+    outputs = run_function(*args)
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1568, in _call_impl
+    result = forward_call(*args, **kwargs)
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/transformers/models/llama/modeling_llama.py", line 812, in forward
+    hidden_states = self.mlp(hidden_states)
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1568, in _call_impl
+    result = forward_call(*args, **kwargs)
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/transformers/models/llama/modeling_llama.py", line 268, in forward
+    down_proj = self.down_proj(self.act_fn(self.gate_proj(x)) * self.up_proj(x))
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1557, in _call_impl
+    args_result = hook(self, args)
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/deepspeed/utils/nvtx.py", line 15, in wrapped_fn
+    ret_val = func(*args, **kwargs)
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/deepspeed/runtime/zero/parameter_offload.py", line 278, in _pre_forward_module_hook
+    self.pre_sub_module_forward_function(module)
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/utils/_contextlib.py", line 115, in decorate_context
+    return func(*args, **kwargs)
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/deepspeed/runtime/zero/parameter_offload.py", line 452, in pre_sub_module_forward_function
+    param_coordinator.fetch_sub_module(sub_module, forward=True)
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/_dynamo/eval_frame.py", line 328, in _fn
+    return fn(*args, **kwargs)
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/deepspeed/utils/nvtx.py", line 15, in wrapped_fn
+    ret_val = func(*args, **kwargs)
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/torch/utils/_contextlib.py", line 115, in decorate_context
+    return func(*args, **kwargs)
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/deepspeed/runtime/zero/partitioned_param_coordinator.py", line 385, in fetch_sub_module
+    self.__all_gather_params(params_to_prefetch, forward)
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/deepspeed/utils/nvtx.py", line 15, in wrapped_fn
+    ret_val = func(*args, **kwargs)
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/deepspeed/runtime/zero/partitioned_param_coordinator.py", line 434, in __all_gather_params
+    self.__all_gather_params_(nonquantized_params, forward, quantize=self.zero_quantized_weights)
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/deepspeed/runtime/zero/partitioned_param_coordinator.py", line 463, in __all_gather_params_
+    handle = param_group[0].all_gather_coalesced(param_group, quantize=quantize)
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/deepspeed/utils/nvtx.py", line 15, in wrapped_fn
+    ret_val = func(*args, **kwargs)
+  File "/home/users/ntu/chih0001/anaconda3/envs/llava-test/lib/python3.10/site-packages/deepspeed/runtime/zero/partition_parameters.py", line 1213, in all_gather_coalesced
+    param_buffer = torch.empty(
+torch.cuda.OutOfMemoryError: CUDA out of memory. Tried to allocate 32.00 MiB. GPU 3 has a total capacty of 39.56 GiB of which 5.75 MiB is free. Including non-PyTorch memory, this process has 39.55 GiB memory in use. Of the allocated memory 32.13 GiB is allocated by PyTorch, and 5.24 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+[2024-04-29 00:49:48,146] [INFO] [launch.py:316:sigkill_handler] Killing subprocess 1752377
+[2024-04-29 00:49:48,421] [INFO] [launch.py:316:sigkill_handler] Killing subprocess 1752378
+[2024-04-29 00:49:48,703] [INFO] [launch.py:316:sigkill_handler] Killing subprocess 1752379
+[2024-04-29 00:49:49,023] [INFO] [launch.py:316:sigkill_handler] Killing subprocess 1752380
+[2024-04-29 00:49:49,023] [ERROR] [launch.py:322:sigkill_handler] ['/home/users/ntu/chih0001/anaconda3/envs/llava-test/bin/python3.10', '-u', 'llava/train/train_mem.py', '--local_rank=3', '--deepspeed', './scripts/zero3.json', '--model_name_or_path', '/home/users/ntu/chih0001/scratch/model/llava-v1.6-vicuna-7b', '--version', 'v1', '--data_path', '/home/users/ntu/chih0001/scratch/VLM/LLaVA/train/lora.json', '--image_folder', './playground/data', '--vision_tower', '/home/users/ntu/chih0001/scratch/model/clip-vit-large-patch14-336', '--mm_projector_type', 'mlp2x_gelu', '--mm_vision_select_layer', '-2', '--mm_use_im_start_end', 'False', '--mm_use_im_patch_token', 'False', '--image_aspect_ratio', 'pad', '--group_by_modality_length', 'True', '--bf16', 'True', '--output_dir', '/home/users/ntu/chih0001/scratch/model/finetune/llava-v1.6-vicuna-7b-DSLLM-finetune', '--num_train_epochs', '1', '--per_device_train_batch_size', '32', '--per_device_eval_batch_size', '4', '--gradient_accumulation_steps', '2', '--evaluation_strategy', 'no', '--save_strategy', 'steps', '--save_steps', '50000', '--save_total_limit', '1', '--learning_rate', '2e-5', '--weight_decay', '0.', '--warmup_ratio', '0.03', '--lr_scheduler_type', 'cosine', '--logging_steps', '1', '--tf32', 'True', '--model_max_length', '2048', '--gradient_checkpointing', 'True', '--dataloader_num_workers', '4', '--lazy_preprocess', 'True', '--report_to', 'wandb'] exits with return code = 1
