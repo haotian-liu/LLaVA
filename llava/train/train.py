@@ -59,7 +59,7 @@ class ModelArguments:
     vision_tower: Optional[str] = field(default=None)
     mm_vision_select_layer: Optional[int] = field(default=-1)   # default to the last layer
     pretrain_mm_mlp_adapter: Optional[str] = field(default=None)
-    mm_projector_type: Optional[str] = field(default='linear')
+    mm_projector_type: Optional[str] = field(default=None)
     mm_use_im_start_end: bool = field(default=False)
     mm_use_im_patch_token: bool = field(default=True)
     mm_patch_merge_type: Optional[str] = field(default='flat')
@@ -793,6 +793,14 @@ def train(attn_implementation=None):
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
     local_rank = training_args.local_rank
     compute_dtype = (torch.float16 if training_args.fp16 else (torch.bfloat16 if training_args.bf16 else torch.float32))
+
+    if os.path.exists(model_args.model_name_or_path) and model_args.mm_projector_type is None:
+        config_file = os.path.join(model_args.model_name_or_path, 'config.json')
+        with open(config_file, 'r') as f:
+            model_args.mm_projector_type = json.load(f)['mm_projector_type']
+
+    elif model_args.mm_projector_type is None:
+        model_args.mm_projector_type = 'linear'
 
     bnb_model_from_pretrained_args = {}
     if training_args.bits in [4, 8]:
