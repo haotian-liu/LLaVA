@@ -1,29 +1,23 @@
 #    Copyright 2023 Haotian Liu
-#
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
 #    You may obtain a copy of the License at
-#
 #        http://www.apache.org/licenses/LICENSE-2.0
-#
 #    Unless required by applicable law or agreed to in writing, software
 #    distributed under the License is distributed on an "AS IS" BASIS,
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-
 from abc import ABC, abstractmethod
-
 import torch
 import torch.nn as nn
 
 from .multimodal_encoder.builder import build_vision_tower
-from .multimodal_projector.builder import build_vision_projector
-
+# from .multimodal_projector.builder import build_vision_projector  # deprecated in this fork
 from llava.constants import IGNORE_INDEX, IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_PATCH_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
-
 from llava.mm_utils import get_anyres_image_grid_shape
+from .projectors import build_projector
 
 
 class LlavaMetaModel:
@@ -33,7 +27,8 @@ class LlavaMetaModel:
 
         if hasattr(config, "mm_vision_tower"):
             self.vision_tower = build_vision_tower(config, delay_load=True)
-            self.mm_projector = build_vision_projector(config)
+            # projector created later in initialize_vision_modules to ensure correct dims
+            self.mm_projector = None
 
             if 'unpad' in getattr(config, 'mm_patch_merge_type', ''):
                 self.image_newline = nn.Parameter(
@@ -77,13 +72,13 @@ class LlavaMetaModel:
         self.config.mm_patch_merge_type = mm_patch_merge_type
 
         if getattr(self, 'mm_projector', None) is None:
-            self.mm_projector = build_vision_projector(self.config)
-
-            if 'unpad' in mm_patch_merge_type:
-                embed_std = 1 / torch.sqrt(torch.tensor(self.config.hidden_size, dtype=self.dtype))
-                self.image_newline = nn.Parameter(
-                    torch.randn(self.config.hidden_size, dtype=self.dtype) * embed_std
-                )
+            self.mm_projector = build_projector(
+                kind=getattr(self.config, "mm_projector_type", "linear"),
+                in_dim=self.config.mm_hidden_size,   # from vision tower
+                out_dim=self.config.hidden_size,     # to LLM hidden size
+                hidden_mult=getattr(self.config, "mm_projector_hidden_mult", 1.0),
+                dropout=getattr(self.config, "mm_projector_dropout", 0.0),
+            )
         else:
             # In case it is frozen by LoRA
             for p in self.mm_projector.parameters():
@@ -91,6 +86,7 @@ class LlavaMetaModel:
 
         if pretrain_mm_mlp_adapter is not None:
             mm_projector_weights = torch.load(pretrain_mm_mlp_adapter, map_location='cpu')
+
             def get_w(weights, keyword):
                 return {k.split(keyword + '.')[1]: v for k, v in weights.items() if keyword in k}
 
@@ -170,7 +166,9 @@ class LlavaMetaForCausalLM(ABC):
                         height = width = self.get_vision_tower().num_patches_per_side
                         assert height * width == base_image_feature.shape[0]
                         if image_aspect_ratio == 'anyres':
-                            num_patch_width, num_patch_height = get_anyres_image_grid_shape(image_sizes[image_idx], self.config.image_grid_pinpoints, self.get_vision_tower().config.image_size)
+                            num_patch_width, num_patch_height = get_anyres_image_grid_shape(
+                                image_sizes[image_idx], self.config.image_grid_pinpoints, self.get_vision_tower().config.image_size
+                            )
                             image_feature = image_feature.view(num_patch_height, num_patch_width, height, width, -1)
                         else:
                             raise NotImplementedError
@@ -180,7 +178,7 @@ class LlavaMetaForCausalLM(ABC):
                             image_feature = unpad_image(image_feature, image_sizes[image_idx])
                             image_feature = torch.cat((
                                 image_feature,
-                                self.model.image_newline[:, None, None].expand(*image_feature.shape[:-1], 1).to(image_feature.device)
+                                self.get_model().image_newline[:, None, None].expand(*image_feature.shape[:-1], 1).to(image_feature.device)
                             ), dim=-1)
                             image_feature = image_feature.flatten(1, 2).transpose(0, 1)
                         else:
@@ -192,7 +190,7 @@ class LlavaMetaForCausalLM(ABC):
                         if 'unpad' in mm_patch_merge_type:
                             image_feature = torch.cat((
                                 image_feature,
-                                self.model.image_newline[None].to(image_feature.device)
+                                self.get_model().image_newline[None].to(image_feature.device)
                             ), dim=0)
                     new_image_features.append(image_feature)
                 image_features = new_image_features
@@ -205,10 +203,6 @@ class LlavaMetaForCausalLM(ABC):
         if getattr(self.config, 'tune_mm_mlp_adapter', False) and getattr(self.config, 'mm_use_im_start_end', False):
             raise NotImplementedError
 
-        # Let's just add dummy tensors if they do not exist,
-        # it is a headache to deal with None all the time.
-        # But it is not ideal, and if you have a better idea,
-        # please open an issue / submit a PR, thanks.
         _labels = labels
         _position_ids = position_ids
         _attention_mask = attention_mask
@@ -336,10 +330,8 @@ class LlavaMetaForCausalLM(ABC):
                 input_embeddings = self.get_input_embeddings().weight.data
                 output_embeddings = self.get_output_embeddings().weight.data
 
-                input_embeddings_avg = input_embeddings[:-num_new_tokens].mean(
-                    dim=0, keepdim=True)
-                output_embeddings_avg = output_embeddings[:-num_new_tokens].mean(
-                    dim=0, keepdim=True)
+                input_embeddings_avg = input_embeddings[:-num_new_tokens].mean(dim=0, keepdim=True)
+                output_embeddings_avg = output_embeddings[:-num_new_tokens].mean(dim=0, keepdim=True)
 
                 input_embeddings[-num_new_tokens:] = input_embeddings_avg
                 output_embeddings[-num_new_tokens:] = output_embeddings_avg

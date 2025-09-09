@@ -693,7 +693,7 @@ class LazySupervisedDataset(Dataset):
         sources = self.list_data_dict[i]
         if isinstance(i, int):
             sources = [sources]
-        assert len(sources) == 1, "Don't know why it is wrapped to a list"  # FIXME
+        assert len(sources) == 1, "Sources should contain exactly one item for single-item processing"
         if 'image' in sources[0]:
             image_file = self.list_data_dict[i]['image']
             image_folder = self.data_args.image_folder

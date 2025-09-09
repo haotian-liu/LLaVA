@@ -139,11 +139,11 @@ class ModelWorker:
 
                 images = [load_image_from_base64(image) for image in images]
 
-                # FIXME: for image-start/end token
-                # replace_token = DEFAULT_IMAGE_TOKEN
-                # if getattr(self.model.config, 'mm_use_im_start_end', False):
-                #     replace_token = DEFAULT_IM_START_TOKEN + replace_token + DEFAULT_IM_END_TOKEN
-                # prompt = prompt.replace(DEFAULT_IMAGE_TOKEN, replace_token)
+                # Handle image-start/end tokens when enabled in config
+                replace_token = DEFAULT_IMAGE_TOKEN
+                if getattr(self.model.config, 'mm_use_im_start_end', False):
+                    replace_token = DEFAULT_IM_START_TOKEN + replace_token + DEFAULT_IM_END_TOKEN
+                    prompt = prompt.replace(DEFAULT_IMAGE_TOKEN, replace_token)
                 prompt = prompt.replace(' ' + DEFAULT_IMAGE_TOKEN + '\n', DEFAULT_IMAGE_TOKEN)
                 prompt_split = prompt.split(DEFAULT_IMAGE_TOKEN)
                 prompt = []
