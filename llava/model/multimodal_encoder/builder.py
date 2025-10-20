@@ -16,6 +16,7 @@ def build_vision_tower(vision_tower_cfg, **kwargs):
     if vision_tower and 'medical_vit' in vision_tower.lower():
         print("Building Medical ViT Tower...")
         
+        
         # Get checkpoint path from config
         checkpoint_path = getattr(
             vision_tower_cfg,
