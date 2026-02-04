@@ -62,17 +62,56 @@ if __name__ == "__main__":
             pred = predictions[prob_id]
             pred_text = pred['text']
 
-        if pred_text in args.options:
-            answer = pred_text
-        elif len(pred_text) >= 3 and pred_text[0] in args.options and pred_text[1:3] == ". ":
-            answer = pred_text[0]
-        else:
-            pattern = re.compile(r'The answer is ([A-Z]).')
-            res = pattern.findall(pred_text)
-            if len(res) == 1:
-                answer = res[0]  # 'A', 'B', ...
+        ipred_text = pred_text.strip()
+
+        pred_text = pred_text or ""
+        ipred_text = pred_text.strip()
+
+        answer = "FAILED"
+
+        # 1) Exact match (after strip)
+        if ipred_text in args.options:
+            answer = ipred_text
+
+        # 2) Leading letter + optional punctuation or whitespace/newline, then more text
+        #    Examples: "A\n...", "A. ...", "A) ...", "A: ...", "A, ..."
+        elif len(ipred_text) >= 1 and ipred_text[0] in args.options:
+            if len(ipred_text) == 1:
+                answer = ipred_text[0]
             else:
-                answer = "FAILED"
+                # allow punctuation OR whitespace/newline immediately after the letter
+                if ipred_text[1] in [".", ")", ":", ",", " ", "\n", "\t", "\r"]:
+                    answer = ipred_text[0]
+
+        # 3) "Final answer: X" anywhere (tolerate punctuation after X)
+        if answer == "FAILED":
+            m = re.findall(r'final answer\s*:\s*([A-Z])[\.\)\:\,]?', ipred_text, flags=re.IGNORECASE)
+            if m:
+                cand = m[-1].upper()
+                if cand in args.options:
+                    answer = cand
+
+        # 4) Fallback: first standalone option letter on its own line
+        #    This catches:
+        #      "A\n\nThe continent..."
+        #      "B\nReasoning: ..."
+        if answer == "FAILED":
+            m = re.search(r'^\s*([A-Z])\s*$', pred_text, flags=re.MULTILINE)
+            if m:
+                cand = m.group(1).upper()
+                if cand in args.options:
+                    answer = cand
+
+        # 5) Final fallback: first occurrence of a valid option letter as a standalone token
+        #    Avoids grabbing letters inside words like "Africa"
+        if answer == "FAILED":
+            m = re.search(r'\b([A-Z])\b', ipred_text)
+            if m:
+                cand = m.group(1).upper()
+                if cand in args.options:
+                    answer = cand
+
+
 
         pred_idx = get_pred_idx(answer, prob['choices'], args.options)
 
@@ -96,13 +135,14 @@ if __name__ == "__main__":
     correct = len(results['correct'])
     total = len(results['correct']) + len(results['incorrect'])
 
-    ###### IMG ######
-    multimodal_correct = len([x for x in results['correct'] if x['is_multimodal']])
-    multimodal_incorrect = len([x for x in results['incorrect'] if x['is_multimodal']])
-    multimodal_total = multimodal_correct + multimodal_incorrect
-    ###### IMG ######
+    print(f'Total: {total}, Correct: {correct}, Accuracy: {correct / total * 100:.2f}%')
 
-    print(f'Total: {total}, Correct: {correct}, Accuracy: {correct / total * 100:.2f}%, IMG-Accuracy: {multimodal_correct / multimodal_total * 100:.2f}%')
+    # ###### IMG ######
+    # multimodal_correct = len([x for x in results['correct'] if x['is_multimodal']])
+    # multimodal_incorrect = len([x for x in results['incorrect'] if x['is_multimodal']])
+    # multimodal_total = multimodal_correct + multimodal_incorrect
+    # print(f'IMG-Accuracy: {multimodal_correct / multimodal_total * 100:.2f}%')
+    # ###### IMG ######
 
     sqa_results['acc'] = correct / total * 100
     sqa_results['correct'] = correct

@@ -3,6 +3,7 @@ __pycache__
 *.pyc
 *.egg-info
 dist
+.ven/
 
 # Log
 *.log
@@ -33,3 +34,40 @@ ckpts*
 
 # Demo
 serve_images/
+
+# --- HPC / local artifacts ---
+.venv/
+logs/
+*.out
+*.err
+*.log
+
+# Container images
+*.sif
+
+# Training artifacts / outputs
+runs/
+answers/
+merged_models/
+artifacts/
+checkpoints/
+
+# HF caches (if they exist inside repo)
+hf_home/
+hf_cache/
+triton_cache/
+.cache/
+
+# Evaluation outputs
+*.jsonl
+*.csv
+
+# Accidental files created from CLI flags
+--model-base
+--model-path
+--save-model-path
+
+# Editor
+.vscode/
+.idea/
+.DS_Store

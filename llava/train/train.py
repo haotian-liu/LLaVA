@@ -113,17 +113,27 @@ class TrainingArguments(transformers.TrainingArguments):
 
 
 def maybe_zero_3(param, ignore_status=False, name=None):
-    from deepspeed import zero
-    from deepspeed.runtime.zero.partition_parameters import ZeroParamStatus
+    """
+    If DeepSpeed ZeRO-3 is enabled, gather the param to CPU.
+    Otherwise, just detach+cpu.
+    """
+    try:
+        import deepspeed
+        from deepspeed import zero
+        from deepspeed.runtime.zero.partition_parameters import ZeroParamStatus
+    except Exception:
+        # No deepspeed installed -> normal path
+        return param.detach().cpu()
+
     if hasattr(param, "ds_id"):
         if param.ds_status == ZeroParamStatus.NOT_AVAILABLE:
             if not ignore_status:
-                logging.warning(f"{name}: param.ds_status != ZeroParamStatus.NOT_AVAILABLE: {param.ds_status}")
-        with zero.GatheredParameters([param]):
-            param = param.data.detach().cpu().clone()
+                raise RuntimeError(f"{name} not available")
+        with zero.GatheredParameters([param], modifier_rank=0):
+            return param.detach().cpu()
     else:
-        param = param.detach().cpu().clone()
-    return param
+        return param.detach().cpu()
+
 
 
 # Borrowed from peft.utils.get_peft_model_state_dict
@@ -419,6 +429,8 @@ def preprocess_v1(
     conv = conversation_lib.default_conversation.copy()
     roles = {"human": conv.roles[0], "gpt": conv.roles[1]}
 
+    DEBUG_MASK = bool(int(os.environ.get("DEBUG_MASK", "0")))
+
     # Apply prompt templates
     conversations = []
     for i, source in enumerate(sources):
@@ -451,45 +463,133 @@ def preprocess_v1(
     assert conv.sep_style == conversation_lib.SeparatorStyle.TWO
 
     # Mask targets
-    sep = conv.sep + conv.roles[1] + ": "
-    for conversation, target in zip(conversations, targets):
+    # Mask targets: supervise assistant only, mask everything up to and including "ASSISTANT: "
+    assert conv.sep_style == conversation_lib.SeparatorStyle.TWO
+
+    # Mask targets (robust): mask all, then unmask assistant spans by matching token subsequences
+    sep = conv.sep + conv.roles[1] + ":"
+
+    def _encode_no_special(text: str):
+        if has_image:
+            ids = tokenizer_image_token(text, tokenizer)
+            # tokenizer_image_token might return a tensor in some forks
+            if hasattr(ids, "tolist"):
+                ids = ids.tolist()
+        else:
+            ids = tokenizer(text, add_special_tokens=False).input_ids
+
+        # Drop BOS if present
+        if tokenizer.bos_token_id is not None and len(ids) > 0 and ids[0] == tokenizer.bos_token_id:
+            ids = ids[1:]
+        return ids
+
+
+    def _find_subseq(haystack, needle):
+        """Return first index where needle occurs in haystack, or -1."""
+        if not needle:
+            return -1
+        n = len(needle)
+        for i in range(0, len(haystack) - n + 1):
+            if haystack[i:i+n] == needle:
+                return i
+        return -1
+
+    for ex_idx, (conversation, target) in enumerate(zip(conversations, targets)):
         total_len = int(target.ne(tokenizer.pad_token_id).sum())
 
+        full_ids = input_ids[ex_idx, :total_len].tolist()
+
+        # Mask everything (except padding)
+        target[:total_len] = IGNORE_INDEX
+        if total_len < target.shape[0]:
+            target[total_len:] = IGNORE_INDEX
+
         rounds = conversation.split(conv.sep2)
-        cur_len = 1
-        target[:cur_len] = IGNORE_INDEX
-        for i, rou in enumerate(rounds):
+        for rou in rounds:
             if rou == "":
                 break
 
             parts = rou.split(sep)
             if len(parts) != 2:
-                break
-            parts[0] += sep
+                continue
 
-            if has_image:
-                round_len = len(tokenizer_image_token(rou, tokenizer))
-                instruction_len = len(tokenizer_image_token(parts[0], tokenizer)) - 2
-            else:
-                round_len = len(tokenizer(rou).input_ids)
-                instruction_len = len(tokenizer(parts[0]).input_ids) - 2
 
-            if i != 0 and not tokenizer.legacy and IS_TOKENIZER_GREATER_THAN_0_14:
-                round_len -= 1
-                instruction_len -= 1
+            prompt_only = parts[0] + sep
 
-            target[cur_len : cur_len + instruction_len] = IGNORE_INDEX
+            rou_ids = _encode_no_special(rou)
+            prompt_ids = _encode_no_special(prompt_only)
 
-            cur_len += round_len
-        target[cur_len:] = IGNORE_INDEX
+            # Locate this round inside the full token sequence
+            start = _find_subseq(full_ids, rou_ids)
+            if start == -1:
+                # Can't align -> skip this round (rare, but safe)
+                continue
 
-        if cur_len < tokenizer.model_max_length:
-            if cur_len != total_len:
-                target[:] = IGNORE_INDEX
-                print(
-                    f"WARNING: tokenization mismatch: {cur_len} vs. {total_len}."
-                    f" (ignored)"
-                )
+            # Assistant span within this round
+            a0 = start + len(prompt_ids)
+            a1 = start + len(rou_ids)
+
+            a0 = max(0, min(a0, total_len))
+            a1 = max(0, min(a1, total_len))
+            if a1 > a0:
+                target[a0:a1] = input_ids[ex_idx, a0:a1]
+
+
+        # Keep padding masked
+        if total_len < target.shape[0]:
+            target[total_len:] = IGNORE_INDEX
+
+        is_rank0 = (not torch.distributed.is_available()) or (not torch.distributed.is_initialized()) or (torch.distributed.get_rank() == 0)
+        if start == -1 and DEBUG_MASK and is_rank0:
+            print("WARNING: could not align round inside full_ids; skipping round supervision.")
+
+        # if DEBUG_MASK and ex_idx == 0 and is_rank0:
+
+        #     ids0 = input_ids[0]
+        #     labs0 = targets[0]
+
+        #     ids0 = ids0.tolist()
+        #     labs0 = labs0.tolist()
+
+        #     supervised_ids = [tid for tid, lab in zip(ids0, labs0) if lab != IGNORE_INDEX]
+        #     masked_ids = [tid for tid, lab in zip(ids0, labs0) if lab == IGNORE_INDEX]
+        #     print("\n================ MASKING DEBUG (v1) ================")
+
+        #     def _safe_ids(ids):
+        #         vocab = tokenizer.vocab_size if hasattr(tokenizer, "vocab_size") else 32000
+        #         out = []
+        #         for x in ids:
+        #             try:
+        #                 x = int(x)
+        #             except Exception:
+        #                 continue
+        #             if 0 <= x < vocab:
+        #                 out.append(x)
+        #         return out
+            
+        #     first = ids0[:200]
+        #     first_lab = labs0[:200]
+        #     masked_first = [tid if lab == IGNORE_INDEX else tokenizer.pad_token_id for tid, lab in zip(first, first_lab)]
+        #     super_first = [tid if lab != IGNORE_INDEX else tokenizer.pad_token_id for tid, lab in zip(first, first_lab)]
+
+        #     print("FIRST 200 masked-as-text (prompt):")
+        #     print(tokenizer.decode(_safe_ids(masked_first), skip_special_tokens=False))
+        #     print("FIRST 200 supervised-as-text (should be mostly pads):")
+        #     print(tokenizer.decode(_safe_ids(super_first), skip_special_tokens=False))
+
+
+        #     print("\n---\nRAW conversation string used for masking:\n")
+        #     print(conversation[:1500])
+
+        #     num_total = len(labs0)
+        #     num_supervised = sum(x != IGNORE_INDEX for x in labs0)
+        #     print(f"\ntotal: {num_total} supervised: {num_supervised} ratio: {num_supervised/num_total:.4f}")
+
+        #     if num_supervised == 0:
+        #         print("WARNING: sample 0 has 0 supervised tokens (all labels masked).")
+
+        #     print("====================================================\n")
+
 
     return dict(
         input_ids=input_ids,
@@ -644,13 +744,7 @@ def preprocess(
         input_ids = conversations_tokenized["input_ids"]
 
     targets = copy.deepcopy(input_ids)
-    for target, source in zip(targets, sources):
-        if has_image:
-            tokenized_lens = get_tokenize_len([header] + [s["value"] for s in source])
-        else:
-            tokenized_lens = _tokenize_fn([header] + [s["value"] for s in source], tokenizer)["input_ids_lens"]
-        speakers = [sentence["from"] for sentence in source]
-        _mask_targets(target, tokenized_lens, speakers)
+
 
     return dict(input_ids=input_ids, labels=targets)
 
