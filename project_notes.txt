@@ -1,0 +1,53 @@
+======================
+ENVIERMENT SETUP
+======================
+1. move  .tar.gz file to your habrok from your comp
+scp llava_dev_amd64.tar.gz s4723708@gpu1.hb.hpc.rug.nl:/scratch/s4723708/
+
+2. make the container on habrok
+module load apptainer
+cd /scratch/$USER
+gunzip llava_dev_amd64.tar.gz
+apptainer build llava_dev.sif docker-archive://llava_dev_amd64.tar
+
+3. (optinal) you can work within this container
+apptainer shell llava_dev.sif
+* to leav the container simply typing: exit
+
+
+======================
+DATASET 
+======================
+
+mkdir -p /scratch/$USER/datasets
+cd /scratch/$USER/datasets
+git clone https://github.com/lupantech/ScienceQA.git
+cd ScienceQA
+
+# downloads images/data into the repo’s data folder
+bash tools/download.sh
+
+
+======================
+RUNING A JOB 
+======================
+
+sbatch /scratch/$USER/LLaVA_DL_project/jobs/dryrun_train.sbatch
+squeue -u $USER
+
+======================
+Syncing 
+======================
+
+rsync -avh --progress /scratch/$USER/llava/ \
+    s4790650@login1.hb.hpc.rug.nl:/scratch/s4790650/llava/
+
+======================
+Data preprocesing 
+======================
+
+./.venv/bin/python scripts/convert_sqa_to_llava.py \
+    convert_to_llava \
+    --base-dir /scratch/s4723708/llava/datasets/ScienceQA/data/scienceqa \
+    --prompt-format "QCM-A" \
+    --split train val minival test minitest

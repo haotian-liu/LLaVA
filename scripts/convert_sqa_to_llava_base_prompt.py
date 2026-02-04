@@ -27,15 +27,23 @@ def get_answer(problem, options):
 
 
 def get_lecture_text(problem):
-    # \\n: GPT-3 can generate the lecture with more tokens.
-    lecture = problem['lecture'].replace("\n", "\\n")
-    return lecture
+    lecture = problem.get("lecture")
+    if lecture is None:
+        return None
+    lecture = lecture.strip()
+    if lecture == "" or lecture.upper() == "N/A":
+        return None
+    return lecture.replace("\n", "\\n")
 
 
 def get_solution_text(problem):
-    # \\n: GPT-3 can generate the solution with more tokens
-    solution = problem['solution'].replace("\n", "\\n")
-    return solution
+    solution = problem.get("solution")
+    if solution is None:
+        return None
+    solution = solution.strip()
+    if solution == "" or solution.upper() == "N/A":
+        return None
+    return solution.replace("\n", "\\n")
 
 
 def create_one_example_chatbot(format, question, context, choice, answer, lecture, solution, test_example=True):
@@ -66,25 +74,25 @@ def create_one_example_chatbot(format, question, context, choice, answer, lectur
     if test_example:
         output = "Answer:"
     elif output_format == 'A':
-        output = f"Answer: The answer is {answer}."
+        output = f"Answer: Final answer: {answer}"
 
     elif output_format == 'AL':
-        output = f"Answer: The answer is {answer}. BECAUSE: {solution}"
+        output = f"Answer: Final answer:{answer}.\nReasoning: {lecture}"
     elif output_format == 'AE':
-        output = f"Answer: The answer is {answer}. BECAUSE: {lecture}"
+        output = f"Answer: Final answer: {answer}.\nReasoning: {solution}"
     elif output_format == 'ALE':
-        output = f"Answer: The answer is {answer}. BECAUSE: {lecture} {solution}"
+        output = f"Answer: Final answer: {answer}.\nReasoning: {lecture} {solution}"
     elif output_format == 'AEL':
-        output = f"Answer: The answer is {answer}. BECAUSE: {solution} {lecture}"
+        output = f"Answer: Final answer: {answer}.\nReasoning: {solution} {lecture}"
 
     elif output_format == 'LA':
-        output = f"Answer: {lecture} The answer is {answer}."
+        output = f"Answer: Reasoning: {lecture} \nFinal answer: {answer}"
     elif output_format == 'EA':
-        output = f"Answer: {solution} The answer is {answer}."
+        output = f"Answer: Reasoning: {solution}\nFinal answer: {answer}"
     elif output_format == 'LEA':
-        output = f"Answer: {lecture} {solution} The answer is {answer}."
+        output = f"Answer: Reasoning: {lecture} {solution}\nFinal answer: {answer}"
     elif output_format == 'ELA':
-        output = f"Answer: {solution} {lecture} The answer is {answer}."
+        output = f"Answer: Reasoning: {solution} {lecture}\nFinal answer: {answer}"
     elif output_format == 'LEPA':
         output = ''
         if len(lecture.strip()) > 0:
@@ -222,12 +230,16 @@ def build_prompt_chatbot(problems, shot_qids, prompt_format, use_caption=False, 
     examples = {}
 
     for qid in shot_qids:
+
+
         question = get_question_text(problems[qid])
         context = get_context_text(problems[qid], use_caption)
         choice = get_choice_text(problems[qid], options)
         answer = get_answer(problems[qid], options)
-        lecture = get_lecture_text(problems[qid]).replace('\\n', '\n')
-        solution = get_solution_text(problems[qid]).replace('\\n', '\n')
+        lecture = get_lecture_text(problems[qid])
+        solution = get_solution_text(problems[qid])
+        if lecture is None or solution is None:
+            continue
 
         train_example = create_one_example_chatbot(prompt_format,
                                            question,

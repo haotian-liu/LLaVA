@@ -13,6 +13,14 @@ from llava.mm_utils import tokenizer_image_token, process_images, get_model_name
 
 from PIL import Image
 import math
+import re
+
+def extract_option_letters(text):
+    # Matches (A), (B), (C), ...
+    letters = re.findall(r"\(([A-Z])\)", text)
+    # Deduplicate but preserve order
+    seen = set()
+    return [l for l in letters if not (l in seen or seen.add(l))]
 
 
 def split_list(lst, n):
@@ -25,13 +33,70 @@ def get_chunk(lst, n, k):
     chunks = split_list(lst, n)
     return chunks[k]
 
+def add_output_format_instruction(qs: str, fmt: str) -> str:
+    opts = extract_option_letters(qs)
+    opts_or = " or ".join(opts)
+
+    if fmt == "letter":
+        return qs + f"\nRespond with one letter: {opts_or}."
+
+    elif fmt == "cot_reason_first":
+        return qs + (
+            "\nOutput format (exactly two lines):\n"
+            "Reasoning: 1-3 sentences.\n"
+            f"Final answer: one letter from {opts_or}.\n"
+            "Do not write anything else."
+        )
+
+    elif fmt == "cot_answer_first":
+        return qs + (
+            "\nOutput format (exactly two lines):\n"
+            f"Final answer: one letter from {opts_or}.\n"
+            "Reasoning: 1-3 sentences.\n"
+            "Do not write anything else."
+        )
+
+    else:
+        return qs
+
+
+
 
 def eval_model(args):
-    # Model
     disable_torch_init()
     model_path = os.path.expanduser(args.model_path)
     model_name = get_model_name_from_path(model_path)
-    tokenizer, model, image_processor, context_len = load_pretrained_model(model_path, args.model_base, model_name)
+
+    tokenizer, model, image_processor, context_len = load_pretrained_model(
+        model_path, args.model_base, model_name,
+        device_map=None,
+        device="cuda"
+    )
+
+    model = model.to("cuda")
+    device = torch.device("cuda")
+
+    # Ensure vision tower + image processor are loaded (some configs delay-load)
+    if image_processor is None:
+        vt = model.get_vision_tower()
+        if isinstance(vt, list):
+            vt = vt[0]
+        if hasattr(vt, "load_model"):
+            vt.load_model()
+        image_processor = vt.image_processor
+
+    # move vision tower
+    vt = model.get_vision_tower()
+    if isinstance(vt, list):
+        vt = vt[0]
+    if hasattr(vt, "to"):
+        vt.to(device)
+
+    # move projector
+    model.get_model().mm_projector.to(device)
+
+    # ---------------------------------------------------------------------------
+
 
     questions = json.load(open(os.path.expanduser(args.question_file), "r"))
     questions = get_chunk(questions, args.num_chunks, args.chunk_idx)
@@ -48,7 +113,7 @@ def eval_model(args):
             image_file = line["image"]
             image = Image.open(os.path.join(args.image_folder, image_file))
             image_tensor = process_images([image], image_processor, model.config)[0]
-            images = image_tensor.unsqueeze(0).half().cuda()
+            images = image_tensor.unsqueeze(0).half().to(device)
             image_sizes = [image.size]
             if getattr(model.config, 'mm_use_im_start_end', False):
                 qs = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN + '\n' + qs
@@ -59,9 +124,8 @@ def eval_model(args):
             images = None
             image_sizes = None
 
-        if args.single_pred_prompt:
-            qs = qs + '\n' + "Answer with the option's letter from the given choices directly."
-            cur_prompt = cur_prompt + '\n' + "Answer with the option's letter from the given choices directly."
+        qs = add_output_format_instruction(qs, args.output_format)
+        cur_prompt = add_output_format_instruction(cur_prompt, args.output_format)
 
         conv = conv_templates[args.conv_mode].copy()
         conv.append_message(conv.roles[0], qs)
@@ -70,6 +134,8 @@ def eval_model(args):
 
         input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).cuda()
 
+        max_new = 32 if args.output_format == "letter" else 256
+        
         with torch.inference_mode():
             output_ids = model.generate(
                 input_ids,
@@ -77,7 +143,7 @@ def eval_model(args):
                 image_sizes=image_sizes,
                 do_sample=True if args.temperature > 0 else False,
                 temperature=args.temperature,
-                max_new_tokens=1024,
+                max_new_tokens=256, #max_new,
                 use_cache=True,
             )
 
@@ -106,6 +172,7 @@ if __name__ == "__main__":
     parser.add_argument("--temperature", type=float, default=0.2)
     parser.add_argument("--answer-prompter", action="store_true")
     parser.add_argument("--single-pred-prompt", action="store_true")
+    parser.add_argument("--output-format", type=str, default="letter", choices=["letter", "cot_reason_first", "cot_answer_first"], help="Force model output format.")
     args = parser.parse_args()
 
     eval_model(args)
