@@ -108,7 +108,7 @@ def eval_model(args):
     input_ids = (
         tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors="pt")
         .unsqueeze(0)
-        .cuda()
+        .to(model.device)
     )
 
     with torch.inference_mode():
