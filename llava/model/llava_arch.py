@@ -313,10 +313,16 @@ class LlavaMetaForCausalLM(ABC):
         else:
             new_labels = new_labels_padded
 
-        if _attention_mask is None:
-            attention_mask = None
+        if attention_mask.all():
+            # No padding was applied, respect original attention_mask presence
+            if _attention_mask is None:
+                attention_mask = None
+            else:
+                attention_mask = attention_mask.to(dtype=_attention_mask.dtype)
         else:
-            attention_mask = attention_mask.to(dtype=_attention_mask.dtype)
+            # Padding was applied, always return the new attention_mask
+            if _attention_mask is not None:
+                attention_mask = attention_mask.to(dtype=_attention_mask.dtype)
 
         if _position_ids is None:
             position_ids = None
