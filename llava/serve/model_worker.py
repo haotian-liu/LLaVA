@@ -21,8 +21,15 @@ from llava.utils import (build_logger, server_error_msg,
 from llava.model.builder import load_pretrained_model
 from llava.mm_utils import process_images, load_image_from_base64, tokenizer_image_token
 from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
+from llava.serve.rocm_utils import is_rocm, configure_hip_allocator
 from transformers import TextIteratorStreamer
 from threading import Thread
+
+# On ROCm/HIP, set the memory-allocator config early so every subsequent
+# allocation uses the safer policy.  Users may override PYTORCH_HIP_ALLOC_CONF
+# before launching this worker.
+if is_rocm():
+    configure_hip_allocator()
 
 
 GB = 1 << 30
@@ -173,16 +180,25 @@ class ModelWorker:
             yield json.dumps({"text": ori_prompt + "Exceeds max token length. Please start a new conversation, thanks.", "error_code": 0}).encode() + b"\0"
             return
 
-        thread = Thread(target=model.generate, kwargs=dict(
-            inputs=input_ids,
-            do_sample=do_sample,
-            temperature=temperature,
-            top_p=top_p,
-            max_new_tokens=max_new_tokens,
-            streamer=streamer,
-            use_cache=True,
-            **image_args
-        ))
+        # torch.inference_mode() is thread-local: the @torch.inference_mode()
+        # decorator on generate_stream() does NOT propagate into child threads.
+        # On ROCm/HIP this causes the HIP runtime to attempt gradient
+        # allocations inside the generation kernel, corrupting the memory pool
+        # and producing a segmentation fault.  Wrap the call explicitly.
+        def _generate_with_inference_mode():
+            with torch.inference_mode():
+                model.generate(
+                    inputs=input_ids,
+                    do_sample=do_sample,
+                    temperature=temperature,
+                    top_p=top_p,
+                    max_new_tokens=max_new_tokens,
+                    streamer=streamer,
+                    use_cache=True,
+                    **image_args
+                )
+
+        thread = Thread(target=_generate_with_inference_mode)
         thread.start()
 
         generated_text = ori_prompt
@@ -260,7 +276,10 @@ if __name__ == "__main__":
     parser.add_argument("--model-path", type=str, default="facebook/opt-350m")
     parser.add_argument("--model-base", type=str, default=None)
     parser.add_argument("--model-name", type=str)
-    parser.add_argument("--device", type=str, default="cuda")
+    parser.add_argument("--device", type=str, default="cuda",
+        help="Inference device. Use 'cuda' for NVIDIA GPUs and ROCm PyTorch "
+             "(which also uses 'cuda' internally). The alias 'rocm' is "
+             "accepted and normalised to 'cuda' automatically.")
     parser.add_argument("--multi-modal", action="store_true", help="Multimodal mode is automatically detected with model name, please make sure `llava` is included in the model path.")
     parser.add_argument("--limit-model-concurrency", type=int, default=5)
     parser.add_argument("--stream-interval", type=int, default=1)
@@ -270,6 +289,21 @@ if __name__ == "__main__":
     parser.add_argument("--use-flash-attn", action="store_true")
     args = parser.parse_args()
     logger.info(f"args: {args}")
+
+    # PyTorch ROCm builds use 'cuda' as the device string; accept 'rocm' as
+    # a convenience alias so users don't need to know this.
+    if args.device == "rocm":
+        args.device = "cuda"
+        logger.info("Device alias 'rocm' normalised to 'cuda'.")
+
+    if is_rocm():
+        import os
+        logger.info(
+            "ROCm/HIP detected (torch.version.hip=%s). "
+            "PYTORCH_HIP_ALLOC_CONF=%s",
+            torch.version.hip,
+            os.environ.get("PYTORCH_HIP_ALLOC_CONF", "<unset>"),
+        )
 
     if args.multi_modal:
         logger.warning("Multimodal mode is automatically detected with model name, please make sure `llava` is included in the model path.")

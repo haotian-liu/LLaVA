@@ -26,6 +26,11 @@ from llava.constants import DEFAULT_IMAGE_PATCH_TOKEN, DEFAULT_IM_START_TOKEN, D
 def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, load_4bit=False, device_map="auto", device="cuda", use_flash_attn=False, **kwargs):
     kwargs = {"device_map": device_map, **kwargs}
 
+    # 'rocm' is a convenience alias; PyTorch ROCm builds expose GPU devices
+    # under the standard 'cuda' device string.
+    if device == "rocm":
+        device = "cuda"
+
     if device != "cuda":
         kwargs['device_map'] = {"": device}
 
