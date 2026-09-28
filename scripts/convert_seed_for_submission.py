@@ -16,6 +16,10 @@ def eval_single(result_file, eval_only_type=None):
     for line in open(result_file):
         row = json.loads(line)
         results[row['question_id']] = row
+        try:
+            results[int(row['question_id'])] = row
+        except (TypeError, ValueError):
+            pass
 
     type_counts = {}
     correct_counts = {}
